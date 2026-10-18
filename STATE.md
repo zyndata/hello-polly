@@ -33,7 +33,8 @@ Statuses: `pending` → `in-progress` → `done` (or `blocked` with a note).
       `style-src-attr` violations, so the listener does catch them. `/assets/*` answers
       `immutable`, the document `no-cache`.
 - [ ] **CI green on `dev`. A `v0.1.0` tag deploys and `https://<domain>` serves the shell.**
-      CI: see the run for the Phase 1 push (reported in the phase summary). The `v0.1.0`
+      CI: **green** on `dev` (run 39159075235 on `dc65ced`: check, unit, build, and e2e
+      34/34 in Chromium + WebKit). Half met: the `v0.1.0`
       deploy is **open**: releasing is a separate act (`/release`), and it needs the owner
       prerequisites first: the `SSH_*` secrets and `DEPLOY_CHECK_TOKEN`, DNS for
       `hellopolly.gorny.dev`, the nginx site and certificate, and the Cloudflare rules
