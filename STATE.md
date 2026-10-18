@@ -87,6 +87,13 @@ unset (docs/DEVELOPMENT.md). Not a repository problem.
 Tests: 111 unit tests (11 files), e2e 38 + 2 opt-in in Chromium and WebKit. Content: 4 topics,
 45 words, 17 prompts, 48 pictures, 470.8 kB, the largest 24.7 kB (cow).
 
+CI: **green** on `dev` (run 39163336077 on `3673582`: check, unit 111, `check:content`,
+build, e2e 38 passed + 2 opt-in skipped in Chromium + WebKit). jsDelivr under the CSP:
+after the push, `E2E_CDN_REF=3673582` (the pushed commit, immutable like a tag) with
+`test:e2e:csp` against the container loaded every content picture from
+`cdn.jsdelivr.net/gh/zyndata/hello-polly@3673582/content/img/` in both engines with zero
+violations (served as `image/svg+xml`, byte-identical to the repository).
+
 ## Quality gates
 
 Recorded with the device and voice named (PLAN.md "Speech and pictures are replaceable").
