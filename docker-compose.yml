@@ -1,0 +1,14 @@
+# Local mirror of the production container. Requires a prebuilt dist/; use
+# `npm run docker:up`, which builds first.
+services:
+  app:
+    build: .
+    image: hello-polly:dev
+    container_name: hellopolly-dev
+    restart: unless-stopped
+    # Loopback only: nginx (in production) or the browser (locally) reaches it through
+    # 127.0.0.1, never the public interface. :8080 belongs to Eat My Way.
+    ports:
+      - '127.0.0.1:8081:8081'
+    mem_limit: 256m
+    cpus: 0.5

@@ -1,0 +1,47 @@
+# Caddy serves the prebuilt SPA as static files. It listens on plain HTTP :8081 (:8080 is Eat
+# My Way on the same host); in production nginx terminates TLS for hellopolly.gorny.dev and
+# proxies here. Caddy is the single source of the security headers. nginx must not add its
+# own, or browsers receive duplicates.
+
+{
+	admin off
+	auto_https off
+	servers {
+		# nginx sits in front; without this Caddy would log the proxy's address.
+		trusted_proxies static private_ranges
+	}
+}
+
+:8081 {
+	root * /srv
+	encode zstd gzip
+
+	header {
+		# No 'unsafe-inline' and no 'unsafe-eval', ever. Phase 1 allows this origin only, plus
+		# one host:
+		#   script-src https://static.cloudflareinsights.com: the Cloudflare Web Analytics
+		#     beacon, which the zone injects into this document at the edge. It reports to
+		#     /cdn-cgi/rum on this same origin, so connect-src needs nothing for it.
+		# Every later widening (jsDelivr images in Phase 2, Google in Phases 7 and 8) is
+		# recorded in STATE.md and verified under `npm run docker:up`.
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; frame-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		# Nothing records the child: the microphone and the camera are denied outright.
+		Permissions-Policy "accelerometer=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), interest-cohort=(), magnetometer=(), microphone=(), payment=(), usb=()"
+		# Version and stack are nobody's business.
+		-Server
+	}
+
+	# Hashed bundle assets are immutable; the entry document never is. Matched on the
+	# requested path, before try_files rewrites a deep link to index.html.
+	@immutable path /assets/*
+	@document not path /assets/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+	header @document Cache-Control "no-cache"
+
+	# Routing is hash-based, so this only catches typo'd paths. Everything resolves to the
+	# one document.
+	try_files {path} /index.html
+	file_server
+}

@@ -1,0 +1,109 @@
+@import 'tailwindcss';
+
+/*
+ * The one self-hosted font: Nunito (SIL OFL 1.1, licence in assets/fonts/OFL.txt), variable
+ * weight 400–900, subset to printable ASCII plus the Polish letters and typographic quotes and
+ * dashes. One file, about 32 kB, served from /assets/ like any other hashed asset, so the CSP
+ * stays at `font-src 'self'`. See STATE.md for how the subset was made.
+ */
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url('./assets/fonts/nunito-pl.woff2') format('woff2');
+}
+
+/*
+ * Design tokens: the pirate-sea palette from PLAN.md "Visual design", defined once. Tailwind
+ * turns each `--color-*` into utilities (`bg-ocean`, `text-deep-sea`…), and plain CSS reads
+ * the same variables.
+ */
+@theme {
+  --font-sans: 'Nunito', ui-rounded, system-ui, sans-serif;
+
+  --color-ocean: #1e88e5;
+  --color-deep-sea: #0d47a1;
+  --color-sky: #90caf9;
+  --color-foam: #e3f2fd;
+  --color-lagoon: #26c6da;
+  /* Stars, the chest and rewards only. */
+  --color-gold: #ffc93c;
+  /* Highlights and the second-miss "glow" hint. */
+  --color-coral: #ff7a59;
+  --color-sand: #f6e3b4;
+  /* Success. */
+  --color-leaf: #66bb6a;
+
+  /* Parent screens: body text on foam. */
+  --color-ink: #0b2545;
+  --color-ink-muted: #44607f;
+
+  /* Child screens: the minimum tap target (PLAN.md: ≥ 72 px). `size-tap`, `min-h-tap`… */
+  --spacing-tap: 72px;
+
+  --radius-card: 1.75rem;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    background: var(--color-deep-sea);
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  /*
+   * The full-bleed sea of every child screen. Sky at the top, deep sea at the bottom, faint
+   * waves drawn over it. The safe areas are padded, never covered, so nothing a child must tap
+   * ends up under a notch or the home indicator.
+   */
+  .sea {
+    background-color: var(--color-ocean);
+    background-image:
+      url('./assets/waves.svg'),
+      linear-gradient(
+        180deg,
+        var(--color-sky) 0%,
+        var(--color-lagoon) 18%,
+        var(--color-ocean) 45%,
+        var(--color-deep-sea) 100%
+      );
+    background-size:
+      240px 60px,
+      100% 100%;
+    background-repeat: repeat, no-repeat;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+      env(safe-area-inset-left);
+    /* No pull-to-refresh, no rubber-band scroll, no double-tap zoom: none of them can be a
+       way out for a child. */
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+  }
+
+  .parent {
+    background: var(--color-foam);
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+      env(safe-area-inset-left);
+  }
+
+  .link {
+    color: var(--color-deep-sea);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .link:hover {
+    color: var(--color-ocean);
+  }
+}
