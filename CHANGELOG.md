@@ -8,8 +8,17 @@ project adheres to [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
+### Documentation
+
+- Record the phase 1 CI result in STATE.md
+
 ### Features
 
 - Phase 1 — scaffold & Docker
+- Phase 2 — content pipeline & local data layer
+
+### Miscellaneous
+
+- Update CHANGELOG
 
 
