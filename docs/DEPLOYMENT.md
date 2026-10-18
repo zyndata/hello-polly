@@ -19,9 +19,13 @@ The bundle is built **in CI, never on the server**. The image is `FROM caddy:2-a
 prebuilt `dist/`; Caddy serves static files on plain HTTP `:8081` and is the **only** source of
 the security headers. nginx terminates TLS and proxies; it must not add headers of its own.
 
-From Phase 2 the content images are not served by this server at all: the production build
-loads them from `https://cdn.jsdelivr.net/gh/zyndata/hello-polly@<tag>/content/img/…`, the
-repository at its release tag. A tag therefore must never move (see `/release`).
+The content pictures are not served by this server in normal operation: `deploy.yml` builds
+with `VITE_CONTENT_REF=<tag>`, so the bundle loads them from
+`https://cdn.jsdelivr.net/gh/zyndata/hello-polly@<tag>/content/img/…`, the repository at its
+release tag (`img-src https://cdn.jsdelivr.net` in the CSP). A tag therefore must never move
+(see `/release`). The same files are also in `dist/content/img/` and served by Caddy
+(`no-cache`, revalidated by ETag); a picture falls back to that copy only if jsDelivr fails.
+Builds without `VITE_CONTENT_REF` (dev, preview, `docker:up`, CI) use the origin copy only.
 
 ## Cloudflare sits in front
 

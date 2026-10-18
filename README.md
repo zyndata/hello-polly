@@ -10,11 +10,13 @@ It runs in the browser and installs as a PWA on a phone, tablet or computer. The
 **Polish**; the only English the child hears is the vocabulary itself (CEFR A1 / Cambridge
 Pre A1 Starters). The code, comments and documentation are in English.
 
-> **Status: in development. Phase 1 of 11 is done**: the scaffold. Every screen of the
-> [plan](PLAN.md) exists as a Polish placeholder on the right base layout, the theme and the
-> self-hosted font are in place, and the app is served by Caddy in Docker under its production
-> Content-Security-Policy. Nothing a child can use exists yet. [STATE.md](STATE.md) records
-> what was decided and what is still open.
+> **Status: in development. Phases 1–2 of 11 are done**: the scaffold, then the content and the
+> local data layer. Every screen of the [plan](PLAN.md) exists as a Polish placeholder; the
+> first four topics (colours, numbers 1–10, fruit, pets and farm animals: 45 words) have their
+> pictures, Polish forms and spoken-prompt catalog; progress has its IndexedDB store and its
+> tested rules (merging two parents' devices, when a word counts as learned, reviews, what to
+> teach next). Nothing a child can use exists yet. [STATE.md](STATE.md) records what was
+> decided and what is still open.
 
 ## What it looks like (so far)
 
@@ -40,8 +42,8 @@ Pre A1 Starters). The code, comments and documentation are in English.
 A pure client-side SPA: Vite, Svelte 5, TypeScript (strict), Tailwind CSS v4, hash routing.
 IndexedDB is the source of truth; Google Drive is an optional sync layer. The static bundle is
 built in CI and served by Caddy in Docker behind nginx and Cloudflare, with a strict CSP (no
-`unsafe-inline`, no `unsafe-eval`). Pictures (from Phase 2) are Microsoft Fluent Emoji, served
-from jsDelivr at the release tag.
+`unsafe-inline`, no `unsafe-eval`). Pictures are Microsoft Fluent Emoji, served from jsDelivr
+at the release tag.
 
 - Development setup and cross-platform rules: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
 - Deployment, secrets, rollback: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
@@ -57,4 +59,6 @@ npm run docker:up    # http://localhost:8081 (production headers)
 ## Licence
 
 [MIT](LICENSE). The Nunito font is under the SIL Open Font License 1.1
-([src/assets/fonts/OFL.txt](src/assets/fonts/OFL.txt)).
+([src/assets/fonts/OFL.txt](src/assets/fonts/OFL.txt)). The pictures are Microsoft Fluent
+Emoji, MIT ([content/img/LICENSE](content/img/LICENSE),
+[attribution](content/img/ATTRIBUTION.md)).

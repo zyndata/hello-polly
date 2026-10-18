@@ -1,0 +1,19 @@
+[
+  {"id":"lesson.start","pl":"Płyniemy na nową wyspę!"},
+  {"id":"lesson.finish","pl":"Brawo! Wyspa zdobyta!"},
+  {"id":"intro.look","pl":"Popatrz i posłuchaj."},
+  {"id":"intro.tap","pl":"Dotknij obrazka!"},
+  {"id":"intro.next","pl":"A teraz następny obrazek."},
+  {"id":"pick.find","pl":"Gdzie jest {word}?"},
+  {"id":"digits.start","pl":"Dotknij cyferki!"},
+  {"id":"digits.find","pl":"A teraz znajdź obrazek!"},
+  {"id":"memory.start","pl":"Odkrywaj karty i szukaj par!"},
+  {"id":"memory.pair","pl":"Jest para!"},
+  {"id":"feedback.retry","pl":"Spróbuj jeszcze raz."},
+  {"id":"feedback.hint","pl":"Popatrz, to ten!"},
+  {"id":"feedback.correct","pl":"Świetnie!"},
+  {"id":"games.locked","pl":"Najpierw poznajmy więcej słówek!"},
+  {"id":"speed.slow","pl":"Powoli."},
+  {"id":"speed.normal","pl":"Normalnie."},
+  {"id":"home.hold","pl":"Przytrzymaj dłużej, żeby wyjść."}
+]

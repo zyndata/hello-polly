@@ -30,11 +30,14 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm test
+      - run: npm run check:content
 
       # The production bundle is built here, once, and shipped as an artifact. The deploy
-      # target is a small VM; it never runs a bundler.
+      # target is a small VM; it never runs a bundler. VITE_CONTENT_REF makes the bundle load
+      # its pictures from jsDelivr at this very tag (src/lib/images.ts).
       - name: Build
         env:
+          VITE_CONTENT_REF: ${{ github.ref_name }}
           VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
           VITE_GOOGLE_API_KEY: ${{ vars.VITE_GOOGLE_API_KEY }}
           VITE_GOOGLE_APP_ID: ${{ vars.VITE_GOOGLE_APP_ID }}
