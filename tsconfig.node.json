@@ -1,0 +1,12 @@
+{
+  // The files that run in Node rather than in the browser: the Vite and Vitest configs, the
+  // content scripts and their tests. They get Node's types; the app (tsconfig.json) does not,
+  // so nothing in src/ can reach a Node global by accident.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // `lib` stays the base one, DOM included: scripts/screenshots.mjs hands callbacks to the
+    // browser through Playwright.
+    "types": ["node"]
+  },
+  "include": ["vite.config.ts", "vitest.config.ts", "svelte.config.js", "scripts/**/*.mjs", "scripts/**/*.ts"]
+}

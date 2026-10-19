@@ -29,9 +29,6 @@
     "src/**/*.svelte",
     "e2e/**/*.ts",
     "playwright.config.ts",
-    "playwright.csp.config.ts",
-    "vite.config.ts",
-    "vitest.config.ts",
-    "svelte.config.js"
+    "playwright.csp.config.ts"
   ]
 }

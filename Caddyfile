@@ -17,14 +17,15 @@
 	encode zstd gzip
 
 	header {
-		# No 'unsafe-inline' and no 'unsafe-eval', ever. Phase 1 allows this origin only, plus
-		# one host:
+		# No 'unsafe-inline' and no 'unsafe-eval', ever. This origin only, plus two hosts:
 		#   script-src https://static.cloudflareinsights.com: the Cloudflare Web Analytics
 		#     beacon, which the zone injects into this document at the edge. It reports to
 		#     /cdn-cgi/rum on this same origin, so connect-src needs nothing for it.
-		# Every later widening (jsDelivr images in Phase 2, Google in Phases 7 and 8) is
-		# recorded in STATE.md and verified under `npm run docker:up`.
-		Content-Security-Policy "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; frame-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'"
+		#   img-src https://cdn.jsdelivr.net (Phase 2, STATE.md decision 13): the content
+		#     pictures, served from this public repository at the release tag.
+		# Every later widening (Google in Phases 7 and 8) is recorded in STATE.md and verified
+		# under `npm run docker:up`.
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; img-src 'self' https://cdn.jsdelivr.net; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; frame-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "no-referrer"
 		# Nothing records the child: the microphone and the camera are denied outright.

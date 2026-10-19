@@ -36,6 +36,11 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      # Offline: verifies content/img against its manifest and the content rules. CI never
+      # downloads pictures; `npm run content` is run by hand and its output committed.
+      - name: Content check
+        run: npm run check:content
+
       # The VITE_* values are public by design (they end up in the bundle) and unused until
       # Phase 7. They are repository variables, never secrets.
       - name: Build

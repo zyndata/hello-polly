@@ -1,0 +1,6 @@
+[
+  {"id":"colours","en":"colours","pl":"Kolory","icon":"artist-palette","order":2,"words":["colours.red","colours.blue","colours.yellow","colours.green","colours.orange","colours.purple","colours.pink","colours.brown","colours.black","colours.white","colours.grey"]},
+  {"id":"numbers","en":"numbers","pl":"Liczby 1–10","icon":"input-numbers","order":3,"words":["numbers.one","numbers.two","numbers.three","numbers.four","numbers.five","numbers.six","numbers.seven","numbers.eight","numbers.nine","numbers.ten"]},
+  {"id":"fruit","en":"fruit","pl":"Owoce","icon":"red-apple","order":4,"words":["fruit.apple","fruit.banana","fruit.orange","fruit.pear","fruit.grapes","fruit.strawberry","fruit.cherries","fruit.watermelon","fruit.lemon","fruit.pineapple","fruit.mango","fruit.coconut"]},
+  {"id":"pets-farm","en":"animals","pl":"Zwierzęta domowe i z farmy","icon":"paw-prints","order":5,"words":["pets-farm.cat","pets-farm.dog","pets-farm.rabbit","pets-farm.fish","pets-farm.bird","pets-farm.mouse","pets-farm.horse","pets-farm.cow","pets-farm.pig","pets-farm.sheep","pets-farm.chicken","pets-farm.duck"]}
+]
