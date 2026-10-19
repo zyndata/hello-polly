@@ -6,6 +6,12 @@ This file is generated from Conventional Commit messages by
 The format follows [Keep a Changelog](https://keepachangelog.com) and the
 project adheres to [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+
+### Documentation
+
+- Record the v0.1.0 release and the owner prerequisites
+
 ## [0.1.0] - 2026-10-19
 
 ### Documentation
