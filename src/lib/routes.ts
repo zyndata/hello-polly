@@ -13,6 +13,7 @@ import Lesson from '../screens/child/Lesson.svelte';
 import Shelf from '../screens/child/Shelf.svelte';
 import TreasureMap from '../screens/child/Map.svelte';
 import ParentChild from '../screens/parent/Child.svelte';
+import Family from '../screens/parent/Family.svelte';
 import Panel from '../screens/parent/Panel.svelte';
 import Speech from '../screens/parent/Speech.svelte';
 
@@ -37,6 +38,7 @@ const built: Record<string, ScreenComponent> = {
   '/child/:id/chest': ChestScreen,
   '/parent': Panel,
   '/parent/child/:id': ParentChild,
+  '/parent/family': Family,
   '/parent/speech': Speech,
   '/setup': Setup
 };

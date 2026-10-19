@@ -17,7 +17,10 @@ npm run dev                    # http://localhost:5173
 
 Node version: see [.nvmrc](../.nvmrc). With `nvm` (either platform): `nvm use`.
 
-`.env.local` can stay empty until Phase 7: nothing reads the `VITE_*` values before Drive sync.
+`.env.local` may stay empty: without `VITE_GOOGLE_CLIENT_ID` the app works fully on one device
+and *Rodzina* says the build has no Google connection. With a real client id (Phase 7, see
+"Live check" in [DEPLOYMENT.md](DEPLOYMENT.md)) it syncs with Google Drive. The e2e build always
+gets a fixed fake id from `playwright.config.ts`; Google itself is faked (`e2e/fake-google.ts`).
 
 ## npm scripts
 
@@ -102,9 +105,15 @@ src/
                            ContentImage, SpeakingPicture, SpeedToggle (🐢/🐇), HomeButton
                            (long press), Island, VoiceCheck, ChildForm, WordPlanEditor,
                            ParentGate and Gated
+  lib/sync/                Drive sync: backend.ts (the StorageBackend interface), drive.ts
+                           (Drive REST, drive.file), google-auth.ts (GIS token flow),
+                           engine.ts (one sync cycle), state.svelte.ts (status and triggers)
   screens/                 the built screens: Start (and the child picker), Setup,
-                           child/Map, child/Lesson, parent/Panel, parent/Child, parent/Speech
-e2e/                       Playwright specs; every spec fails on a CSP violation
+                           child/Map, child/Lesson, parent/Panel, parent/Child, parent/Speech,
+                           parent/Family (Rodzina)
+  test/fake-drive.ts       an in-memory Drive for the sync engine's unit tests
+e2e/                       Playwright specs; every spec fails on a CSP violation;
+                           fake-google.ts fakes GIS and the Drive API at the network boundary
 ```
 
 ## Speech
@@ -171,3 +180,11 @@ Two things the CSP forbids that are easy to write by accident in Svelte:
 
 Use `http://localhost:8081`, not `http://127.0.0.1:8081`: from Phase 7 only the former is an
 authorized JavaScript origin on the Google OAuth client.
+
+The sync specs (`e2e/sync.spec.ts`) need a container built with *some* client id, or they skip
+with a message. Any value works, since every Google request is answered by the fake: put one in
+`.env.local`, or on Linux run `VITE_GOOGLE_CLIENT_ID=e2e-client npm run docker:up` once.
+
+Against real Google, expect one report that is not ours: Google Identity Services may apply an
+inline style inside its own frame, which `style-src 'self'` blocks (Eat My Way decision 88).
+It has no visible effect; `style-src` stays as it is.

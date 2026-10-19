@@ -24,7 +24,12 @@ Drive's own permissions.
 
 - The Google OAuth token (from Phase 7) has the `drive.file` scope: access only to files this
   app created or the user picked for it. It is held in memory and `sessionStorage`, never in
-  `localStorage`.
+  `localStorage`, IndexedDB or Drive, and it is asked for only from a parent's tap (connecting,
+  the parent gate, „Wznów”); a device that never connected makes no request to Google at all.
+- The CSP allows Google in exactly three places: `script-src` and `frame-src
+  https://accounts.google.com` (Google Identity Services) and `connect-src
+  https://www.googleapis.com` (the Drive API). `Cross-Origin-Opener-Policy` is
+  `same-origin-allow-popups`, which the sign-in popup needs to return the token.
 - Speech is the device's own voice (Web Speech API). No audio is recorded, uploaded or stored;
   `Permissions-Policy` denies the microphone and the camera outright.
 - Sound effects are synthesized in the browser. No audio file is shipped.

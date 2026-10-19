@@ -1,0 +1,204 @@
+import {
+  NotAuthenticatedError,
+  RemoteChangedError,
+  RemoteGoneError,
+  type AccountInfo,
+  type RemoteContent,
+  type RemoteVersion,
+  type StorageBackend
+} from './backend';
+import { currentToken, forgetAccessToken, hasAccessToken, requestToken, revokeAccess } from './google-auth';
+
+/**
+ * Google Drive, scope `drive.file`: the app sees only the files it created (or, from Phase 8,
+ * that the parent picked for it). The family file sits in the parent's visible Drive, so it
+ * can be shared with the second parent; `appDataFolder` cannot (PLAN.md "Research summary").
+ */
+
+const DRIVE_FILES = 'https://www.googleapis.com/drive/v3/files';
+const DRIVE_UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files';
+const DRIVE_ABOUT = 'https://www.googleapis.com/drive/v3/about';
+
+const VERSION_FIELDS = 'id,version,modifiedTime';
+
+interface DriveFileResource {
+  id?: string;
+  version?: string;
+  modifiedTime?: string;
+  trashed?: boolean;
+}
+
+interface DriveErrorBody {
+  error?: { message?: string; errors?: { reason?: string }[] };
+}
+
+/** 429 and 5xx are Google asking for a moment: two short retries, then give up until the next cycle. */
+const RETRY_DELAYS_MS = [500, 1500];
+const RETRY_AFTER_CAP_MS = 10_000;
+
+export interface DriveBackendOptions {
+  /** Injected in tests. Defaults to the global `fetch`. */
+  fetchImpl?: typeof fetch;
+  /** The token for each request. Defaults to the one in hand, never asking Google (decision 66). */
+  token?: () => Promise<string>;
+  /** How a session is obtained in `authenticate`. Defaults to GIS, from a parent's tap. */
+  requestToken?: (options: { interactive?: boolean }) => Promise<string>;
+  /** Injected in tests, so the retries do not wait. */
+  sleep?: (ms: number) => Promise<void>;
+}
+
+function toVersion(file: DriveFileResource): RemoteVersion | null {
+  if (file.id === undefined || file.version === undefined || file.modifiedTime === undefined) return null;
+  return { fileId: file.id, version: String(file.version), modifiedTime: file.modifiedTime };
+}
+
+export function createDriveBackend(options: DriveBackendOptions = {}): StorageBackend {
+  const doFetch = options.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
+  const token = options.token ?? currentToken;
+  const ask = options.requestToken ?? requestToken;
+  const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+
+  function retryAfterMs(response: Response): number | undefined {
+    const seconds = Number(response.headers.get('Retry-After') ?? NaN);
+    return Number.isFinite(seconds) && seconds >= 0 ? Math.min(seconds * 1000, RETRY_AFTER_CAP_MS) : undefined;
+  }
+
+  async function request(url: string, init: RequestInit = {}): Promise<Response> {
+    let response: Response;
+    for (let attempt = 0; ; attempt += 1) {
+      const accessToken = await token();
+      response = await doFetch(url, {
+        ...init,
+        headers: { ...(init.headers ?? {}), Authorization: `Bearer ${accessToken}` }
+      });
+      const wait = RETRY_DELAYS_MS[attempt];
+      if (wait === undefined || (response.status !== 429 && response.status < 500)) break;
+      await sleep(retryAfterMs(response) ?? wait);
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      const body = (await response.clone().json().catch(() => ({}))) as DriveErrorBody;
+      const reason = body.error?.errors?.[0]?.reason ?? '';
+      if (response.status === 401 || reason === 'authError' || reason === 'insufficientPermissions') {
+        forgetAccessToken();
+        throw new NotAuthenticatedError(body.error?.message ?? 'Drive refused the request');
+      }
+      // `drive.file` no longer reaches this file (e.g. it was unshared): for us it is gone.
+      if (reason === 'appNotAuthorizedToFile') throw new RemoteGoneError();
+      throw new Error(`Drive request failed (${response.status}): ${body.error?.message ?? ''}`);
+    }
+    return response;
+  }
+
+  async function json<T>(url: string, init: RequestInit = {}): Promise<T> {
+    const response = await request(url, init);
+    if (!response.ok) throw new Error(`Drive request failed (${response.status})`);
+    return (await response.json()) as T;
+  }
+
+  const query = (params: Record<string, string>): string => new URLSearchParams(params).toString();
+
+  async function version(fileId: string): Promise<RemoteVersion> {
+    const response = await request(
+      `${DRIVE_FILES}/${encodeURIComponent(fileId)}?${query({ fields: `${VERSION_FIELDS},trashed` })}`
+    );
+    if (response.status === 404) throw new RemoteGoneError();
+    if (!response.ok) throw new Error(`Drive metadata read failed (${response.status})`);
+    const file = (await response.json()) as DriveFileResource;
+    const found = toVersion(file);
+    if (file.trashed === true || found === null) throw new RemoteGoneError();
+    return found;
+  }
+
+  return {
+    async authenticate(authOptions = {}): Promise<AccountInfo> {
+      await ask({ interactive: authOptions.interactive === true });
+      const about = await json<{ user?: { permissionId?: string; emailAddress?: string; displayName?: string } }>(
+        `${DRIVE_ABOUT}?${query({ fields: 'user(permissionId,emailAddress,displayName)' })}`
+      );
+      const id = about.user?.permissionId;
+      if (id === undefined) throw new NotAuthenticatedError('Drive did not identify the account');
+      const label = about.user?.emailAddress ?? about.user?.displayName;
+      return label === undefined ? { id } : { id, label };
+    },
+
+    isAuthenticated: hasAccessToken,
+
+    signOut(): void {
+      void revokeAccess();
+    },
+
+    async find(name: string): Promise<RemoteVersion | null> {
+      const escaped = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const result = await json<{ files?: DriveFileResource[] }>(
+        `${DRIVE_FILES}?${query({
+          spaces: 'drive',
+          q: `name = '${escaped}' and trashed = false`,
+          orderBy: 'createdTime',
+          fields: `files(${VERSION_FIELDS})`,
+          pageSize: '10'
+        })}`
+      );
+      for (const file of result.files ?? []) {
+        const found = toVersion(file);
+        if (found !== null) return found;
+      }
+      return null;
+    },
+
+    async create(name: string, content: string): Promise<RemoteVersion> {
+      const boundary = `hp-${crypto.randomUUID()}`;
+      const body = [
+        `--${boundary}`,
+        'Content-Type: application/json; charset=UTF-8',
+        '',
+        JSON.stringify({ name, mimeType: 'application/json' }),
+        `--${boundary}`,
+        'Content-Type: application/json; charset=UTF-8',
+        '',
+        content,
+        `--${boundary}--`,
+        ''
+      ].join('\r\n');
+      const file = await json<DriveFileResource>(
+        `${DRIVE_UPLOAD}?${query({ uploadType: 'multipart', fields: VERSION_FIELDS })}`,
+        { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body }
+      );
+      const created = toVersion(file);
+      if (created === null) throw new Error('Drive created the file but returned no version');
+      return created;
+    },
+
+    version,
+
+    async read(fileId: string): Promise<RemoteContent> {
+      const current = await version(fileId);
+      const response = await request(`${DRIVE_FILES}/${encodeURIComponent(fileId)}?${query({ alt: 'media' })}`);
+      if (response.status === 404) throw new RemoteGoneError();
+      if (!response.ok) throw new Error(`Drive download failed (${response.status})`);
+      return { content: await response.text(), version: current };
+    },
+
+    async update(content: string, expected: RemoteVersion): Promise<RemoteVersion> {
+      // Drive has no conditional update: re-read the version just before writing (decision 65).
+      const current = await version(expected.fileId);
+      if (current.version !== expected.version) throw new RemoteChangedError();
+      const file = await json<DriveFileResource>(
+        `${DRIVE_UPLOAD}/${encodeURIComponent(expected.fileId)}?${query({ uploadType: 'media', fields: VERSION_FIELDS })}`,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json; charset=UTF-8' }, body: content }
+      );
+      const written = toVersion(file);
+      if (written === null) throw new Error('Drive accepted the file but returned no version');
+      return written;
+    },
+
+    async trash(fileId: string): Promise<void> {
+      const response = await request(`${DRIVE_FILES}/${encodeURIComponent(fileId)}?${query({ fields: 'id' })}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+        body: JSON.stringify({ trashed: true })
+      });
+      if (!response.ok && response.status !== 404) throw new Error(`Drive trash failed (${response.status})`);
+    }
+  };
+}

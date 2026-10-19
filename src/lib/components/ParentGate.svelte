@@ -10,6 +10,7 @@
   import { erase, isLocked, newGate, polishNumber, press } from '../gate/gate';
   import { parentGate } from '../gate/open.svelte';
   import { sounds } from '../sound/effects';
+  import { renew } from '../sync/state.svelte';
 
   let gate = $state(newGate(Math.random));
   let now = $state(Date.now());
@@ -31,6 +32,9 @@
     if (gate.passed) {
       sounds().play('correct');
       parentGate.pass();
+      // A parent's tap: the one moment a connected device may renew its Drive token without
+      // the consent screen (STATE.md decision 66). Does nothing when not connected.
+      void renew();
     } else if (gate.misses > before.misses) {
       misses = gate.misses;
       sounds().play('wiggle');

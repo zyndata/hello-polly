@@ -44,6 +44,9 @@ export default defineConfig({
     command: 'npm run build && npx vite preview --port 4173 --strictPort',
     url: 'http://localhost:4173',
     reuseExistingServer: !isCI,
-    timeout: 180_000
+    timeout: 180_000,
+    // A fixed client id, so the run is the same on a machine with no .env.local. It is never
+    // sent anywhere: every Google request is answered by e2e/fake-google.ts.
+    env: { VITE_GOOGLE_CLIENT_ID: 'e2e-client.apps.googleusercontent.com' }
   }
 });

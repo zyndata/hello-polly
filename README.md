@@ -10,8 +10,8 @@ It runs in the browser and installs as a PWA on a phone, tablet or computer. The
 **Polish**; the only English the child hears is the vocabulary itself (CEFR A1 / Cambridge
 Pre A1 Starters). The code, comments and documentation are in English.
 
-> **Status: in development. Phases 1–6 of 11 are done**: the scaffold, the content and the
-> local data layer, speech, children and the word plan, real lessons, and rewards. A parent sets up a
+> **Status: in development. Phases 1–7 of 11 are done**: the scaffold, the content and the
+> local data layer, speech, children and the word plan, real lessons, rewards, and Drive sync. A parent sets up a
 > child (nickname and an animal picture), chooses the topics and, if they like, the exact words
 > to start with. The child gets a treasure map of islands: each island is a lesson of about
 > 8–12 steps, up to three new words in *look and listen*, then „Gdzie jest…?” picks with 2–4
@@ -21,8 +21,11 @@ Pre A1 Starters). The code, comments and documentation are in English.
 > *Cyferki* (tap a digit, hear a word, find its picture) and *Memory*. The parent panel sits
 > behind a parent gate (a number in Polish words). Stars fill a meter on the map; a full meter
 > brings a treasure chest that opens in three taps and gives 1–3 stickers for an album, one
-> sticker per word (rare gold ones shimmer), each saying its English word when tapped. Sync
-> and stories come in later phases. The development build is live at https://hellopolly.gorny.dev (v0.1.0).
+> sticker per word (rare gold ones shimmer), each saying its English word when tapped. A
+> parent can save the family in one file on their own Google Drive (*Rodzina*), and every
+> device signed in to that account then continues the same children's progress; the child
+> never sees sign-in or sync. This needs the Google Cloud setup, which the live site does not
+> have yet. Inviting the second parent and stories come in later phases. The development build is live at https://hellopolly.gorny.dev (v0.1.0).
 > [STATE.md](STATE.md) records what was decided and what is still open.
 
 ## What it looks like (so far)

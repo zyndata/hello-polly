@@ -110,7 +110,8 @@ WAF token are the same as Eat My Way's; the SSH key is Hello Polly's own (STATE.
 | `DEPLOY_CHECK_TOKEN` | Shared secret sent as `X-Deploy-Check` by the health check, matched by the Cloudflare WAF skip rule |
 
 **Variables** (same page → *Variables*). All three are public by design and end up in the
-bundle; none is read before Phase 7:
+bundle. `VITE_GOOGLE_CLIENT_ID` is read from Phase 7 (without it *Rodzina* says the build has no
+Google connection); the other two from Phase 8 (the Picker):
 
 | Variable | Value |
 |---|---|
@@ -151,6 +152,46 @@ docker run -d --name hello-polly --restart unless-stopped \
 
 The rolled-back bundle keeps loading images from its own tag on jsDelivr, so pictures stay
 consistent with it. Fix forward with the next patch version; never move a tag.
+
+## Live check against real Google (Drive sync)
+
+The e2e suite runs the real GIS and Drive clients against a fake Google (STATE.md decision 72),
+so what only real Google can show is checked by hand, once the Google Cloud project exists
+(owner prerequisites in PLAN.md) and after any change to sign-in or sync. Record the date, the
+browsers and the result in STATE.md.
+
+Prerequisites:
+
+- [ ] Google Cloud project: OAuth consent screen (external, scope `drive.file` only, privacy
+      URL), a web OAuth client whose authorized JavaScript origins are
+      `https://hellopolly.gorny.dev`, `http://localhost:5173` and `http://localhost:8081`,
+      and the **Google Drive API** enabled. While the consent screen is in *Testing*, add both
+      parents' accounts as test users.
+- [ ] The client id in `.env.local` (`VITE_GOOGLE_CLIENT_ID=…`, never committed) for local runs,
+      and as the repository variable `VITE_GOOGLE_CLIENT_ID` for CI and releases.
+
+Locally (`npm run docker:up`, http://localhost:8081, DevTools console open), then once more on
+https://hellopolly.gorny.dev after the next tag:
+
+- [ ] Before connecting: a whole session (first run, a lesson, the panel) makes no request to
+      any Google host (Network tab filtered by `google`).
+- [ ] Panel → *Rodzina* → „Połącz z Dyskiem Google”: the Google window asks only for access to
+      files created by this app; after it, *Stan* is „Połączono” and *Konto* names the account.
+- [ ] `hello-polly-family.json` appears in the root of that account's My Drive, and its content
+      is the family (the child's nickname is in it).
+- [ ] Zero CSP violations in the console through the whole flow. Expected exception, as in Eat
+      My Way decision 88: an inline-style report from inside Google's own GIS frame; record it
+      if it appears, do not widen `style-src` for it.
+- [ ] A second browser (or phone) on the same account: first run → „Mam już rodzinę na Dysku
+      Google” lands on the same child's map without adding a child.
+- [ ] Play a few pictures on each; within a few seconds (or on switching back to the tab) both
+      show the same stars and words, and the file on Drive holds both devices' progress.
+- [ ] A reload keeps „Połączono” without a Google window.
+- [ ] After the token's hour (or after revoking the app at https://myaccount.google.com/permissions):
+      the child's screens show nothing but the small dot on the gear; passing the parent gate
+      renews (a Google window may flash) or *Rodzina* offers „Wznów”; the waiting progress
+      then lands on Drive.
+- [ ] „Odłącz” keeps every child on the device, and no further Google request is made.
 
 ## Troubleshooting
 

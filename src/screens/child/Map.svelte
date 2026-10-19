@@ -16,6 +16,7 @@
   import ChildLayout from '../../lib/components/ChildLayout.svelte';
   import ContentImage from '../../lib/components/ContentImage.svelte';
   import HomeButton from '../../lib/components/HomeButton.svelte';
+  import { syncState } from '../../lib/sync/state.svelte';
   import Island from '../../lib/components/Island.svelte';
   import StarMeter from '../../lib/components/StarMeter.svelte';
   import { prompt, topics } from '../../lib/content';
@@ -141,8 +142,12 @@
           </span>
         {/if}
       </div>
-      <button type="button" class="size-tap rounded-full bg-foam/85 p-2 shadow-md" aria-label="Dla rodzica" data-testid="gear" onclick={gear}>
+      <button type="button" class="relative size-tap rounded-full bg-foam/85 p-2 shadow-md" aria-label="Dla rodzica" data-testid="gear" onclick={gear}>
         <ContentImage id="gear" class="pointer-events-none h-full w-full object-contain" />
+        {#if syncState.attention}
+          <!-- Progress waits for a parent to renew Drive (STATE.md decision 67). No text, no sound. -->
+          <span class="absolute top-1 right-1 size-4 rounded-full border-2 border-white bg-coral" data-testid="gear-dot"></span>
+        {/if}
       </button>
     </header>
 

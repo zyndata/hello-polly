@@ -1,6 +1,7 @@
 <!--
-  /setup, the first run (PLAN.md "First run", without the Drive step): the voice check, „Mam
-  zaproszenie” or „Zaczynamy”, the first child, the starting topics (and, if the parent wants,
+  /setup, the first run (PLAN.md "First run"): the voice check, „Mam zaproszenie”, „Mam już
+  rodzinę na Dysku Google” (STATE.md decision 68: another device of the same account loads the
+  family instead of adding the child twice) or „Zaczynamy”, the first child, the starting topics (and, if the parent wants,
   specific words in the queue), and one sentence about the parent gate. The last tap creates
   the child and hands the phone over to the child's map. Once a child exists, this screen
   sends the visitor to `/` (STATE.md decision 37: it is not behind the gate).
@@ -19,6 +20,8 @@
   import { sounds } from '../lib/sound/effects';
   import { unlock } from '../lib/unlock';
   import { change } from '../lib/store';
+  import { isDriveConfigured } from '../lib/sync/google-auth';
+  import { connect, syncState } from '../lib/sync/state.svelte';
   import type { Screen } from '../lib/screens';
   import type { Accent, ChildProfile, WordPlan } from '../lib/types';
 
@@ -34,6 +37,8 @@
   let profile = $state<Omit<ChildProfile, 'deleted'> | undefined>();
   let plan = $state<WordPlan>(defaultPlan());
   let saving = $state(false);
+  let loadingDrive = $state(false);
+  let driveNote = $state<string | undefined>();
 
   const number = $derived(NUMBERED.indexOf(step === 'invite' ? 'start' : step) + 1);
 
@@ -46,6 +51,30 @@
       ready = true;
     })();
   });
+
+  async function fromDrive() {
+    if (loadingDrive) return;
+    loadingDrive = true;
+    driveNote = undefined;
+    unlock();
+    try {
+      await connect();
+      if (syncState.status === 'error') {
+        driveNote = syncState.message;
+        return;
+      }
+      if (liveChildren(await loadFamily()).length > 0) {
+        await replace('/');
+        return;
+      }
+      driveNote = 'Połączono, ale na tym koncie nie ma jeszcze dzieci. Dodaj pierwsze dziecko: zapisze się na Dysku.';
+      step = 'child';
+    } catch {
+      driveNote = 'Nie połączono. Okno Google zostało zamknięte albo nie udało się z nim połączyć.';
+    } finally {
+      loadingDrive = false;
+    }
+  }
 
   async function finish() {
     if (!profile || saving) return;
@@ -85,6 +114,13 @@
           <button type="button" class="button" onclick={() => (step = 'child')}>Zaczynamy</button>
           <button type="button" class="button-quiet" onclick={() => (step = 'invite')}>Mam zaproszenie</button>
         </div>
+        {#if isDriveConfigured()}
+          <p>Jeśli Hello Polly działa już na innym twoim urządzeniu i zapisuje rodzinę na Dysku Google, wczytaj ją stąd.</p>
+          <button type="button" class="button-quiet justify-self-start" disabled={loadingDrive} onclick={fromDrive} data-testid="setup-drive">
+            Mam już rodzinę na Dysku Google
+          </button>
+        {/if}
+        {#if driveNote}<p class="notice" data-testid="setup-drive-note">{driveNote}</p>{/if}
       </section>
     {:else if step === 'invite'}
       <section class="card" aria-labelledby="invite-title">
@@ -99,6 +135,7 @@
     {:else if step === 'child'}
       <section class="card" aria-labelledby="child-title">
         <h2 id="child-title" class="card-title">Kto będzie się uczyć?</h2>
+        {#if driveNote}<p class="notice" data-testid="setup-drive-note">{driveNote}</p>{/if}
         <ChildForm
           initial={profile}
           submitLabel="Dalej"

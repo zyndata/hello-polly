@@ -13,7 +13,7 @@ Any deviation from [PLAN.md](PLAN.md) must be recorded here before proceeding.
 | 4     | Children, word plan, parent gate, look-and-listen   | done        | 2026-10-19 |
 | 5     | Lessons & first exercises                           | done        | 2026-10-19 |
 | 6     | Rewards                                             | done        | 2026-10-19 |
-| 7     | Drive sync (one account, many devices)              | pending     |           |
+| 7     | Drive sync (one account, many devices)              | done        | 2026-10-19 |
 | 8     | Inviting the second parent                          | pending     |           |
 | 9     | Stories & more games                                | pending     |           |
 | 10    | Screen time & the progress dashboard                | pending     |           |
@@ -327,6 +327,55 @@ the CSP is unchanged in this phase). `rewards.spec.ts` also ran 3 × 3 repeats i
 
 CI: **green** on `dev` (run 39311290913 on `5a34b58`: check, unit 258, `check:content`,
 build, e2e 106 passed + 2 opt-in skipped in Chromium + WebKit).
+
+### Phase 7 acceptance (2026-10-19)
+
+- [x] **Two devices playing at the same time with the same child converge to identical
+      derived state, and nothing is lost (fake-drive e2e, including an interleaved upload
+      race).** e2e (`sync.spec.ts`, two browser contexts over one fake Drive): a phone connects
+      from *Rodzina*, a tablet joins from the first run („Mam już rodzinę na Dysku Google”, the
+      same child, no duplicate); both meet a word at once; after the debounce and a focus both
+      IndexedDB copies and the file are byte-identical (canonical JSON) and each holds both
+      devices' words. The race: the phone's upload is parked after its write guard passed, the
+      tablet's whole cycle lands, the phone's stale upload then drops the tablet's subtree *from
+      the file*; on the tablet's next cycle it is back, and all three copies are identical.
+      Unit (`engine.test.ts` over `src/test/fake-drive.ts`): the same two races (caught by the
+      guard and re-merged; past the guard and re-added), and **40 seeded runs of 30 random
+      steps on three devices** (stars, chests, settings, syncs, each sync possibly interleaved
+      with another device's cycle before or past the guard): every run ends with three
+      identical files equal to Drive's, every device's stars and every chest present.
+- [x] **An expired token never shows anything on a child screen.** e2e: the token is revoked
+      while the child plays; the map stays, no dialog, no alert, no text, no Google window
+      (GIS prompts unchanged); later play makes **no** Google request at all; the only change is
+      the gear's empty coral dot (decision 67). Passing the parent gate renews silently and the
+      waiting word lands on Drive. Also: a token that ran out is not renewed on reload (no GIS
+      load, no request), and a device that never connected makes no Google request through a
+      whole session, the gate included.
+- [x] **Zero CSP violations through the OAuth flow under `npm run docker:up`.** The whole suite
+      against the container built with a client id (decision 72): 62 passed, 1 opt-in skipped,
+      zero violations, the sync specs included (the GIS stub is served from
+      `https://accounts.google.com/gsi/client`, so the shipped policy is what allowed it).
+      What this cannot show is real Google's own frames and popup: that is the live check.
+- [ ] **Live check against real Google, recorded in DEPLOYMENT.md as a checklist.** The
+      checklist is written (docs/DEPLOYMENT.md "Live check against real Google"); **not run**:
+      the owner's Google Cloud project and OAuth client do not exist yet (the owner's answer
+      this phase). Open until the owner creates them, sets `VITE_GOOGLE_CLIENT_ID` (`.env.local`
+      and the repository variable) and walks the checklist; the result goes here.
+
+Also: `drive.test.ts` covers the REST client (find by name oldest-first, multipart create,
+guarded media update, 404/trashed/`appNotAuthorizedToFile` → gone, 401 → re-auth, quota 403
+is not an auth failure, two retries on 429/5xx, `about.get`); the engine never overwrites a
+newer-schema file or a non-family file, re-creates a file that is gone, settles two fresh
+devices that both created the file on the older one (the younger trashed), and compacts and
+prunes only its own subtrees. Speech settings now go through `change()` like every other
+write, so they trigger a sync too.
+
+Tests: 282 unit tests (30 files); e2e in Chromium 62 passed + 1 opt-in skipped, under
+`vite preview` and under `test:e2e:csp`; `sync.spec.ts` also ran 3 × in Chromium with no
+failure. **WebKit was not run locally**: this machine's Playwright WebKit cannot load any
+page at all (`WebKit encountered an internal error`, even for `https://example.com` and the
+untouched `routes.spec.ts`), an environment fault since Phase 6; CI runs WebKit. Bundle:
+275.4 kB JS (92.1 kB gzip, +6 kB), 35.0 kB CSS.
 
 ## Quality gates
 
@@ -797,6 +846,76 @@ is settled here (56).
     `album.empty`, `album.missing`. No new sound effect: `chest-creak`, `pop` and `sparkle`
     exist since Phase 3 (decision 29).
 
+### 2026-10-19 — Phase 7: Drive sync (one account, many devices)
+
+Open question 5 names this phase (64). The owner's Google Cloud project is not set up yet, so
+everything here is built and tested against a fake Google; the live check is a checklist in
+docs/DEPLOYMENT.md, open until the owner runs it.
+
+64. **Open question 5 settled: one family per Google account** (the owner's choice, PLAN.md's
+    assumption). Connecting looks for the app-created `hello-polly-family.json` (the oldest,
+    if a race ever left two) and creates it only when there is none. A device that already
+    has children merges them into that family: within one account every device is the same
+    parent's, so the union is right. Choosing between two families („Dołącz” / „Zachowaj
+    osobno”) is Phase 8's, for the second parent.
+65. **`StorageBackend` is shaped for one file, not a folder.** Eat My Way's interface lists and
+    names many files in `appDataFolder`; here there is one visible file found by name, then
+    addressed by id: `authenticate`, `isAuthenticated`, `signOut`, `find`, `create`,
+    `version`, `read`, `update(id, content, expected)`. `share`/`unshare`/`pick` arrive with
+    Phase 8. The change check uses Drive's monotonic `version` (PLAN.md's `fields=id,
+    modifiedTime,version`); the write guard re-reads it just before the upload, as Eat My Way
+    does, since Drive has no conditional update. A lost race costs nothing (PLAN.md "Sync
+    model"): the merge is a join, and the device whose delta was overwritten re-adds it on its
+    next cycle.
+66. **No Google request outside a parent's tap, ever.** Eat My Way decision 173 arms a silent
+    renewal on the *next* tap anywhere; here that tap is usually the child's, and GIS's token
+    flow opens a (briefly visible) window even when silent. So: the token is mirrored into
+    `sessionStorage` (decision 173, never `localStorage`, never IndexedDB), background sync runs
+    only while that token is valid and otherwise stops without loading GIS, and a renewal is
+    attempted only (a) when the parent passes the gate (that tap is a parent's gesture, so a
+    connected device renews silently on the way into the panel) and (b) from the buttons on
+    *Rodzina*. The cost: a one-hour token means a child's device syncs for about an hour after
+    a parent last visited the panel; its progress waits locally and lands on the next visit.
+    The account hint for a silent renewal is the account label already kept in `meta`, held in
+    memory: nothing at all goes to `localStorage`.
+67. **The gear's dot means "progress is waiting and sync cannot run".** PLAN.md's dot on the
+    gear is shown only when this device has changes Drive lacks *and* sync is stopped (expired
+    token, revoked grant, or an error), so it is not on permanently between parent visits. It
+    is a small coral dot with no text and no sound; nothing else on a child screen changes.
+68. **The first-run Drive step is a button on „Zaczynamy?”: „Mam już rodzinę na Dysku
+    Google”**, instead of PLAN.md's step 6 after the child. A second device of the same
+    account must load the family *before* a child is created, or the parent would add the same
+    child twice. A brand-new family is connected later from *Rodzina*, which PLAN.md allows.
+69. **The sync pass also prunes a deleted child's progress** (decision 34 left it to this
+    phase): this device replaces its own subtree for a tombstoned child with an empty one and
+    bumps `seq`, so the merge takes it like any other change. A missing key cannot express it:
+    the merge is a union, and the other copy would come back. Compaction (120 days) runs in
+    the same pass, on this device's subtrees only.
+70. **What the cycle does with a file it cannot trust.** A file whose `schema` is newer than
+    this app's is never overwritten („Zaktualizuj aplikację”); a file that is not a family
+    file stops sync with a message and is left as it is. A file that is gone (404 or trashed)
+    is created again from the local copy: within one account the device is the source of
+    truth. Phase 8 refines this for the second parent („Dostęp … cofnięty”).
+71. **Screens are not live.** A sync writes the merged file to IndexedDB through the same
+    transaction as every local change, so nothing is ever overwritten; child screens read it
+    when they open, so the map shows another device's stars on the next screen, not mid-tap.
+    *Rodzina* re-reads after each sync. Nothing on a child screen moves because of sync.
+72. **e2e fake at the network boundary, unit fake in `src/test/`.** As in Eat My Way, the e2e
+    runs serve a GIS stub from `https://accounts.google.com/gsi/client` and answer
+    `www.googleapis.com` from a Playwright route, so the shipped CSP is exercised unchanged;
+    the e2e build gets a fixed, never-sent `VITE_GOOGLE_CLIENT_ID`. `test:e2e:csp` needs the
+    container built with any client id (`.env.local`); without one the sync specs skip with a
+    message. `src/test/fake-drive.ts` is the in-memory backend for the engine's unit tests.
+
+73. **CSP and COOP widened for Google Identity Services**, exactly as the task names:
+    `script-src` + `https://accounts.google.com` (the GIS script), `frame-src 'none'` →
+    `https://accounts.google.com` (its frames), `connect-src` + `https://www.googleapis.com`
+    (Drive, uploads included), and a new `Cross-Origin-Opener-Policy:
+    same-origin-allow-popups` (GIS returns the token through the popup's `opener`, which
+    `same-origin` severs; Eat My Way decision 86). PLAN.md's `connect-src
+    https://accounts.google.com` is not granted until something is measured to need it
+    (live check). The Picker's `apis.google.com` and `docs.google.com` are Phase 8's.
+
 ## Open questions
 
 Copied from PLAN.md. Each is settled in the phase named and the answer recorded here.
@@ -808,8 +927,8 @@ Copied from PLAN.md. Each is settled in the phase named and the answer recorded 
 3. **Sticker art**: 3D PNG (richer, larger) or Color SVG (Phase 6). **Settled** (decision 56):
    Color SVG, and a word's sticker is its own picture, so stickers add 0 kB.
 4. **Picker in an installed iOS PWA**: unknown until measured; fallback defined (Phase 8 spike).
-5. **Should one family file per Google account allow several families?** Assumed no: one
-   family per account (Phase 7).
+5. **Should one family file per Google account allow several families?** **Settled**
+   (decision 64): no, one family per account, the owner's choice.
 6. **Speech engine and picture set**: kept or replaced by the quality gates in "Speech and
    pictures are replaceable" (Phases 2, 3 and 5). **Still open after Phase 5**: all four gate
    verdicts need the owner (two phones; the child). Nothing measured here argues for a swap.
