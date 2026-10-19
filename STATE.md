@@ -377,6 +377,10 @@ page at all (`WebKit encountered an internal error`, even for `https://example.c
 untouched `routes.spec.ts`), an environment fault since Phase 6; CI runs WebKit. Bundle:
 275.4 kB JS (92.1 kB gzip, +6 kB), 35.0 kB CSS.
 
+CI: **green** on `dev` (run 39317063495 on `d2e9200`: check, unit 282, `check:content`,
+build, e2e 124 passed + 2 opt-in skipped in Chromium + WebKit, no flaky test). So the sync
+specs did pass in WebKit, in CI.
+
 ## Quality gates
 
 Recorded with the device and voice named (PLAN.md "Speech and pictures are replaceable").
