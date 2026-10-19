@@ -80,15 +80,35 @@ src/
   lib/db.ts                Dexie: meta (deviceId), family (the local FamilyFile), syncBaseline
   lib/domain/              pure, tested rules: mergeFamily, compaction, word states and
                            Leitner reviews, nextWords, composeLesson, chests and minutes
-  lib/screens.ts           every screen in PLAN.md as data (path, Polish title, area, phase)
-  lib/routes.ts            the svelte-spa-router map built from it
-  lib/components/          ChildLayout (full-bleed sea), ParentLayout, Placeholder, ContentImage
+  lib/screens.ts           every screen in PLAN.md as data (path, Polish title, area, phase,
+                           built)
+  lib/routes.ts            the svelte-spa-router map: built screens, placeholders for the rest
+  lib/speech/              SpeechEngine (engine.ts) and WebSpeechEngine, the only code that
+                           touches speechSynthesis; Speaker (speeds, prompts, sentence queue,
+                           voice choice, unlock); fake.ts, the recording fake both suites use
+  lib/sound/effects.ts     the six sound effects as Web Audio recipes (no audio files)
+  lib/unlock.ts            the unlock gesture: speech and sound start only after it
+  lib/components/          ChildLayout (full-bleed sea), ParentLayout, Placeholder,
+                           ContentImage, SpeakingPicture, SpeedToggle (🐢/🐇)
+  screens/                 the built screens: Start, parent/Speech
 e2e/                       Playwright specs; every spec fails on a CSP violation
 ```
 
+## Speech
+
+Nothing outside `src/lib/speech/` touches `speechSynthesis`; screens call `speaker()` from
+`src/lib/speech/index.ts`, and every tap handler that speaks calls `unlock()` first. Tests never
+use the machine's voices: unit tests run the real `WebSpeechEngine` over `installSpeechFake`
+on a plain object, and e2e installs the same fake with `fakeSpeech(page)` (`e2e/speech.ts`),
+then reads what was spoken, in which language, at which rate and with which voice. To hear
+real voices, open `/#/parent/speech` on the device: it names the voices it found and lets you
+tap every word at both speeds.
+
 ## Content and pictures
 
-Content refers to pictures by **id** (`"banana"`), never by file name or URL;
+Content refers to pictures by **id** (`"banana"`), never by file name or URL (screens too: the
+few pictures they use directly, Polly and the 🐢/🐇 toggle, are `UI_IMAGE_IDS` in the content
+rules);
 [src/lib/images.ts](../src/lib/images.ts) is the only place that makes a URL. To add a word:
 
 1. Add its picture to `content/images.json` (the upstream path in the pinned

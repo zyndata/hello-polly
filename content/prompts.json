@@ -1,4 +1,5 @@
 [
+  {"id":"start.hello","pl":"Cześć! Jestem Polly."},
   {"id":"lesson.start","pl":"Płyniemy na nową wyspę!"},
   {"id":"lesson.finish","pl":"Brawo! Wyspa zdobyta!"},
   {"id":"intro.look","pl":"Popatrz i posłuchaj."},

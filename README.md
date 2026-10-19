@@ -10,19 +10,20 @@ It runs in the browser and installs as a PWA on a phone, tablet or computer. The
 **Polish**; the only English the child hears is the vocabulary itself (CEFR A1 / Cambridge
 Pre A1 Starters). The code, comments and documentation are in English.
 
-> **Status: in development. Phases 1–2 of 11 are done**: the scaffold, then the content and the
-> local data layer. Every screen of the [plan](PLAN.md) exists as a Polish placeholder; the
-> first four topics (colours, numbers 1–10, fruit, pets and farm animals: 45 words) have their
-> pictures, Polish forms and spoken-prompt catalog; progress has its IndexedDB store and its
-> tested rules (merging two parents' devices, when a word counts as learned, reviews, what to
-> teach next). Nothing a child can use exists yet. [STATE.md](STATE.md) records what was
-> decided and what is still open.
+> **Status: in development. Phases 1–3 of 11 are done**: the scaffold, the content and the
+> local data layer, and speech. The start screen is real (Polly; the first tap unlocks the
+> device's voice and she says hello), and so is the parent's *Mowa i głosy* screen: a voice
+> check that names the English and Polish voices found, the accent, both speeds, and every word
+> of the first four topics (colours, numbers 1–10, fruit, pets and farm animals: 45 words) to
+> tap and hear 🐢 slowly or 🐇 normally. The other screens are still Polish placeholders, and
+> nothing a child can learn with exists yet. [STATE.md](STATE.md) records what was decided and
+> what is still open.
 
 ## What it looks like (so far)
 
-| Child screens | Parent screens |
+| Start (child) | Speech and voices (parent) |
 |---|---|
-| ![A child-screen placeholder on the sea background](docs/screenshots/map.png) | ![The parent-panel placeholder](docs/screenshots/parent.png) |
+| ![Polly the parrot on the sea, ringed by a pulsing gold circle: tap to begin](docs/screenshots/start.png) | ![The parent's speech screen: voice check, accent, speeds](docs/screenshots/speech.png) |
 
 ## What it will and will not do
 

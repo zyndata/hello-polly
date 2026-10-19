@@ -23,8 +23,7 @@ const BASE_URL = process.env.BASE_URL ?? 'http://localhost:8081';
 /** Which screens, under which file name. Grows as the phases build real screens. */
 const SHOTS = [
   ['start', '/'],
-  ['map', '/child/demo'],
-  ['parent', '/parent']
+  ['speech', '/parent/speech']
 ];
 
 mkdirSync(OUT_DIR, { recursive: true });

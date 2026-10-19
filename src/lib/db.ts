@@ -1,8 +1,9 @@
 /**
  * IndexedDB, the source of truth (PLAN.md "Architecture"). Three stores:
  *
- * - `meta`: local-only key/value pairs. `deviceId` (created once per install, never synced) and
- *   `schema`; later the preferred voices, the Drive file id and the account label.
+ * - `meta`: local-only key/value pairs. `deviceId` (created once per install, never synced),
+ *   `schema`, `voices` (the preferred voice per language tag); later the Drive file id and the
+ *   account label.
  * - `family`: the one local `FamilyFile`, under the key `local`. It has exactly the shape of the
  *   Drive file, so sync is a merge, never a migration.
  * - `syncBaseline`: the last family file seen on Drive (Phase 7).
@@ -99,4 +100,27 @@ export async function getSyncBaseline(database: HelloPollyDb = db()): Promise<Sy
 
 export async function setSyncBaseline(baseline: SyncBaselineRow, database: HelloPollyDb = db()): Promise<void> {
   await database.syncBaseline.put(baseline);
+}
+
+/** Language tag → preferred voice id on this device. Local only: voices differ between phones. */
+export type PreferredVoiceIds = Record<string, string>;
+
+export async function getPreferredVoices(database: HelloPollyDb = db()): Promise<PreferredVoiceIds> {
+  const row = await database.meta.get('voices');
+  return row?.value && typeof row.value === 'object' ? { ...(row.value as PreferredVoiceIds) } : {};
+}
+
+/** Sets (or, with `null`, clears) the preferred voice for one language tag. */
+export async function setPreferredVoice(
+  tag: string,
+  voiceId: string | null,
+  database: HelloPollyDb = db()
+): Promise<PreferredVoiceIds> {
+  return database.transaction('rw', database.meta, async () => {
+    const voices = await getPreferredVoices(database);
+    if (voiceId === null) delete voices[tag];
+    else voices[tag] = voiceId;
+    await database.meta.put({ key: 'voices', value: voices });
+    return voices;
+  });
 }

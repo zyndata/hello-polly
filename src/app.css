@@ -106,4 +106,159 @@
   .link:hover {
     color: var(--color-ocean);
   }
+
+  /* Parent screens: a section, its heading, a warning, a button, a labelled choice. */
+  .card {
+    display: grid;
+    gap: 0.75rem;
+    border-radius: 1rem;
+    background: white;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgb(13 71 161 / 0.12);
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-deep-sea);
+  }
+
+  .notice {
+    border-left: 4px solid var(--color-coral);
+    padding-left: 0.5rem;
+    font-weight: 600;
+  }
+
+  .button {
+    min-height: 44px;
+    border-radius: 9999px;
+    background: var(--color-ocean);
+    padding: 0.5rem 1rem;
+    font-weight: 700;
+    color: white;
+  }
+
+  .button:hover {
+    background: var(--color-deep-sea);
+  }
+
+  .choice {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .choice input {
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--color-ocean);
+  }
+
+  .select {
+    min-height: 44px;
+    border: 1px solid var(--color-sky);
+    border-radius: 0.5rem;
+    background: white;
+    padding: 0 0.5rem;
+  }
+
+  /* A picture that speaks (SpeakingPicture): presses in on tap, bounces while it speaks. */
+  .speaking-picture {
+    transition: transform 120ms ease-out;
+  }
+
+  .speaking-picture:active {
+    transform: scale(0.94);
+  }
+
+  .speaking-picture.is-speaking {
+    animation: bounce 600ms ease-in-out infinite;
+  }
+
+  /* 🐢/🐇: the chosen speed is raised and ringed in gold. */
+  .speed-option {
+    transition:
+      transform 150ms ease-out,
+      box-shadow 150ms ease-out;
+  }
+
+  .speed-option.is-chosen {
+    transform: scale(1.1);
+    background: var(--color-foam);
+    box-shadow: 0 0 0 5px var(--color-gold);
+  }
+
+  /* Start screen: Polly bobs, and a ring pulses around her until the tap. */
+  .start-target {
+    width: 100%;
+  }
+
+  .start-polly {
+    position: relative;
+    display: grid;
+    place-items: center;
+    animation: bob 2.4s ease-in-out infinite;
+  }
+
+  .start-ring {
+    position: absolute;
+    inset: -1.5rem;
+    border-radius: 9999px;
+    border: 6px solid var(--color-gold);
+    animation: pulse-ring 1.6s ease-out infinite;
+  }
+
+  .start-polly.is-started .start-ring {
+    animation: none;
+    opacity: 0;
+  }
+
+  @keyframes bounce {
+    0%,
+    100% {
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      transform: translateY(-8%) scale(1.04);
+    }
+  }
+
+  @keyframes bob {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(0.85);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(1.25);
+      opacity: 0;
+    }
+  }
+
+  /* Keep the meaning (glow, scale), drop the travel. */
+  @media (prefers-reduced-motion: reduce) {
+    .speaking-picture.is-speaking {
+      animation: none;
+      box-shadow: 0 0 0 5px var(--color-coral);
+    }
+
+    .start-polly {
+      animation: none;
+    }
+
+    .start-ring {
+      animation: none;
+      opacity: 0.8;
+    }
+  }
 }

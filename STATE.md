@@ -9,7 +9,7 @@ Any deviation from [PLAN.md](PLAN.md) must be recorded here before proceeding.
 |-------|-----------------------------------------------------|-------------|-----------|
 | 1     | Scaffold & Docker                                   | done        | 2026-10-18 |
 | 2     | Content pipeline & local data layer                 | done        | 2026-10-18 |
-| 3     | Speech                                              | pending     |           |
+| 3     | Speech                                              | done        | 2026-10-19 |
 | 4     | Children, word plan, parent gate, look-and-listen   | pending     |           |
 | 5     | Lessons & first exercises                           | pending     |           |
 | 6     | Rewards                                             | pending     |           |
@@ -94,6 +94,48 @@ after the push, `E2E_CDN_REF=3673582` (the pushed commit, immutable like a tag) 
 `cdn.jsdelivr.net/gh/zyndata/hello-polly@3673582/content/img/` in both engines with zero
 violations (served as `image/svg+xml`, byte-identical to the repository).
 
+### Phase 3 acceptance (2026-10-19)
+
+- [x] **Unit: slow and normal use the configured rates; a new `speak` cancels the previous
+      one.** `src/lib/speech/speaker.test.ts` runs `Speaker` over the real `WebSpeechEngine`
+      over the fake: configured and default rates, clamping, the slow repeat after its pause,
+      `say` overrides, accent and preferred voices; a new request cancels the word being
+      spoken, four quick requests leave only the last one spoken, a request during the slow
+      pause drops the repeat, `cancel()` stops a prompt midway; nothing reaches the engine
+      before the unlock. Mutation check: removing the cancel-first turned 3 tests red; making
+      slow use the normal rate turned 6 red. Around it: `web-speech.test.ts` (async voices,
+      polling, unique voice ids, outcomes, watchdog, prime), `voices`, `timing`, `prompt`,
+      `effects`, `family` (settings as `Lww`) and the preferred voices in `db`.
+- [x] **e2e (Chromium + WebKit, speech faked): tapping a picture speaks its `say ?? en`, and
+      the 🐢/🐇 toggle changes the rate.** `e2e/speech.spec.ts`: all 45 pictures on
+      `/parent/speech` tapped, each spoken as `say ?? en` (no word has a `say` yet, so the
+      override is proved in the unit suite); 🐢 → 0.6, 🐇 → 0.9 and back, each switch says
+      „Powoli.” / „Normalnie.” in Polish; plus the start screen (nothing before the tap, then
+      the greeting and `/setup`), cutting off a word, the voice check with and without a
+      Polish, a British or any voice, settings and the device's voice surviving a reload.
+- [ ] **Manual, recorded here: real voices on an Android phone and an iPhone; slow mode judged
+      intelligible for first-time listening on the first four topics, `say` overrides added
+      where it was not.** **Open**: it needs the owner and the two phones. This environment
+      has only headless browsers (no voices in Chromium; four US espeak voices in WebKit).
+      Closed by: on each phone, open `/#/parent/speech` (from a `docker:up` build on the LAN,
+      or the live site after the next `/release`), note the voice names the check reports,
+      tap all 45 words at 🐢, and list any word that is not clear. Each such word gets a
+      `say` in `content/words.json`; the speech gate below is then decided.
+- [x] **No network request and no audio file appear in the network log at any point.**
+      `e2e/network.spec.ts`, on the browser's real speech (no fake): start → unlock →
+      greeting → `/parent/speech` → eight words at both speeds, the three voice-check
+      buttons and all six sound effects. Zero requests during speech and sound, none to
+      another origin, none of type media or with an audio extension or content type, in
+      Chromium and WebKit, under `vite preview` and under Caddy with the production CSP.
+
+Tests: 192 unit tests (18 files); e2e 62 passed + 2 opt-in skipped in Chromium and WebKit,
+both under `vite preview` and with `test:e2e:csp` against the container (zero CSP
+violations; the CSP is unchanged in this phase). Bundle: 176.7 kB JS (61.4 kB gzip).
+
+Found on the way: WebKit with espeak on Linux reports an empty `voiceURI` for every voice,
+which crashed the voice list (duplicate keys). Voice ids now fall back to name + language
+and are made unique (decision 22); a unit test covers it.
+
 ## Quality gates
 
 Recorded with the device and voice named (PLAN.md "Speech and pictures are replaceable").
@@ -101,7 +143,7 @@ Recorded with the device and voice named (PLAN.md "Speech and pictures are repla
 | Gate     | When                         | Verdict | Device / voice |
 |----------|------------------------------|---------|----------------|
 | Pictures | end of Phase 2               | open: owner's verdict pending | Contact sheet of the 45 pictures rendered in Chromium (Linux) at 96 px, sent to the owner on 2026-10-18. Own pre-check: all decode; possible confusions are white heart (reads lavender), orange vs mango vs lemon (three round fruit), and the stylised bird. |
-| Speech   | end of Phase 3               | open    |                |
+| Speech   | end of Phase 3               | open: owner's verdict pending | Needs real voices on an Android phone and an iPhone (see Phase 3 acceptance). Tool: `/#/parent/speech`, every word at 🐢. Criteria: every word of the first four topics told apart at slow speed by a first-time listener; `say` overrides ≤ ~10 % of words (≤ 4 of 45). |
 | Pictures | Phase 5, with the child      | open    |                |
 | Speech   | Phase 5, with the child      | open    |                |
 
@@ -244,13 +286,96 @@ Newest last. Every deviation from PLAN.md lands here **before** it is acted on.
     (vite/vitest configs, `scripts/`), and `npm run check` runs svelte-check on the app
     config and then `tsc -p tsconfig.node.json`.
 
+### 2026-10-19 — Phase 3: Speech
+
+19. **Open question 2 settled: the default accent is British (`en-GB`)**, the owner's choice.
+    It was already the default in `DEFAULT_SETTINGS`; American stays selectable in
+    `/parent/speech` as a shared family setting.
+20. **Two layers in `src/lib/speech/`, not one.** PLAN.md puts `speak(text, {lang, speed})` on
+    the `SpeechEngine`. Here the engine is only the platform half: `isAvailable`, `voices`
+    (plus a change listener), `speak(utterance)` for one utterance with an explicit language,
+    rate, pitch and voice (with `start`/`boundary` callbacks, resolving when it ends, is
+    cancelled or fails) and `cancel`. Everything that is policy rather than platform lives in
+    one engine-agnostic `Speaker`: speed → rate, slow mode's pause and repeat, cancel-first,
+    Polish prompts with `{word}`, the sentence queue with boundaries and the timed fallback,
+    voice choice, and the unlock. So a replacement engine (Kokoro, a keyed service) implements
+    the small half only, and the rules are tested once. `WebSpeechEngine` is the only file
+    that touches `speechSynthesis`.
+21. **Rates and pitch.** English words: `slowRate` / `normalRate` from the family settings,
+    pitch 1.1. Polish prompts: a fixed rate 1.0 and pitch 1.1, whatever the 🐢/🐇 toggle says:
+    the toggle is about hearing the English word. Slow mode: a 600 ms pause, then the word
+    again when `slowRepeatTwice` is on; in a prompt, a 250 ms pause before the English word.
+    Rates are clamped to PLAN.md's ranges (0.4–0.8 and 0.8–1.1) on write and on read.
+22. **Voice choice.** Per language tag (`en-GB`, `en-US`, `pl-PL`): the device's preferred
+    voice (stored locally in `meta.voices` by voice id: the `voiceURI`, or name and language
+    where the platform leaves the URI empty, as WebKit with espeak on Linux does for every
+    voice, made unique with `#2`…) if it still exists and speaks that
+    language; otherwise an exact language match, local voices first, then the browser's
+    default flag, then by name; otherwise the same base language (an American voice when no
+    British one exists), local first; otherwise none. Tags are normalised (`en_GB` → `en-GB`,
+    case-insensitive), because older Android reports underscores.
+23. **Without a Polish voice, or with `polishPrompts` off**, the Polish parts of a prompt are
+    skipped and the English word in it is still spoken; `Speaker` reports that it spoke no
+    Polish, so a screen can lean on icon and animation. The voice check says so in words.
+24. **The unlock.** `unlock()` (`src/lib/unlock.ts`) must be called inside a gesture handler:
+    the start screen's tap, or (on a parent screen) the tap on the button that plays
+    something, which is itself a gesture. It makes the speaker speak one silent empty
+    utterance (iOS needs speech started inside a gesture once) and creates/resumes the Web
+    Audio context of the sound effects. Before it, every `speak` returns
+    `locked` without reaching the engine: the app never attempts speech before a gesture.
+25. **The Phase 3 start screen.** Polly (a new UI picture, below) on the sea, the whole screen
+    one tap target with a pulsing ring as the cue. The tap unlocks, plays the `tap` effect,
+    Polly says „Cześć! Jestem Polly.” (new prompt id `start.hello`) and "Hello!", then the app
+    goes to `/setup`. Phase 3 has no way to create a child, so that is always the destination;
+    Phase 4 replaces it with the picker / map / setup choice. Screens that are built carry
+    `built: true` in `screens.ts`, and `routes.ts` maps them to their components.
+26. **UI pictures.** `parrot` (Polly) and `turtle` (🐢) join the manifest, same pinned Fluent
+    commit, 20 kB and 25 kB after SVGO. 🐇 reuses the existing `rabbit` picture. They are not
+    content, so `check:content` lists them as `UI_IMAGE_IDS`: required to exist, never
+    reported as unused. Watch at the Phase 5 picture gate: the 🐇 toggle shows the same rabbit
+    that is the word *rabbit*.
+27. **Where a picture is tapped in Phase 3.** The child screens with pictures are Phases 4–5,
+    so `/parent/speech` gets a word board („Posłuchaj słówek”): every word of the first four
+    topics as a tappable picture, with the 🐢/🐇 toggle. It is also the tool for the manual
+    speech gate. `SpeakingPicture` and `SpeedToggle` are the components the child screens
+    reuse. The toggle's state is per session, starts at `defaultSpeed`, and says „Powoli.” /
+    „Normalnie.” when switched; it is not stored.
+28. **Sentence queue and boundaries.** `speakSentences` speaks one sentence per utterance (so
+    Chrome never cuts a long one) and reports the word being spoken. Real `boundary` events
+    are used when they arrive; until the first one, a timed fallback moves the highlight at
+    an estimated 75 ms per character ÷ rate from the `start` event, and it stops for good as
+    soon as a real boundary arrives. A watchdog resolves an utterance that never ends or
+    fails (some Android builds drop `end`) after three times its estimate plus 4 s, so a
+    queue never hangs. Stories (Phase 9) are the user.
+29. **Sound effects are data.** Each of tap, correct, sparkle, wiggle, chest creak and pop is
+    a short list of tones (waveform, frequency sweep, attack/decay envelope, start offset),
+    rendered by a ~60-line Web Audio player. Peak gain ≤ 0.3, nothing longer than 1.2 s, and
+    `wiggle` is a soft rising-falling wobble, not a buzzer (no loss mechanics). `/parent/speech`
+    has a preview button per effect. No audio file, no `AudioWorklet`, no CSP change.
+30. **One speech fake for both suites.** `src/lib/speech/fake.ts` exports
+    `installSpeechFake(options, target = globalThis)`, a self-contained function that installs
+    a recording `speechSynthesis` and `SpeechSynthesisUtterance` (voices that load
+    asynchronously, `start`/`boundary`/`end` on a timer, Chrome-style `interrupted`/`canceled`
+    errors on cancel). Unit tests call it on a plain object; e2e passes it to
+    `page.addInitScript`. So the real `WebSpeechEngine` is what both suites exercise.
+31. **Settings are written as `Lww` registers** stamped with the current time and this
+    device's id (`setSetting` in `domain/family.ts`), through `updateFamily`. The preferred
+    voices are local only (`meta`), as PLAN.md "Local data model" says.
+32. **The network criterion is checked by e2e** over a whole session that speaks words at
+    both speeds, prompts, a sentence queue and every sound effect: no request leaves the
+    origin, nothing audio is requested (resource type, content type or file extension), and
+    no request at all is made while speaking. Chrome's own "Google …" voices are fetched by
+    the browser outside the page and are not visible to it; that is one more reason local
+    voices are preferred (decision 22).
+
 ## Open questions
 
 Copied from PLAN.md. Each is settled in the phase named and the answer recorded here.
 
 1. **Name, domain, repository** (Phase 1). **Settled** (decision 1): "Hello Polly", not
    translated, no subtitle; `hellopolly.gorny.dev`; `zyndata/hello-polly`.
-2. **Default accent**: British is proposed because Polish schools mostly teach it (Phase 3).
+2. **Default accent** (Phase 3). **Settled** (decision 19): British, `en-GB`; American
+   selectable.
 3. **Sticker art**: 3D PNG (richer, larger) or Color SVG (Phase 6).
 4. **Picker in an installed iOS PWA**: unknown until measured; fallback defined (Phase 8 spike).
 5. **Should one family file per Google account allow several families?** Assumed no: one

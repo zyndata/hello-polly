@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
-import { REQUIRED_PROMPT_IDS, SVG_BUDGET_BYTES, storyTokens, validateContent, type ContentSet } from './lib/content-rules.mjs';
+import { REQUIRED_PROMPT_IDS, SVG_BUDGET_BYTES, UI_IMAGE_IDS, storyTokens, validateContent, type ContentSet } from './lib/content-rules.mjs';
 
 /** A small, valid content set; each test breaks one thing. */
 function valid(): ContentSet {
@@ -28,7 +28,8 @@ function valid(): ContentSet {
     stickers: [{ id: 'sticker.banana', image: 'banana', word: 'fruit.banana', set: 'food' }]
   };
 }
-const images = () => new Map([['red-apple', 5000], ['banana', 10000]]);
+/** The content pictures above, plus the pictures the screens use directly. */
+const images = () => new Map([['red-apple', 5000], ['banana', 10000], ...UI_IMAGE_IDS.map((id): [string, number] => [id, 1000])]);
 const errorsOf = (content: ContentSet, sizes = images()) => validateContent(content, sizes).errors;
 
 describe('validateContent', () => {
@@ -103,6 +104,13 @@ describe('validateContent', () => {
     expect(validateContent(valid(), sizes).warnings).toEqual(['image "unused" is in content/img/ but no content uses it']);
   });
 
+  it('fails on a missing UI picture, and never calls one unused', () => {
+    const sizes = images();
+    sizes.delete('turtle');
+    expect(errorsOf(valid(), sizes)).toEqual(['UI picture: image "turtle" has no file in content/img/']);
+    expect(validateContent(valid(), images()).warnings).toEqual([]);
+  });
+
   it('tokenises sentences into lower-case words', () => {
     expect(storyTokens("Hello! I'm Polly, look: a RED apple.")).toEqual(['hello', "i'm", 'polly', 'look', 'a', 'red', 'apple']);
   });
@@ -124,6 +132,7 @@ describe('npm run check:content (the CLIs, against fixture checkouts)', () => {
     const files = new Map([
       ['red-apple.svg', svg(5000)],
       ['banana.svg', svg(10000)],
+      ...UI_IMAGE_IDS.map((id): [string, string] => [`${id}.svg`, svg(1000)]),
       ['LICENSE', 'MIT'],
       ['ATTRIBUTION.md', 'commit 0123456789abcdef']
     ]);
@@ -132,7 +141,11 @@ describe('npm run check:content (the CLIs, against fixture checkouts)', () => {
     for (const [name, list] of Object.entries(content)) writeFileSync(join(root, 'content', `${name}.json`), JSON.stringify(list));
     const manifest = {
       source: { name: 'Fixture', repository: 'https://example.invalid', commit: '0123456789abcdef', license: 'MIT' },
-      images: { 'red-apple': 'assets/apple.svg', banana: 'assets/banana.svg' }
+      images: {
+        'red-apple': 'assets/apple.svg',
+        banana: 'assets/banana.svg',
+        ...Object.fromEntries(UI_IMAGE_IDS.map((id) => [id, `assets/${id}.svg`]))
+      }
     };
     writeFileSync(join(root, 'content', 'images.json'), JSON.stringify(manifest));
     for (const [name, body] of files) writeFileSync(join(root, 'content', 'img', name), body);

@@ -1,6 +1,16 @@
 import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it } from 'vitest';
-import { HelloPollyDb, getDeviceId, getSyncBaseline, loadFamily, saveFamily, setSyncBaseline, updateFamily } from './db';
+import {
+  HelloPollyDb,
+  getDeviceId,
+  getPreferredVoices,
+  getSyncBaseline,
+  loadFamily,
+  saveFamily,
+  setPreferredVoice,
+  setSyncBaseline,
+  updateFamily
+} from './db';
 import { lww } from './domain/lww';
 import { FAMILY_SCHEMA } from './types';
 
@@ -77,5 +87,16 @@ describe('local database', () => {
     const file = await loadFamily(database);
     await setSyncBaseline({ id: 'drive', fileId: 'abc', version: '7', modifiedTime: '2026-10-18T10:00:00.000Z', file }, database);
     expect((await getSyncBaseline(database))?.version).toBe('7');
+  });
+
+  it('keeps the preferred voice per language tag, locally', async () => {
+    const database = fresh();
+    expect(await getPreferredVoices(database)).toEqual({});
+    await setPreferredVoice('en-GB', 'Daniel', database);
+    await setPreferredVoice('pl-PL', 'Zosia', database);
+    expect(await getPreferredVoices(database)).toEqual({ 'en-GB': 'Daniel', 'pl-PL': 'Zosia' });
+    expect(await setPreferredVoice('en-GB', null, database)).toEqual({ 'pl-PL': 'Zosia' });
+    // Never part of the synced family file.
+    expect(JSON.stringify(await loadFamily(database))).not.toContain('Zosia');
   });
 });

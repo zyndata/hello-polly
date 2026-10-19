@@ -4,9 +4,11 @@ import { CONTENT_VERSION } from '../content';
 import {
   FAMILY_SCHEMA,
   type ChildLimits,
+  type DeviceId,
   type DeviceProgress,
   type FamilyFile,
   type FamilySettings,
+  type Instant,
   type WordPlan
 } from '../types';
 import { DEFAULT_STAMP, lww } from './lww';
@@ -62,4 +64,42 @@ export function emptyFamily(familyId: string): FamilyFile {
     limits: {},
     progress: {}
   };
+}
+
+/** The ranges PLAN.md allows for the two speech rates. */
+export const RATE_RANGES = { slowRate: [0.4, 0.8], normalRate: [0.8, 1.1] } as const;
+
+/** A rate inside its range; anything that is not a number becomes the default. */
+export function clampRate(key: keyof typeof RATE_RANGES, value: number): number {
+  const [min, max] = RATE_RANGES[key];
+  if (!Number.isFinite(value)) return DEFAULT_SETTINGS[key];
+  return Math.min(max, Math.max(min, value));
+}
+
+/** The family's settings as plain values, with the rates kept in range. */
+export function readSettings(file: FamilyFile): FamilySettings {
+  const values = Object.fromEntries(
+    (Object.keys(DEFAULT_SETTINGS) as (keyof FamilySettings)[]).map((key) => [key, file.settings[key]?.v ?? DEFAULT_SETTINGS[key]])
+  ) as unknown as FamilySettings;
+  values.slowRate = clampRate('slowRate', values.slowRate);
+  values.normalRate = clampRate('normalRate', values.normalRate);
+  return values;
+}
+
+/**
+ * The file with one setting changed by this device. The stamp is `now`, or 1 ms after the
+ * register's current stamp when that is later (another device's clock ran ahead): the latest
+ * local intent must win the merge (STATE.md decision 31).
+ */
+export function setSetting<K extends keyof FamilySettings>(
+  file: FamilyFile,
+  key: K,
+  value: FamilySettings[K],
+  now: Instant,
+  device: DeviceId
+): FamilyFile {
+  const v = (key === 'slowRate' || key === 'normalRate' ? clampRate(key, value as number) : value) as FamilySettings[K];
+  const previous = file.settings[key]?.t ?? DEFAULT_STAMP.t;
+  const t = now > previous ? now : new Date(Date.parse(previous) + 1).toISOString();
+  return { ...file, settings: { ...file.settings, [key]: lww(v, t, device) } };
 }

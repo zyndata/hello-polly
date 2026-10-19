@@ -6,7 +6,7 @@ function sample(path: string): string {
   return path.replace(/:[A-Za-z]+/g, 'x1');
 }
 
-test.describe('every screen renders its Polish placeholder', () => {
+test.describe('every screen renders, under its Polish title', () => {
   for (const screen of screens) {
     test(`${screen.path} → ${screen.title}`, async ({ page }) => {
       await page.goto(`/#${sample(screen.path)}`);

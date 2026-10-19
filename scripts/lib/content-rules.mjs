@@ -10,11 +10,12 @@
 export const SVG_BUDGET_BYTES = 25 * 1024;
 
 /**
- * Every Polish prompt the Phase 5 lesson player and exercises (look and listen, E1, E2, E3,
- * feedback, finish) speak. `check:content` fails when one is missing from the catalog, or when
+ * Every Polish prompt the app speaks: the start screen's greeting (Phase 3), and the Phase 5
+ * lesson player and exercises (look and listen, E1, E2, E3, feedback, finish). `check:content` fails when one is missing from the catalog, or when
  * the catalog has one that is not listed here.
  */
 export const REQUIRED_PROMPT_IDS = /** @type {const} */ ([
+  'start.hello',
   'lesson.start',
   'lesson.finish',
   'intro.look',
@@ -47,6 +48,12 @@ export const PROMPT_PLACEHOLDERS = /** @type {const} */ (['word', 'plAcc']);
 export const STORY_FUNCTION_WORDS = /** @type {const} */ ([
   'a', 'an', 'the', 'is', 'am', 'i', 'see', 'it', 'and', 'my', 'like', 'can', 'look', 'polly'
 ]);
+
+/**
+ * Pictures the screens use directly rather than through content: Polly on the start screen,
+ * and the 🐢/🐇 speed toggle. They count as used, and must exist like any content picture.
+ */
+export const UI_IMAGE_IDS = /** @type {const} */ (['parrot', 'turtle', 'rabbit']);
 
 /**
  * @typedef {object} ContentSet
@@ -229,6 +236,8 @@ export function validateContent(content, imageBytes) {
     if (sticker.word !== undefined && !words.has(sticker.word)) errors.push(`${where}: word "${sticker.word}" does not exist`);
     checkImage(where, sticker.image);
   }
+
+  for (const id of UI_IMAGE_IDS) checkImage(`UI picture`, id);
 
   for (const id of imageBytes.keys()) {
     if (!usedImages.has(id)) warnings.push(`image "${id}" is in content/img/ but no content uses it`);

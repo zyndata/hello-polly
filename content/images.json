@@ -58,6 +58,8 @@
     "pig": "assets/Pig/Color/pig_color.svg",
     "ewe": "assets/Ewe/Color/ewe_color.svg",
     "chicken": "assets/Chicken/Color/chicken_color.svg",
-    "duck": "assets/Duck/Color/duck_color.svg"
+    "duck": "assets/Duck/Color/duck_color.svg",
+    "parrot": "assets/Parrot/Color/parrot_color.svg",
+    "turtle": "assets/Turtle/Color/turtle_color.svg"
   }
 }
