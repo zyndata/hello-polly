@@ -12,6 +12,15 @@ project adheres to [Semantic Versioning](https://semver.org).
 
 - Record the v0.1.0 release and the owner prerequisites
 
+### Features
+
+- **content:** Colour flags instead of hearts, hippo and dog avatars
+- Phase 6 — rewards
+
+### Miscellaneous
+
+- Update CHANGELOG
+
 ## [0.1.0] - 2026-10-19
 
 ### Documentation
