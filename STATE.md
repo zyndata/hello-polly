@@ -265,6 +265,9 @@ both under `vite preview` and with `test:e2e:csp` against the container (zero CS
 the CSP is unchanged in this phase). Bundle: 238.8 kB JS (81.8 kB gzip), 29.6 kB CSS.
 Content: 64 pictures, 684.3 kB, the largest 24.7 kB; 23 prompts.
 
+CI: **green** on `dev` (run 39289396805 on `d3896e3`: check, unit 240, `check:content`,
+build, e2e 98 passed + 2 opt-in skipped in Chromium + WebKit).
+
 ## Quality gates
 
 Recorded with the device and voice named (PLAN.md "Speech and pictures are replaceable").
