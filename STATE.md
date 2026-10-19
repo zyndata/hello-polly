@@ -132,6 +132,9 @@ Tests: 192 unit tests (18 files); e2e 62 passed + 2 opt-in skipped in Chromium a
 both under `vite preview` and with `test:e2e:csp` against the container (zero CSP
 violations; the CSP is unchanged in this phase). Bundle: 176.7 kB JS (61.4 kB gzip).
 
+CI: **green** on `dev` (run 39210664681 on `292f14e`: check, unit 192, `check:content`,
+build, e2e 62 passed + 2 opt-in skipped in Chromium + WebKit).
+
 Found on the way: WebKit with espeak on Linux reports an empty `voiceURI` for every voice,
 which crashed the voice list (duplicate keys). Voice ids now fall back to name + language
 and are made unique (decision 22); a unit test covers it.
