@@ -12,7 +12,7 @@ Any deviation from [PLAN.md](PLAN.md) must be recorded here before proceeding.
 | 3     | Speech                                              | done        | 2026-10-19 |
 | 4     | Children, word plan, parent gate, look-and-listen   | done        | 2026-10-19 |
 | 5     | Lessons & first exercises                           | done        | 2026-10-19 |
-| 6     | Rewards                                             | pending     |           |
+| 6     | Rewards                                             | done        | 2026-10-19 |
 | 7     | Drive sync (one account, many devices)              | pending     |           |
 | 8     | Inviting the second parent                          | pending     |           |
 | 9     | Stories & more games                                | pending     |           |
@@ -272,6 +272,58 @@ Content: 64 pictures, 684.3 kB, the largest 24.7 kB; 23 prompts.
 
 CI: **green** on `dev` (run 39289396805 on `d3896e3`: check, unit 240, `check:content`,
 build, e2e 98 passed + 2 opt-in skipped in Chromium + WebKit).
+
+### Phase 6 acceptance (2026-10-19)
+
+- [x] **Unopened chests survive reloads and are identical after merging two devices'
+      progress.** Unit (`stickers.test.ts`): over 300 generated pairs of family files,
+      `chestState` and the album are the same for `merge(a, b)` and `merge(b, a)`, and merging
+      again changes nothing; a phone opening a chest and a tablet earning stars converge to
+      the same `{ unopened: 1, meter: 2 }` and the same album in both merge orders;
+      `recordChest` is idempotent per event id and bumps `seq` once. e2e (`rewards.spec.ts`,
+      Chromium + WebKit): 34 stars and one chest opened on "another device" → the map shows
+      one chest waiting and 4 on the meter; still there after a reload; opened in three taps
+      → recorded on this device under one event id with exactly the stickers shown; back on
+      the map no chest waits, the meter keeps its 4, and the chest's address leads to the
+      map. Leaving after two taps (long-press home) records nothing and the chest still waits.
+- [x] **The draw is deterministic given its seed (unit) and never repeats within an
+      incomplete set.** Unit: the same seed gives the same stickers (50 seeds, and through
+      `drawForChild` on a real family file); 1–3 stickers, never one twice in a chest; over
+      400 random albums and word states nothing owned is ever drawn while anything is left to
+      collect (so nothing repeats in an incomplete set); a full album repeats across chests,
+      never within one. Also: learned > met > preview over 2000 draws, nothing neither met
+      nor next while those last, only the first 5 upcoming words count as a preview, and a
+      rare sticker has half the weight (drawn first 25–42 % of the time against an ordinary
+      one, not 50 %). e2e: a sticker owned from the other device's chest is not drawn.
+- [x] **The chest animation respects `prefers-reduced-motion`.** e2e, both engines, twice:
+      with `reducedMotion: 'no-preference'` the map chest bobs and the rattle, lock pop, lid
+      swing, glow pulse and sticker fly-out each run their animation (the control); with
+      `'reduce'` every one of them computes `animation-name: none`, while the meaning stays:
+      the lid is open (a transform), the lock is gone (opacity 0), the glow is on (opacity 1)
+      and the stickers are there (opacity 1). The shimmer of rare stickers, the meter's
+      growth, an empty slot's wiggle and the album's „new” ring follow the same rule
+      (`app.css`).
+
+Also: the album is open from the first day (four topic tabs, 11 empty colour slots,
+„Zbieraj gwiazdki…”, an empty slot wiggles and says „Tej naklejki jeszcze nie masz.”, a tab
+switches the page); after a chest the album opens on the first page in map order with a new
+sticker, rings the new ones, and a tap on a sticker says its word. `e2e/no-reading.spec.ts`
+walks the empty album, the map with a chest, the shut and the open chest, and the album with
+new stickers: no visible text, every button a picture. The README gains the chest and album
+screenshots (`npm run screenshots` now walks a chest).
+
+Seen in the screenshots, not fixed: on the colours page every empty slot shows the same flag
+silhouette, since the 11 colour pictures share one shape (decision 55). An empty colour slot
+therefore does not hint which colour it holds; the other pages do.
+
+Sticker art (task 5, decision 56): Color SVG, the word's own picture; **0 kB added** to the
+content. The only new picture is the 📒 button (`ledger`). Content: 65 pictures, 668.5 kB,
+the largest 24.7 kB; 30 prompts; 45 stickers, 4 rare.
+
+Tests: 258 unit tests (28 files); e2e 106 passed + 2 opt-in skipped in Chromium and WebKit,
+both under `vite preview` and with `test:e2e:csp` against the container (zero CSP violations;
+the CSP is unchanged in this phase). `rewards.spec.ts` also ran 3 × 3 repeats in both engines
+(90 runs) with no failure. Bundle: 255.6 kB JS (86.1 kB gzip), 34.7 kB CSS.
 
 ## Quality gates
 
@@ -682,6 +734,66 @@ Not a phase: the manual setup PLAN.md lists under "Owner prerequisites", then `/
     The 11 hearts are deleted. The pictures quality gate's "white heart" watch item now
     reads "white flag". No new package, no CSP change.
 
+### 2026-10-19 — Phase 6: Rewards
+
+Open question 3 names this phase; PLAN.md's task 5 says "pick one and record the size", so it
+is settled here (56).
+
+56. **Open question 3 settled: Color SVG, and a sticker is a word's own picture.** One sticker
+    per vocabulary word (45 now), `id` = the word id, `image` = the word's picture, `set` = the
+    word's topic. Size added to the content: **0 kB** (no new file; the pictures are already
+    in `content/img/`, within the 25 kB budget, on jsDelivr). 3D PNGs were rejected: about
+    40–150 kB each upstream, a second format for `ImageSource` and `check:content`, and a
+    sticker that looks unlike the word it says, when the album is meant to be a review
+    device (PLAN.md "Rewards"). The cost: a sticker is not a *new* picture. Distinct sticker
+    art (a sea set, gold variants) can be added later as plain content, since `Sticker.image`
+    is already separate from `Sticker.word`.
+57. **Rare gold stickers are content**: one per set (`numbers.ten`, `colours.purple`,
+    `fruit.pineapple`, `pets-farm.horse`), 4 of 45 ≈ 1 in 11, as `rare: true`. They shimmer in
+    the album and in the chest (a gold ring with a moving sheen; still under reduced motion).
+    In the draw a rare sticker has half the weight of an ordinary one, so it tends to come
+    later, but it always comes.
+58. **The draw** (`domain/stickers.ts`, pure, seeded by the chest's event id): (a) the count is
+    1, 2 or 3 (40 / 40 / 20 %); (b) candidates are the stickers the child does not own, and
+    only once the whole album is owned does it draw from everything (then a sticker can repeat
+    across chests, never within one); this is stricter than "no duplicates until a set
+    completes" and implies it; (c) weights: word learned 6, word met (introduced or
+    practising) 2, word among the next 5 the child will be taught (`nextWords`) 1 (the
+    "preview"), anything else 0, used only when every weight is 0; rare × ½; (d) weighted
+    sampling without replacement with mulberry32. The same seed, album and word states give the
+    same stickers on every device.
+59. **Opening a chest** is recorded as `chestsOpened[eventId] = { at, stickers }` (a new
+    `recordChest` in `domain/progress.ts`, idempotent per id) at the moment the lid opens. Left
+    before that, nothing is recorded and the chest still waits. The data model does not
+    change. Two offline devices may each open "the last" chest; the opened count then exceeds
+    the earned one, `unopened` stays at 0 (already clamped) and the child simply got one more
+    chest. Accepted: no loss mechanic may take a sticker back.
+60. **Chest scene** (`/child/:id/chest`): a hand-drawn inline SVG chest. Tap 1 rattles it
+    (`chest-creak`), tap 2 pops the lock (`pop`), tap 3 swings the lid open with a gold glow
+    (`sparkle`, `correct`) and the stickers fly out, each then spoken in turn; a tap on a
+    sticker says its word again. A pulsing ▶ then leads to the album, on the page of the first
+    new sticker, with the new ones ringed. With no chest waiting the route goes back to the
+    map. Reduced motion keeps the meaning (the glow, the lid open, the stickers in place) and
+    drops the travel (rattle, swing, fly-out, shimmer sweep).
+61. **Map**: a star meter in the header, between the avatar (or home) and the gear: a gold
+    star, then an SVG bar whose fill is an SVG `width` attribute (no inline style), stars
+    toward the next chest out of `starsPerChest`, growing from empty on arrival. A chest sits
+    at the bar's end: faded and inert while none waits, a bobbing, gold-glowing button when one
+    or more do (the bob is on an inner element, so the button itself stays still). The bottom
+    bar gains 📒 for the album. Arriving with a chest waiting, Polly says „Polly znalazła
+    skrzynię skarbów! Dotknij jej!” instead of „Dotknij statku…”. New UI picture: `ledger`
+    (📒, Fluent, same pinned commit, 20.7 kB upstream) in `UI_IMAGE_IDS`.
+62. **Album** (`/child/:id/album`): one page per set, in map order, chosen by a row of big
+    topic-icon tabs (no arrows, no page numbers). Each page is a grid of slots in the topic's
+    teaching order: an owned sticker (white die-cut edge, gold for rare) speaks its word on a
+    tap; an empty slot is a dashed outline with the picture's faint silhouette, and a tap on it
+    wiggles and says „Tej naklejki jeszcze nie masz.” The album is open from the first day (an
+    empty album is a goal, not a dead end): with no sticker yet Polly says „Zbieraj gwiazdki, a
+    znajdziesz skrzynię z naklejkami!” Long-press home back to the map.
+63. **New prompts**: `map.chest`, `chest.tap`, `chest.again`, `chest.open`, `album.look`,
+    `album.empty`, `album.missing`. No new sound effect: `chest-creak`, `pop` and `sparkle`
+    exist since Phase 3 (decision 29).
+
 ## Open questions
 
 Copied from PLAN.md. Each is settled in the phase named and the answer recorded here.
@@ -690,7 +802,8 @@ Copied from PLAN.md. Each is settled in the phase named and the answer recorded 
    translated, no subtitle; `hellopolly.gorny.dev`; `zyndata/hello-polly`.
 2. **Default accent** (Phase 3). **Settled** (decision 19): British, `en-GB`; American
    selectable.
-3. **Sticker art**: 3D PNG (richer, larger) or Color SVG (Phase 6).
+3. **Sticker art**: 3D PNG (richer, larger) or Color SVG (Phase 6). **Settled** (decision 56):
+   Color SVG, and a word's sticker is its own picture, so stickers add 0 kB.
 4. **Picker in an installed iOS PWA**: unknown until measured; fallback defined (Phase 8 spike).
 5. **Should one family file per Google account allow several families?** Assumed no: one
    family per account (Phase 7).

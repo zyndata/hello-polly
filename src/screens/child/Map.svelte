@@ -3,22 +3,28 @@
   islands, one per lesson. Islands with a flag are lessons done (on any device), Polly's ship
   waits at the next one, and a few more lie ahead. Tapping the ship's island opens the lesson;
   when the next lesson would be empty (nothing new, due or to practise), Polly says so instead
-  (STATE.md decisions 39, 46). The 🎲 at the bottom opens the game shelf. The gear opens the
+  (STATE.md decisions 39, 46). At the top a star meter fills toward the next chest, and a
+  waiting chest glows at its end (decision 61). The 🎲 at the bottom opens the game shelf and
+  the 📒 the sticker album. The gear opens the
   parent gate; the long-press home leads back to the picker when there are two or more
   children (decision 36). Nothing here needs reading.
 -->
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { push, replace } from 'svelte-spa-router';
+  import Chest from '../../lib/components/Chest.svelte';
   import ChildLayout from '../../lib/components/ChildLayout.svelte';
   import ContentImage from '../../lib/components/ContentImage.svelte';
   import HomeButton from '../../lib/components/HomeButton.svelte';
   import Island from '../../lib/components/Island.svelte';
+  import StarMeter from '../../lib/components/StarMeter.svelte';
   import { prompt, topics } from '../../lib/content';
   import { loadFamily } from '../../lib/db';
   import { liveChild, liveChildren } from '../../lib/domain/children';
+  import { readSettings } from '../../lib/domain/family';
   import { lessonFor } from '../../lib/domain/lesson';
   import { lessonsDone } from '../../lib/domain/progress';
+  import { chestState } from '../../lib/domain/rewards';
   import { localDay } from '../../lib/domain/time';
   import { sounds } from '../../lib/sound/effects';
   import { speaker } from '../../lib/speech';
@@ -39,6 +45,9 @@
   let lessonSteps = $state(0);
   let siblings = $state(0);
   let nudge = $state(0);
+  let meter = $state(0);
+  let perChest = $state(15);
+  let unopened = $state(0);
   let current = $state<HTMLElement | undefined>();
 
   /** Bottom to top would be the sea chart; top to bottom reads like a path to scroll down. */
@@ -58,9 +67,14 @@
       siblings = liveChildren(file).length;
       done = lessonsDone(file.progress[childId]);
       lessonSteps = lessonFor(file, childId, topics, localDay(new Date())).length;
+      perChest = readSettings(file).starsPerChest;
+      ({ meter, unopened } = chestState(file.progress[childId], perChest));
       await tick();
       current?.scrollIntoView({ block: 'center' });
-      if (speaker().isUnlocked) void speaker().sayPrompt(prompt(lessonSteps > 0 ? 'map.go' : 'map.later'), speed.value);
+      if (speaker().isUnlocked) {
+        const say = unopened > 0 ? 'map.chest' : lessonSteps > 0 ? 'map.go' : 'map.later';
+        void speaker().sayPrompt(prompt(say), speed.value);
+      }
     })();
   });
 
@@ -82,6 +96,18 @@
     void push(`/child/${childId}/play`);
   }
 
+  function chest() {
+    unlock();
+    sounds().play('chest-creak');
+    void push(`/child/${childId}/chest`);
+  }
+
+  function albumPage() {
+    unlock();
+    sounds().play('tap');
+    void push(`/child/${childId}/album`);
+  }
+
   function gear() {
     unlock();
     sounds().play('tap');
@@ -101,6 +127,20 @@
           <ContentImage id={profile.avatar} class="h-full w-full object-contain" />
         </span>
       {/if}
+      <div class="flex min-w-0 flex-1 items-center gap-2">
+        <StarMeter value={meter} max={perChest} />
+        {#if unopened > 0}
+          <button type="button" class="map-chest size-tap shrink-0" aria-label="Skrzynia skarbów" data-testid="chest" data-unopened={unopened} onclick={chest}>
+            <span class="map-chest-bob block h-full w-full">
+              <Chest class="pointer-events-none h-full w-full" />
+            </span>
+          </button>
+        {:else}
+          <span class="map-chest-shut size-tap shrink-0" aria-hidden="true">
+            <Chest class="h-full w-full" />
+          </span>
+        {/if}
+      </div>
       <button type="button" class="size-tap rounded-full bg-foam/85 p-2 shadow-md" aria-label="Dla rodzica" data-testid="gear" onclick={gear}>
         <ContentImage id="gear" class="pointer-events-none h-full w-full object-contain" />
       </button>
@@ -140,6 +180,9 @@
     <nav class="bottom-bar flex justify-center gap-4 p-3" aria-label="Menu">
       <button type="button" class="bar-button size-tap rounded-full bg-foam/90 p-2 shadow-md" aria-label="Gry" data-testid="games" onclick={games}>
         <ContentImage id="game-die" class="pointer-events-none h-full w-full object-contain" />
+      </button>
+      <button type="button" class="bar-button size-tap rounded-full bg-foam/90 p-2 shadow-md" aria-label="Album z naklejkami" data-testid="album" onclick={albumPage}>
+        <ContentImage id="ledger" class="pointer-events-none h-full w-full object-contain" />
       </button>
     </nav>
   {/if}

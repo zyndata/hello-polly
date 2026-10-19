@@ -10,8 +10,8 @@ It runs in the browser and installs as a PWA on a phone, tablet or computer. The
 **Polish**; the only English the child hears is the vocabulary itself (CEFR A1 / Cambridge
 Pre A1 Starters). The code, comments and documentation are in English.
 
-> **Status: in development. Phases 1–5 of 11 are done**: the scaffold, the content and the
-> local data layer, speech, children and the word plan, and real lessons. A parent sets up a
+> **Status: in development. Phases 1–6 of 11 are done**: the scaffold, the content and the
+> local data layer, speech, children and the word plan, real lessons, and rewards. A parent sets up a
 > child (nickname and an animal picture), chooses the topics and, if they like, the exact words
 > to start with. The child gets a treasure map of islands: each island is a lesson of about
 > 8–12 steps, up to three new words in *look and listen*, then „Gdzie jest…?” picks with 2–4
@@ -19,17 +19,21 @@ Pre A1 Starters). The code, comments and documentation are in English.
 > after the second miss the right picture glows. Stars appear at the end of each island. Once a
 > child has learned four words, a game shelf opens with three games: *Posłuchaj i dotknij*,
 > *Cyferki* (tap a digit, hear a word, find its picture) and *Memory*. The parent panel sits
-> behind a parent gate (a number in Polish words). The treasure chest, sync and stories come in
-> later phases. The development build is live at https://hellopolly.gorny.dev (v0.1.0).
+> behind a parent gate (a number in Polish words). Stars fill a meter on the map; a full meter
+> brings a treasure chest that opens in three taps and gives 1–3 stickers for an album, one
+> sticker per word (rare gold ones shimmer), each saying its English word when tapped. Sync
+> and stories come in later phases. The development build is live at https://hellopolly.gorny.dev (v0.1.0).
 > [STATE.md](STATE.md) records what was decided and what is still open.
 
 ## What it looks like (so far)
 
 | Treasure map (child) | Look and listen (child) | Listen and tap (child) |
 |---|---|---|
-| ![Islands in a blue sea: one with a flag, the next with Polly on her sailboat, two more ahead](docs/screenshots/map.png) | ![A big red flag to tap, progress dots, the turtle and rabbit speed buttons and a house to hold for leaving](docs/screenshots/lesson.png) | ![Two flags to choose from after two wrong taps: the right one glows coral; Polly and a speaker button below](docs/screenshots/pick.png) |
+| ![Islands in a blue sea: one with a flag, the next with Polly on her sailboat, two more ahead; a star meter two-thirds full and a faded chest at the top, a die and an album at the bottom](docs/screenshots/map.png) | ![A big red flag to tap, progress dots, the turtle and rabbit speed buttons and a house to hold for leaving](docs/screenshots/lesson.png) | ![Two flags to choose from after two wrong taps: the right one glows coral; Polly and a speaker button below](docs/screenshots/pick.png) |
 | **Cyferki (child)** | **Island won (child)** | **Start (child)** |
 | ![Four fruit pictures above four digit tiles 1–4; digit 2 is picked and ringed in gold](docs/screenshots/digits.png) | ![The island with its flag, Polly, and a row of gold stars earned](docs/screenshots/finish.png) | ![Polly the parrot on the sea, ringed by a pulsing gold circle: tap to begin](docs/screenshots/start.png) |
+| **Treasure chest (child)** | **Sticker album (child)** | |
+| ![An open pirate chest glowing gold, a new sticker (a green flag) above it and a green ▶ below](docs/screenshots/chest.png) | ![The album's colours page: topic tabs above a grid of dashed slots with flag silhouettes; the green flag sticker ringed in gold](docs/screenshots/album.png) | |
 | **Parent gate** | **Word plan (parent)** | **Speech and voices (parent)** |
 | ![The parent gate: „dziesięć” written in words above a number keypad](docs/screenshots/gate.png) | ![A child's next new words and the word plan: queue, random order, topics](docs/screenshots/plan.png) | ![The parent's speech screen: voice check, accent, speeds](docs/screenshots/speech.png) |
 

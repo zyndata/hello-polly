@@ -95,3 +95,24 @@ export async function ownProgress(page: Page, child: string): Promise<DeviceProg
   const file = await readFamily(page);
   return Object.entries(file.progress[child] ?? {}).find(([device]) => device !== SEED_DEVICE)?.[1];
 }
+
+/**
+ * Stars (and chests already opened) earned on another device, as if synced from it. Keeps any
+ * other progress that device has.
+ */
+export async function seedStars(page: Page, child: string, stars: number, opened: DeviceProgress['chestsOpened'] = {}): Promise<void> {
+  const file = await readFamily(page);
+  const current = file.progress[child]?.[SEED_DEVICE];
+  const seeded: DeviceProgress = {
+    seq: (current?.seq ?? 0) + 1,
+    introduced: current?.introduced ?? {},
+    attempts: current?.attempts ?? {},
+    stars,
+    chestsOpened: opened,
+    lessons: current?.lessons ?? {},
+    minutes: current?.minutes ?? {},
+    storiesHeard: current?.storiesHeard ?? {}
+  };
+  file.progress[child] = { ...file.progress[child], [SEED_DEVICE]: seeded };
+  await writeFamily(page, file);
+}

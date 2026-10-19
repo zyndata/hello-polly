@@ -67,6 +67,7 @@
     "game-die": "assets/Game die/Color/game_die_color.svg",
     "locked": "assets/Locked/Color/locked_color.svg",
     "speaker-high-volume": "assets/Speaker high volume/Color/speaker_high_volume_color.svg",
+    "ledger": "assets/Ledger/Color/ledger_color.svg",
 
     "fox": "assets/Fox/Color/fox_color.svg",
     "lion": { "path": "assets/Lion/Color/lion_color.svg", "floatPrecision": 1 },

@@ -11,7 +11,8 @@ export const SVG_BUDGET_BYTES = 25 * 1024;
 
 /**
  * Every Polish prompt the app speaks: the start screen's greeting (Phase 3), and the Phase 5
- * lesson player and exercises (look and listen, E1, E2, E3, feedback, finish). `check:content` fails when one is missing from the catalog, or when
+ * lesson player and exercises (look and listen, E1, E2, E3, feedback, finish), and the
+ * Phase 6 chest and album. `check:content` fails when one is missing from the catalog, or when
  * the catalog has one that is not listed here.
  */
 export const REQUIRED_PROMPT_IDS = /** @type {const} */ ([
@@ -37,7 +38,14 @@ export const REQUIRED_PROMPT_IDS = /** @type {const} */ ([
   'picker.who',
   'map.go',
   'map.later',
-  'gate.parents'
+  'gate.parents',
+  'map.chest',
+  'chest.tap',
+  'chest.again',
+  'chest.open',
+  'album.look',
+  'album.empty',
+  'album.missing'
 ]);
 
 /**
@@ -56,10 +64,11 @@ export const STORY_FUNCTION_WORDS = /** @type {const} */ ([
 
 /**
  * Pictures the screens use directly rather than through content: Polly, the 🐢/🐇 speed
- * toggle, Polly's ship on the map, the gear of the parent gate and the home button. They count
+ * toggle, Polly's ship on the map, the gear of the parent gate, the home button, the game
+ * shelf's die, lock and speaker, and the album's ledger. They count
  * as used, and must exist like any content picture.
  */
-export const UI_IMAGE_IDS = /** @type {const} */ (['parrot', 'turtle', 'rabbit', 'sailboat', 'gear', 'house', 'game-die', 'locked', 'speaker-high-volume']);
+export const UI_IMAGE_IDS = /** @type {const} */ (['parrot', 'turtle', 'rabbit', 'sailboat', 'gear', 'house', 'game-die', 'locked', 'speaker-high-volume', 'ledger']);
 
 /**
  * @typedef {object} ContentSet

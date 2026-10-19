@@ -3,7 +3,7 @@
  * every change bumps `seq`, so the newer copy wins the merge (PLAN.md "Sync model").
  */
 
-import type { ChildId, Day, DeviceId, DeviceProgress, FamilyFile, Instant, LessonRecord, WordId } from '../types';
+import type { ChestOpening, ChildId, Day, DeviceId, DeviceProgress, FamilyFile, Instant, LessonRecord, WordId } from '../types';
 import { emptyProgress } from './family';
 
 type ChildProgress = Record<DeviceId, DeviceProgress> | undefined;
@@ -56,4 +56,14 @@ export function addStars(file: FamilyFile, child: ChildId, device: DeviceId, sta
 /** Lessons finished on every device: the islands with a flag. */
 export function lessonsDone(progress: ChildProgress): number {
   return Object.values(progress ?? {}).reduce((sum, d) => sum + Object.keys(d.lessons).length, 0);
+}
+
+/**
+ * A chest opened on this device, under an event id unique to it (STATE.md decision 59).
+ * Recording the same id twice changes nothing, so a retried save cannot open a second chest.
+ */
+export function recordChest(file: FamilyFile, child: ChildId, device: DeviceId, id: string, opening: ChestOpening): FamilyFile {
+  return change(file, child, device, (p) =>
+    id in p.chestsOpened ? undefined : { ...p, chestsOpened: { ...p.chestsOpened, [id]: { at: opening.at, stickers: [...opening.stickers] } } }
+  );
 }

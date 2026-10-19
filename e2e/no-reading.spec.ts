@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { fillChild, firstRun, openPanel } from './family';
 import { playLesson } from './lesson';
-import { seedLearned } from './progress';
+import { seedLearned, seedStars } from './progress';
 import { fakeSpeech } from './speech';
 
 /**
@@ -116,4 +116,29 @@ test('the game shelf and the games need no reading', async ({ page }) => {
   }
   await expect(page.getByTestId('game-finished')).toBeVisible();
   await expectNoReading(page, 'game finished');
+});
+
+test('the chest and the album need no reading', async ({ page }) => {
+  test.setTimeout(60_000);
+  await fakeSpeech(page);
+  const ola = await firstRun(page);
+  await page.getByTestId('album').click();
+  await expect(page.getByTestId('album-page')).toBeVisible();
+  await expectNoReading(page, 'album, empty');
+
+  await seedLearned(page, ola, { 'fruit.apple': 1, 'fruit.pear': 1 });
+  await seedStars(page, ola, 15);
+  await page.goto(`/#/child/${ola}`);
+  await page.reload();
+  await expect(page.getByTestId('chest')).toBeVisible();
+  await expectNoReading(page, 'map with a chest');
+  await page.getByTestId('chest').click();
+  await expect(page.getByTestId('chest-scene')).toBeVisible();
+  await expectNoReading(page, 'chest, shut');
+  for (let i = 0; i < 3; i++) await page.getByTestId('chest-open').click();
+  await expect(page.getByTestId('next')).toBeVisible({ timeout: 20_000 });
+  await expectNoReading(page, 'chest, open');
+  await page.getByTestId('next').click();
+  await expect(page.locator('[data-owned="true"]').first()).toBeVisible();
+  await expectNoReading(page, 'album, with new stickers');
 });

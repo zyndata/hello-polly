@@ -4,7 +4,7 @@
  *
  * A script rather than a test because it asserts nothing: it walks a short session on a
  * phone-sized viewport (the first run, one lesson with a pick after two misses and its stars,
- * the map, *Cyferki* over a few learned words, the parent gate, the word plan, the speech screen)
+ * the map, *Cyferki* over a few learned words, a chest and the album, the parent gate, the word plan, the speech screen)
  * and writes PNGs into `docs/screenshots/`. Re-run it whenever a screen in the README changes.
  *
  *   npm run docker:up          # or: npx vite preview --port 4173
@@ -104,7 +104,8 @@ await shot('finish');
 await page.getByTestId('map').waitFor({ timeout: 15_000 });
 await shot('map');
 
-// Four fruit learned on two earlier days (as another device would sync them), for Cyferki.
+// Four fruit learned on two earlier days and 20 stars (as another device would sync them), for
+// Cyferki and a chest.
 const childId = /** @type {string} */ (page.url().split('/child/')[1]);
 await page.evaluate(async (child) => {
   const day = (/** @type {number} */ n) => new Date(Date.now() - n * 86_400_000).toLocaleDateString('sv-SE');
@@ -122,7 +123,7 @@ await page.evaluate(async (child) => {
     const get = db.transaction('family').objectStore('family').get('local');
     get.onsuccess = () => resolve(get.result);
   });
-  const progress = { seq: 1, introduced: {}, attempts, stars: 0, chestsOpened: {}, lessons: {}, minutes: {}, storiesHeard: {} };
+  const progress = { seq: 1, introduced: {}, attempts, stars: 20, chestsOpened: {}, lessons: {}, minutes: {}, storiesHeard: {} };
   row.file.progress[child] = { ...row.file.progress[child], 'screenshot-device': progress };
   await new Promise((resolve) => {
     const tx = db.transaction('family', 'readwrite');
@@ -136,6 +137,17 @@ await page.getByTestId('games').click();
 await page.locator('[data-game="digits"]').click();
 await page.locator('[data-digit="2"]').click();
 await shot('digits');
+await page.goto(`${BASE_URL}/#/child/${childId}`);
+await page.getByTestId('map').waitFor();
+
+// A chest: three taps, the stickers, then the album with the new ones ringed.
+await page.getByTestId('chest').click();
+for (let i = 0; i < 3; i++) await page.getByTestId('chest-open').click();
+await page.getByTestId('next').waitFor({ timeout: 20_000 });
+await shot('chest');
+await page.getByTestId('next').click();
+await page.locator('[data-owned="true"]').first().waitFor();
+await shot('album');
 await page.goto(`${BASE_URL}/#/child/${childId}`);
 await page.getByTestId('map').waitFor();
 

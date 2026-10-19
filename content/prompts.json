@@ -21,5 +21,12 @@
   {"id":"picker.who","pl":"Kto dziś płynie z Polly? Dotknij swojego zwierzątka!"},
   {"id":"map.go","pl":"Dotknij statku i płyniemy!"},
   {"id":"map.later","pl":"Nowe słówka już niedługo!"},
-  {"id":"gate.parents","pl":"To jest miejsce dla rodzica. Dotknij Polly, żeby wrócić."}
+  {"id":"gate.parents","pl":"To jest miejsce dla rodzica. Dotknij Polly, żeby wrócić."},
+  {"id":"map.chest","pl":"Polly znalazła skrzynię skarbów! Dotknij jej!"},
+  {"id":"chest.tap","pl":"Skrzynia skarbów! Dotknij jej!"},
+  {"id":"chest.again","pl":"Jeszcze raz!"},
+  {"id":"chest.open","pl":"Hurra! Naklejki!"},
+  {"id":"album.look","pl":"Twoje naklejki! Dotknij, a powiem słówko."},
+  {"id":"album.empty","pl":"Zbieraj gwiazdki, a znajdziesz skrzynię z naklejkami!"},
+  {"id":"album.missing","pl":"Tej naklejki jeszcze nie masz."}
 ]

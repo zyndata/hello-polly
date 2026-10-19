@@ -6,6 +6,8 @@ import Placeholder from './components/Placeholder.svelte';
 import { notFound, screens, type Screen } from './screens';
 import Setup from '../screens/Setup.svelte';
 import Start from '../screens/Start.svelte';
+import Album from '../screens/child/Album.svelte';
+import ChestScreen from '../screens/child/ChestScreen.svelte';
 import Game from '../screens/child/Game.svelte';
 import Lesson from '../screens/child/Lesson.svelte';
 import Shelf from '../screens/child/Shelf.svelte';
@@ -31,6 +33,8 @@ const built: Record<string, ScreenComponent> = {
   '/child/:id/lesson': Lesson,
   '/child/:id/play': Shelf,
   '/child/:id/play/:game': Game,
+  '/child/:id/album': Album,
+  '/child/:id/chest': ChestScreen,
   '/parent': Panel,
   '/parent/child/:id': ParentChild,
   '/parent/speech': Speech,
