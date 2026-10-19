@@ -11,14 +11,17 @@ project adheres to [Semantic Versioning](https://semver.org).
 ### Documentation
 
 - Record the phase 1 CI result in STATE.md
+- Record the phase 2 CI and jsDelivr results in STATE.md
 
 ### Features
 
 - Phase 1 — scaffold & Docker
 - Phase 2 — content pipeline & local data layer
+- Phase 3 — speech
 
 ### Miscellaneous
 
+- Update CHANGELOG
 - Update CHANGELOG
 
 
