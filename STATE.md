@@ -199,6 +199,10 @@ network check in WebKit on Windows, whose Playwright build has no speech engine 
 WebKit on Linux and in CI; docs/DEVELOPMENT.md). Bundle: 219.9 kB JS (75.9 kB gzip), 25.9 kB
 CSS. Content: 61 pictures, 661.8 kB, the largest 24.7 kB.
 
+CI: **green** on `dev` (run 39216418299 on `d995ad5`: check, unit 219, `check:content`,
+build, e2e 82 passed + 2 opt-in skipped in Chromium + WebKit; the real-speech network check
+runs there in WebKit too).
+
 Found on the way: Svelte state proxies cannot be stored in IndexedDB (structured clone fails),
 so a plan edited on the child's page was silently not saved; the screen now saves
 `$state.snapshot(…)` and shows „Nie udało się zapisać…” if a save ever fails.
