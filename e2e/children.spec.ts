@@ -1,5 +1,6 @@
 import { expect, test } from './fixtures';
 import { fillChild, firstRun, openPanel, queueWord } from './family';
+import { playLesson } from './lesson';
 import { fakeSpeech, spoken } from './speech';
 
 test.beforeEach(async ({ page }) => {
@@ -69,7 +70,7 @@ test('with one child the picker never appears; a second makes it appear; removin
 });
 
 test('a queued word is the next word introduced, ahead of topic order', async ({ page }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(90_000);
   // Queued during the first run: mango comes before the colours.
   const ola = await firstRun(page, 'Ola', 'fox', (p) => queueWord(p, 'fruit', 'fruit.mango'));
   await expect(page.getByTestId('map')).toHaveAttribute('data-done', '0');
@@ -85,16 +86,8 @@ test('a queued word is the next word introduced, ahead of topic order', async ({
       ['mango', 'en-GB']
     ]));
 
-  const lessonWords: string[] = [];
-  for (let i = 0; i < 3; i++) {
-    const picture = page.getByTestId('lesson-word');
-    lessonWords.push((await picture.getAttribute('data-word')) as string);
-    // Nothing moves on until the picture is tapped.
-    await expect(page.getByTestId('next')).toHaveCount(0);
-    await picture.locator('button').click();
-    await page.getByTestId('next').click();
-  }
-  expect(lessonWords).toEqual(['fruit.mango', 'colours.red', 'colours.blue']);
+  const { introduced } = await playLesson(page);
+  expect(introduced).toEqual(['fruit.mango', 'colours.red', 'colours.blue']);
   await expect(page.getByTestId('lesson-finished')).toBeVisible();
   await expect.poll(() => lastText(page)).toBe('Brawo! Wyspa zdobyta!');
   await expect(page).toHaveURL(new RegExp(`#/child/${ola}$`), { timeout: 15_000 });
@@ -109,7 +102,8 @@ test('a queued word is the next word introduced, ahead of topic order', async ({
   await queueWord(page, 'pets-farm', 'pets-farm.duck');
   await expect(upcoming.first()).toHaveAttribute('data-word', 'pets-farm.duck');
   await page.locator('[data-topic="fruit"] summary').click();
-  await expect(page.locator('[data-plan-word="fruit.mango"] [data-testid="status"]')).toHaveText('poznane');
+  // Met and answered in the lesson's picks: practising now.
+  await expect(page.locator('[data-plan-word="fruit.mango"] [data-testid="status"]')).toHaveText('ćwiczy');
 
   await page.goto(`/#/child/${ola}`);
   await page.getByTestId('sail').click();
@@ -117,6 +111,7 @@ test('a queued word is the next word introduced, ahead of topic order', async ({
 });
 
 test('known and paused words are skipped, and the queue reorders', async ({ page }) => {
+  test.setTimeout(90_000);
   const ola = await firstRun(page, 'Ola', 'fox', async (p) => {
     await queueWord(p, 'fruit', 'fruit.mango');
     await queueWord(p, 'fruit', 'fruit.lemon');
@@ -127,13 +122,8 @@ test('known and paused words are skipped, and the queue reorders', async ({ page
     await p.locator('[data-plan-word="colours.blue"]').getByRole('button', { name: 'Wstrzymaj' }).click();
   });
   await page.getByTestId('sail').click();
-  const words: string[] = [];
-  for (let i = 0; i < 3; i++) {
-    words.push((await page.getByTestId('lesson-word').getAttribute('data-word')) as string);
-    await page.getByTestId('lesson-word').locator('button').click();
-    await page.getByTestId('next').click();
-  }
-  expect(words).toEqual(['fruit.lemon', 'fruit.mango', 'colours.yellow']);
+  const { introduced } = await playLesson(page);
+  expect(introduced).toEqual(['fruit.lemon', 'fruit.mango', 'colours.yellow']);
   await expect(page).toHaveURL(new RegExp(`#/child/${ola}$`), { timeout: 15_000 });
 });
 

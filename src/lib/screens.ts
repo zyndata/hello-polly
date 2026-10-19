@@ -27,10 +27,9 @@ export interface Screen {
 export const screens: readonly Screen[] = [
   { path: '/', title: 'Start', area: 'child', phase: 3, built: true },
   { path: '/child/:id', title: 'Mapa skarbów', area: 'child', phase: 4, built: true },
-  // Phase 4 builds look-and-listen; Phase 5 adds the exercises (STATE.md decision 39).
   { path: '/child/:id/lesson', title: 'Lekcja', area: 'child', phase: 5, built: true },
-  { path: '/child/:id/play', title: 'Gry', area: 'child', phase: 5 },
-  { path: '/child/:id/play/:game', title: 'Gra', area: 'child', phase: 5 },
+  { path: '/child/:id/play', title: 'Gry', area: 'child', phase: 5, built: true },
+  { path: '/child/:id/play/:game', title: 'Gra', area: 'child', phase: 5, built: true },
   { path: '/child/:id/stories', title: 'Bajki', area: 'child', phase: 9 },
   { path: '/child/:id/stories/:storyId', title: 'Bajka', area: 'child', phase: 9 },
   { path: '/child/:id/album', title: 'Album z naklejkami', area: 'child', phase: 6 },

@@ -64,6 +64,9 @@
     "sailboat": "assets/Sailboat/Color/sailboat_color.svg",
     "gear": "assets/Gear/Color/gear_color.svg",
     "house": "assets/House/Color/house_color.svg",
+    "game-die": "assets/Game die/Color/game_die_color.svg",
+    "locked": "assets/Locked/Color/locked_color.svg",
+    "speaker-high-volume": "assets/Speaker high volume/Color/speaker_high_volume_color.svg",
 
     "fox": "assets/Fox/Color/fox_color.svg",
     "lion": { "path": "assets/Lion/Color/lion_color.svg", "floatPrecision": 1 },

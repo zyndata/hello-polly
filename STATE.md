@@ -11,7 +11,7 @@ Any deviation from [PLAN.md](PLAN.md) must be recorded here before proceeding.
 | 2     | Content pipeline & local data layer                 | done        | 2026-10-18 |
 | 3     | Speech                                              | done        | 2026-10-19 |
 | 4     | Children, word plan, parent gate, look-and-listen   | done        | 2026-10-19 |
-| 5     | Lessons & first exercises                           | pending     |           |
+| 5     | Lessons & first exercises                           | done        | 2026-10-19 |
 | 6     | Rewards                                             | pending     |           |
 | 7     | Drive sync (one account, many devices)              | pending     |           |
 | 8     | Inviting the second parent                          | pending     |           |
@@ -211,6 +211,60 @@ The Phase 2 jsDelivr criterion is still open until the next tag; from this phase
 the lesson and the parent screens render pictures, so the live check after `/release` is
 simply opening the map.
 
+### Phase 5 acceptance (2026-10-19)
+
+- [x] **A full lesson runs end to end in both engines (e2e) and updates attempts, stars and
+      states.** `e2e/lesson.spec.ts`, Chromium and WebKit: first run → the ship → look and
+      listen for *red*, *blue*, *yellow* → six 2-choice picks. On the first pick the test taps
+      the wrong picture twice: the wiggle, the tapped word, „Spróbuj jeszcze raz.” and the
+      target; then the coral glow and „Popatrz, to ten!”; Polly's mood turns to `think`, 🔊
+      asks again, nothing is removed. Then the finish: 10 stars (9 steps + 1 for the five
+      first tries in a row), „Brawo! Wyspa zdobyta!”, back on the map. IndexedDB then holds,
+      on this device, today's `{ c: 2, w: 2, first: 1 }` for the missed word and
+      `{ c: 2, w: 0, first: 2 }` for the others, `stars: 10`, one lesson, three words
+      introduced; the parent's word list shows all three as „ćwiczy”. A lesson left halfway
+      keeps its two answered picks and gives no stars. Unit: `recordAttempt`, `addStars`, and
+      the attempt history making a word learned (`progress.test.ts`).
+- [x] ***Cyferki*: four digits map to four distinct words; each digit speaks its word; a
+      correct match removes the pair; a wrong one never removes it.** Unit (`digits.test.ts`):
+      100 seeded boards, four distinct words each; a match takes the pair off; four wrong taps
+      in a row remove nothing (retry, then hint); a picture tap with no digit picked is only a
+      tap. e2e (`games.spec.ts`), both engines, over five learned fruit: each digit tile,
+      tapped, says an English word that is one of the four pictures, and the four are
+      distinct; two wrong pictures for digit 1 remove nothing and make the right one glow; each
+      right match marks and hides both the picture and the digit. Attempts: `w: 2, first: 0`
+      for the first word, clean for the rest; 5 stars. Found and fixed on the way: a picture
+      wiggled earlier kept its wiggle animation and never left the board.
+- [x] **New words appear only in 2-choice steps within their first lesson.** Unit
+      (`exercise.test.ts`): 300 random histories over the real content (every box, due and
+      not, paused words), `composeLesson` → `planLesson`: any pick whose pictures include one
+      of the lesson's new words has exactly 2; every pick has its composed count, the target,
+      no repeated picture and no two words that sound alike (*orange* / *orange*); no paused
+      word is shown. e2e: four fruit learned in boxes 3–6 and due → the lesson introduces 2
+      words; the reviews show 3, 4, 4 and 4 pictures and never a new word; the new words'
+      four picks have 2. The next lesson introduces the next three, with the same rule.
+- [ ] **Tested with a real 4-year-old: one full lesson without adult help.** **Open**: it
+      needs the owner and the child; this environment has no child and no phone. Closed by:
+      on a phone (a `docker:up` build on the LAN, or the live site after the next `/release`),
+      the child plays one island from the map to the finish without help, and the owner
+      records here: completed or not, where they hesitated or tapped wrongly, whether the
+      Polish prompts, the 🐢 speed, the glow and the ▶ were understood, and the picture and
+      speech gate results below.
+
+Also: the game shelf is locked with fewer than 4 learned words (Polly with a lock, „Najpierw
+poznajmy więcej słówek!”, a game's address leads back to the shelf), *Cyferki* stays locked
+until 4 learned words outside the numbers; E1 free play is five picks over learned words
+only (6 stars, attempts recorded); *Memory* speaks each flip, keeps pairs, turns two different
+cards back and records no attempt (3 stars); the shelf and every game leave only on a long
+press. `e2e/no-reading.spec.ts` now also walks a pick (after two misses), the finish, the
+locked and open shelf, all three games, a face-up card and a game's finish: no visible text,
+every button a picture.
+
+Tests: 240 unit tests (26 files); e2e 98 passed + 2 opt-in skipped in Chromium and WebKit,
+both under `vite preview` and with `test:e2e:csp` against the container (zero CSP violations;
+the CSP is unchanged in this phase). Bundle: 238.8 kB JS (81.8 kB gzip), 29.6 kB CSS.
+Content: 64 pictures, 684.3 kB, the largest 24.7 kB; 23 prompts.
+
 ## Quality gates
 
 Recorded with the device and voice named (PLAN.md "Speech and pictures are replaceable").
@@ -219,8 +273,8 @@ Recorded with the device and voice named (PLAN.md "Speech and pictures are repla
 |----------|------------------------------|---------|----------------|
 | Pictures | end of Phase 2               | open: owner's verdict pending | Contact sheet of the 45 pictures rendered in Chromium (Linux) at 96 px, sent to the owner on 2026-10-18. Own pre-check: all decode; possible confusions are white heart (reads lavender), orange vs mango vs lemon (three round fruit), and the stylised bird. |
 | Speech   | end of Phase 3               | open: owner's verdict pending | Needs real voices on an Android phone and an iPhone (see Phase 3 acceptance). Tool: `/#/parent/speech`, every word at 🐢. Criteria: every word of the first four topics told apart at slow speed by a first-time listener; `say` overrides ≤ ~10 % of words (≤ 4 of 45). |
-| Pictures | Phase 5, with the child      | open    |                |
-| Speech   | Phase 5, with the child      | open    |                |
+| Pictures | Phase 5, with the child      | open: needs the owner and the child | Criterion: the child names or points to ≥ 90 % of the first four topics' pictures when asked in Polish. Tool: the lesson's picks, or `/#/parent/speech`'s word board, asked „Gdzie jest…?” by the parent. Watch: white heart, orange vs mango vs lemon, the bird, and the 🐇 toggle being the *rabbit* word (decision 26). |
+| Speech   | Phase 5, with the child      | open: needs the owner and the child | Same criteria as Phase 3, judged with the child on the phone the child uses; record the device and the voice names `/#/parent/speech` reports. |
 
 ## Decisions
 
@@ -508,6 +562,72 @@ No open question names Phase 4.
 40. **New prompts** (`check:content` requires them): `picker.who`, `map.go`, `map.later`,
     `gate.parents`.
 
+### 2026-10-19 — Phase 5: Lessons & first exercises
+
+Open question 6 names this phase (the speech and picture gates, again with the child). Both
+need the owner and the child; they stay open in "Quality gates" until the owner reports back.
+
+41. **In a lesson every pick is E1 (*Posłuchaj i dotknij*)**, with the step's 2, 3 or 4
+    pictures. E2 *Cyferki* (always 4 pictures) and E3 *Memory* (pairs, not one heard word)
+    live on the game shelf as free play over learned words. Decision 17 left the choice to
+    the player; this is what keeps "new words only in 2-choice steps" true by construction.
+42. **Choices are planned once, when the lesson opens** (`domain/exercise.ts`, seeded by the
+    lesson's id): the target plus distractors drawn in tiers, each tier shuffled: (a) for a
+    2-choice step of a new word, the lesson's other new words; (b) words the child has met
+    (any state but *new*, not paused); (c) the target's topic; (d) any word. A distractor
+    never has the same spoken form as the target (*orange* the colour vs *orange* the fruit)
+    or the same picture, and in a 3- or 4-choice step it is never a word this lesson
+    introduces, so a new word appears in no step with more than 2 pictures.
+43. **Errorless feedback, exactly.** A correct tap: the `correct` chime, a gold sparkle on the
+    picture, Polly hops, the word, then an English praise at normal speed; the next step
+    follows by itself. A wrong tap: the picture wiggles with the soft `wiggle` sound, says its
+    own word (PLAN.md: tapping a picture always speaks its word), then „Spróbuj jeszcze raz.”
+    and the target word. The second miss adds the coral glow on the right picture and says
+    „Popatrz, to ten!” and the word instead. Later misses keep the glow. Nothing is ever
+    removed, greyed out or marked wrong. A 🔊 button repeats the step's prompt.
+44. **Attempts are written per exercise, the moment it is solved**, into this device's
+    `DeviceProgress` (`recordAttempt`): `c + 1`, `w +` the wrong taps, `first + 1` when there
+    were none, under today's local day. So a lesson left halfway keeps what was answered.
+    E1 and *Cyferki* in free play record the same way; *Memory* records nothing (it matches
+    pictures to pictures, it does not test a heard word).
+45. **Stars.** A lesson gives 1 per step (look-and-listen steps included) plus 1 bonus for
+    every 3 first-try answers in a row (a run of 7 gives 2); about 12–15 for a full lesson,
+    so `starsPerChest` 15 is roughly one chest per lesson as PLAN.md intends. A game gives 1
+    per solved pick, match or pair, plus the same streak bonus (E1, E2). Stars are written
+    once, with the lesson record or at the end of a game (`addStars`); an abandoned lesson
+    gives none. The finish screen shows the stars earned; the meter is Phase 6.
+46. **The map sails whenever the next lesson has any step.** Before this phase a lesson was
+    only new words; now one can be reviews and practice only. „Nowe słówka już niedługo!”
+    is said only when there is nothing at all. The bottom bar is one 🎲 button to the game
+    shelf: stories and the album are Phases 9 and 6, and a 🗺 on the map itself leads
+    nowhere (decision 39 keeps unbuilt screens unreachable).
+47. **New UI pictures** from the same pinned Fluent commit: `game-die` (the shelf button),
+    `locked` (Polly holding a lock on a locked tile) and `speaker-high-volume` (🔊 repeat).
+    *Cyferki*'s digit tiles are the keycap pictures of the numbers topic (no text on a child
+    screen), so its four pictures are learned words **outside** the numbers topic.
+48. **Game shelf.** Three tiles: E1 (🔊 over a picture), E2 (keycap 1), E3 (two card backs).
+    Fewer than 4 learned words (derived *learned*, not paused) locks the shelf: each tile
+    shows Polly with a lock and a tap says „Najpierw poznajmy więcej słówek!”. *Cyferki*
+    stays locked until 4 learned words outside the numbers topic exist. Games: E1 is a round
+    of 5 picks over learned words (choices by box, distractors from learned then met words);
+    *Cyferki* one board of 4 pairs; *Memory* 3 pairs (6 cards), a non-pair turning back after
+    1.2 s. Each ends on a finish screen with its stars and returns to the shelf. Game ids in
+    the route: `listen`, `digits`, `memory`.
+
+49. **One more prompt, `games.choose`** („W co zagramy? Dotknij obrazka!”), said on arriving
+    at an open shelf, so the shelf has a spoken instruction like every child screen.
+    `feedback.correct` („Świetnie!”) closes a game.
+50. **Found on the way, fixed in this phase.** (a) Tailwind's `shadow-*` utilities sit in a
+    later cascade layer than the component CSS, so every state ring set as a `box-shadow`
+    was hidden: the 🐢/🐇 *chosen* ring (since Phase 3), and now the selected digit, the
+    matched card, the right answer and the reduced-motion glow. The elements that carry a ring
+    take their resting shadow from the component rule instead. (b) With 9+ progress dots the
+    house and 🐢/🐇 were squeezed out of shape; they no longer shrink. (c) svelte-spa-router
+    keeps a screen mounted when only a parameter changes, so the game screen loads from its
+    params. (d) Two e2e races: a lesson walker that waited on a step the finish screen had
+    replaced, and the Phase 3 speed test that reloaded before the setting was written.
+    Lessons are now 8–12 steps, so the tests that play them get 90–120 s.
+
 ## Open questions
 
 Copied from PLAN.md. Each is settled in the phase named and the answer recorded here.
@@ -521,6 +641,7 @@ Copied from PLAN.md. Each is settled in the phase named and the answer recorded 
 5. **Should one family file per Google account allow several families?** Assumed no: one
    family per account (Phase 7).
 6. **Speech engine and picture set**: kept or replaced by the quality gates in "Speech and
-   pictures are replaceable" (Phases 2, 3 and 5).
+   pictures are replaceable" (Phases 2, 3 and 5). **Still open after Phase 5**: all four gate
+   verdicts need the owner (two phones; the child). Nothing measured here argues for a swap.
 7. **Level-2 and level-3 content** (verbs, adjectives) needs animation, not a still picture.
    The scope of animation per word is decided when Phase 11 starts.

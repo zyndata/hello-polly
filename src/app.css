@@ -62,6 +62,20 @@
 
 @layer components {
   /*
+   * State rings (chosen, selected, glowing, matched) are box-shadows, so the elements that
+   * carry them take their resting shadow from here, not from Tailwind's `shadow-*` utilities,
+   * which sit in a later layer and would hide every ring.
+   */
+  .speed-option,
+  .choice-picture,
+  .digit-tile,
+  .memory-card {
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.1),
+      0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+
+  /*
    * The full-bleed sea of every child screen. Sky at the top, deep sea at the bottom, faint
    * waves drawn over it. The safe areas are padded, never covered, so nothing a child must tap
    * ends up under a notch or the home indicator.
@@ -478,6 +492,173 @@
     animation: bounce 900ms ease-in-out infinite;
   }
 
+  /* Polly beside an exercise: bobs while waiting, hops on a right answer, tilts on a miss. */
+  .polly-buddy {
+    display: block;
+    animation: bob 2.4s ease-in-out infinite;
+  }
+
+  .polly-buddy.is-happy {
+    animation: hop 600ms ease-out 2;
+  }
+
+  .polly-buddy.is-think {
+    animation: tilt 700ms ease-in-out;
+  }
+
+  /* E1 and Cyferki: the pictures to choose from. */
+  .choice-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .choice-grid.choices-4 {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+  }
+
+  .choice-picture {
+    position: relative;
+    width: min(42vw, 34dvh, 15rem);
+    height: min(42vw, 34dvh, 15rem);
+    transition: transform 120ms ease-out;
+  }
+
+  .choices-3 .choice-picture {
+    width: min(42vw, 28dvh, 13rem);
+    height: min(42vw, 28dvh, 13rem);
+  }
+
+  .choices-4 .choice-picture {
+    width: min(40vw, 25dvh, 12rem);
+    height: min(40vw, 25dvh, 12rem);
+  }
+
+  .choice-picture.digits-picture {
+    width: min(38vw, 22dvh, 11rem);
+    height: min(38vw, 22dvh, 11rem);
+  }
+
+  .choice-picture:active {
+    transform: scale(0.94);
+  }
+
+  .choice-picture.is-wiggling {
+    animation: wiggle 450ms ease-in-out;
+  }
+
+  /* The hint after the second miss: the right picture glows coral. */
+  .choice-picture.is-glowing {
+    box-shadow: 0 0 0 6px var(--color-coral);
+    animation: glow 1.2s ease-in-out infinite;
+  }
+
+  /* A right answer: a gold ring and a little jump. */
+  .choice-picture.is-right {
+    box-shadow: 0 0 0 6px var(--color-gold);
+    animation: hop 600ms ease-out;
+  }
+
+  .choice-picture.is-right::after {
+    content: '';
+    position: absolute;
+    inset: -0.75rem;
+    border-radius: calc(var(--radius-card) + 0.75rem);
+    border: 6px solid var(--color-gold);
+    animation: pulse-ring 700ms ease-out forwards;
+    pointer-events: none;
+  }
+
+
+  /*
+   * A matched Cyferki pair leaves the board; its place stays, so nothing else moves. After the
+   * picture rules, so it also beats a wiggle left over from an earlier miss.
+   */
+  .choice-picture.is-gone,
+  .digit-tile.is-gone {
+    animation: fly-away 500ms ease-in forwards;
+    pointer-events: none;
+  }
+
+  .digit-tile {
+    width: 5rem;
+    height: 5rem;
+    transition: transform 150ms ease-out;
+  }
+
+  .digit-tile.is-selected {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 5px var(--color-gold);
+  }
+
+  /* Memory. */
+  .memory-grid {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    gap: 0.75rem;
+  }
+
+  .memory-card {
+    display: block;
+    overflow: hidden;
+    width: min(28vw, 30dvh, 9rem);
+    height: min(28vw, 30dvh, 9rem);
+    transition: transform 150ms ease-out;
+  }
+
+  .memory-card.is-open {
+    animation: flip-in 250ms ease-out;
+  }
+
+  .memory-card.is-matched {
+    box-shadow: 0 0 0 5px var(--color-gold);
+  }
+
+  /* The finish screen's stars. */
+  .earned-star {
+    width: 2.75rem;
+    height: 2.75rem;
+    animation: pop-in 300ms ease-out;
+  }
+
+  /* The map's bottom bar and the game shelf. */
+  .bottom-bar {
+    background: linear-gradient(0deg, rgb(13 71 161 / 0.6), transparent);
+  }
+
+  .game-tile {
+    width: min(40vw, 30dvh, 11rem);
+    height: min(40vw, 30dvh, 11rem);
+    transition: transform 120ms ease-out;
+  }
+
+  .game-tile:active {
+    transform: scale(0.95);
+  }
+
+  .game-tile.is-locked {
+    background: rgb(227 242 253 / 0.7);
+  }
+
+  .game-tile.is-nudged {
+    animation: wiggle 500ms ease-in-out;
+  }
+
+  .tile-lock {
+    position: absolute;
+    right: -0.25rem;
+    bottom: -0.25rem;
+    width: 50%;
+    height: 50%;
+  }
+
+  .tile-card {
+    width: 100%;
+    height: auto;
+  }
+
   @keyframes hold-fill {
     0% {
       opacity: 0.3;
@@ -533,6 +714,60 @@
     }
   }
 
+  @keyframes hop {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-14%);
+    }
+  }
+
+  @keyframes tilt {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    50% {
+      transform: rotate(-12deg);
+    }
+  }
+
+  @keyframes glow {
+    0%,
+    100% {
+      box-shadow: 0 0 0 4px var(--color-coral);
+    }
+    50% {
+      box-shadow: 0 0 0 10px var(--color-coral);
+    }
+  }
+
+  @keyframes fly-away {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    40% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(0.2) translateY(60%);
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+
+  @keyframes flip-in {
+    0% {
+      transform: scaleX(0.2);
+    }
+    100% {
+      transform: scaleX(1);
+    }
+  }
+
   @keyframes pulse-ring {
     0% {
       transform: scale(0.85);
@@ -561,6 +796,13 @@
     }
 
     .ship.is-waiting,
+    .polly-buddy,
+    .choice-picture.is-wiggling,
+    .choice-picture.is-right,
+    .choice-picture.is-right::after,
+    .memory-card.is-open,
+    .earned-star,
+    .game-tile.is-nudged,
     .finish-polly,
     .finish-island,
     .island-wrap.is-nudged,
@@ -572,6 +814,17 @@
     .next-button::after {
       animation: none;
       opacity: 0.8;
+    }
+
+    /* The glow stays, still; a matched pair simply disappears. */
+    .choice-picture.is-glowing {
+      animation: none;
+    }
+
+    .choice-picture.is-gone,
+    .digit-tile.is-gone {
+      animation: none;
+      visibility: hidden;
     }
 
     /* The hold still shows, as a ring that is simply there. */

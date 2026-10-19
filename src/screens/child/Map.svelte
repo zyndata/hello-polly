@@ -2,7 +2,8 @@
   The treasure map, the child's home (PLAN.md "Screens and navigation"): a vertical sea of
   islands, one per lesson. Islands with a flag are lessons done (on any device), Polly's ship
   waits at the next one, and a few more lie ahead. Tapping the ship's island opens the lesson;
-  with no new word to meet, Polly says so instead (STATE.md decision 39). The gear opens the
+  when the next lesson would be empty (nothing new, due or to practise), Polly says so instead
+  (STATE.md decisions 39, 46). The 🎲 at the bottom opens the game shelf. The gear opens the
   parent gate; the long-press home leads back to the picker when there are two or more
   children (decision 36). Nothing here needs reading.
 -->
@@ -16,7 +17,7 @@
   import { prompt, topics } from '../../lib/content';
   import { loadFamily } from '../../lib/db';
   import { liveChild, liveChildren } from '../../lib/domain/children';
-  import { introducedBy, lessonFor } from '../../lib/domain/lesson';
+  import { lessonFor } from '../../lib/domain/lesson';
   import { lessonsDone } from '../../lib/domain/progress';
   import { localDay } from '../../lib/domain/time';
   import { sounds } from '../../lib/sound/effects';
@@ -34,7 +35,8 @@
   const childId = $derived(params?.id ?? '');
   let profile = $state<ChildProfile | undefined>();
   let done = $state(0);
-  let newWords = $state(0);
+  /** Steps in the next lesson; 0 means there is nothing to sail to yet. */
+  let lessonSteps = $state(0);
   let siblings = $state(0);
   let nudge = $state(0);
   let current = $state<HTMLElement | undefined>();
@@ -55,16 +57,16 @@
       profile = child;
       siblings = liveChildren(file).length;
       done = lessonsDone(file.progress[childId]);
-      newWords = introducedBy(lessonFor(file, childId, topics, localDay(new Date()))).length;
+      lessonSteps = lessonFor(file, childId, topics, localDay(new Date())).length;
       await tick();
       current?.scrollIntoView({ block: 'center' });
-      if (speaker().isUnlocked) void speaker().sayPrompt(prompt(newWords > 0 ? 'map.go' : 'map.later'), speed.value);
+      if (speaker().isUnlocked) void speaker().sayPrompt(prompt(lessonSteps > 0 ? 'map.go' : 'map.later'), speed.value);
     })();
   });
 
   function sail() {
     unlock();
-    if (newWords > 0) {
+    if (lessonSteps > 0) {
       sounds().play('tap');
       void push(`/child/${childId}/lesson`);
       return;
@@ -72,6 +74,12 @@
     nudge += 1;
     sounds().play('wiggle');
     void speaker().sayPrompt(prompt('map.later'), speed.value);
+  }
+
+  function games() {
+    unlock();
+    sounds().play('tap');
+    void push(`/child/${childId}/play`);
   }
 
   function gear() {
@@ -115,7 +123,7 @@
                   <Island class="pointer-events-none h-full w-full" />
                 </span>
               {/key}
-              <span class="ship" class:is-waiting={newWords > 0} aria-hidden="true">
+              <span class="ship" class:is-waiting={lessonSteps > 0} aria-hidden="true">
                 <ContentImage id="sailboat" class="pointer-events-none h-full w-full object-contain" />
                 <ContentImage id="parrot" class="ship-polly pointer-events-none object-contain" />
               </span>
@@ -128,5 +136,11 @@
         </li>
       {/each}
     </ol>
+
+    <nav class="bottom-bar flex justify-center gap-4 p-3" aria-label="Menu">
+      <button type="button" class="bar-button size-tap rounded-full bg-foam/90 p-2 shadow-md" aria-label="Gry" data-testid="games" onclick={games}>
+        <ContentImage id="game-die" class="pointer-events-none h-full w-full object-contain" />
+      </button>
+    </nav>
   {/if}
 </ChildLayout>

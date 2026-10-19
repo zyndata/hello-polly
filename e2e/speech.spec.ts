@@ -1,5 +1,6 @@
 import { expect, test } from './fixtures';
 import { gotoParent, passGate } from './gate';
+import { readFamily } from './progress';
 import { fakeSpeech, lastSpoken, speechCalls, spoken } from './speech';
 import words from '../content/words.json' with { type: 'json' };
 
@@ -97,6 +98,8 @@ test.describe('/parent/speech', () => {
 
   test('the default speed starts the toggle', async ({ page }) => {
     await page.getByRole('radio', { name: '🐇 normalnie' }).check();
+    // Stored before the reload, or the reload can win the race against the write.
+    await expect.poll(() => readFamily(page).then((f) => f.settings.defaultSpeed.v)).toBe('normal');
     await page.reload();
     await passGate(page);
     await expect(page.locator('[data-speed="normal"]')).toHaveAttribute('aria-pressed', 'true');

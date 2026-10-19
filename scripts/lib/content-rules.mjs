@@ -30,6 +30,7 @@ export const REQUIRED_PROMPT_IDS = /** @type {const} */ ([
   'feedback.hint',
   'feedback.correct',
   'games.locked',
+  'games.choose',
   'speed.slow',
   'speed.normal',
   'home.hold',
@@ -58,7 +59,7 @@ export const STORY_FUNCTION_WORDS = /** @type {const} */ ([
  * toggle, Polly's ship on the map, the gear of the parent gate and the home button. They count
  * as used, and must exist like any content picture.
  */
-export const UI_IMAGE_IDS = /** @type {const} */ (['parrot', 'turtle', 'rabbit', 'sailboat', 'gear', 'house']);
+export const UI_IMAGE_IDS = /** @type {const} */ (['parrot', 'turtle', 'rabbit', 'sailboat', 'gear', 'house', 'game-die', 'locked', 'speaker-high-volume']);
 
 /**
  * @typedef {object} ContentSet

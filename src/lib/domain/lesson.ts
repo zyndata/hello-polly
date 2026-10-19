@@ -91,5 +91,5 @@ export function lessonFor(file: FamilyFile, child: ChildId, topics: readonly Top
 }
 
 /** The words a lesson introduces, in order. */
-export const introducedBy = (steps: readonly LessonStep[]): WordId[] =>
+export const introducedBy = (steps: readonly Pick<LessonStep, 'kind' | 'word'>[]): WordId[] =>
   steps.flatMap((s) => (s.kind === 'introduce' ? [s.word] : []));

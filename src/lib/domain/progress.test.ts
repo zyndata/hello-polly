@@ -5,7 +5,8 @@ import { emptyFamily, defaultPlan } from './family';
 import { wordStates } from './learning';
 import { introducedBy, lessonFor } from './lesson';
 import { mergeFamily } from './merge';
-import { lessonsDone, recordIntroduced, recordLesson } from './progress';
+import { totalStars } from './rewards';
+import { addStars, lessonsDone, recordAttempt, recordIntroduced, recordLesson } from './progress';
 
 const T1 = '2026-10-19T08:00:00.000Z';
 const T2 = '2026-10-19T09:00:00.000Z';
@@ -44,5 +45,32 @@ describe('progress', () => {
     let file = family();
     file = { ...file, plans: { ...file.plans, c1: { v: { ...defaultPlan(), queue: ['pets-farm.duck'] }, t: T2, d: 'dev-a' } } };
     expect(introducedBy(lessonFor(file, 'c1', topics, TODAY))[0]).toBe('pets-farm.duck');
+  });
+
+  it('records solved exercises per word and day, with first tries and wrong taps', () => {
+    let file = family();
+    file = recordAttempt(file, 'c1', 'dev-a', 'fruit.apple', TODAY, 0);
+    file = recordAttempt(file, 'c1', 'dev-a', 'fruit.apple', TODAY, 2);
+    file = recordAttempt(file, 'c1', 'dev-a', 'fruit.apple', '2026-10-20', 0);
+    file = recordAttempt(file, 'c1', 'dev-a', 'fruit.pear', TODAY, 1);
+    const p = file.progress.c1?.['dev-a'];
+    expect(p?.attempts).toEqual({
+      'fruit.apple': { [TODAY]: { c: 2, w: 2, first: 1 }, '2026-10-20': { c: 1, w: 0, first: 1 } },
+      'fruit.pear': { [TODAY]: { c: 1, w: 1, first: 0 } }
+    });
+    expect(p?.seq).toBe(4);
+    // Two first tries on two days: still practising, one more makes it learned.
+    expect(wordStates(file.progress.c1).get('fruit.apple')?.status).toBe('practising');
+    file = recordAttempt(file, 'c1', 'dev-a', 'fruit.apple', '2026-10-20', 0);
+    expect(wordStates(file.progress.c1).get('fruit.apple')).toMatchObject({ status: 'learned', box: 1, due: '2026-10-21' });
+  });
+
+  it('adds stars on this device only, never taking any away', () => {
+    let file = addStars(family(), 'c1', 'dev-a', 12);
+    file = addStars(file, 'c1', 'dev-b', 3);
+    expect(addStars(file, 'c1', 'dev-a', 0)).toBe(file);
+    expect(addStars(file, 'c1', 'dev-a', -5)).toBe(file);
+    expect(file.progress.c1?.['dev-a']?.stars).toBe(12);
+    expect(totalStars(file.progress.c1)).toBe(15);
   });
 });

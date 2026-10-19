@@ -44,7 +44,7 @@
 
 <button
   type="button"
-  class="home-button size-tap rounded-full bg-foam/85 p-2 shadow-md {className}"
+  class="home-button size-tap shrink-0 rounded-full bg-foam/85 p-2 shadow-md {className}"
   class:is-holding={holding}
   aria-label="Wyjście: przytrzymaj"
   data-testid="home"

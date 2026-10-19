@@ -26,11 +26,11 @@
   }
 </script>
 
-<div class="flex gap-3 {className}" role="group" aria-label="Tempo mowy">
+<div class="flex shrink-0 gap-3 {className}" role="group" aria-label="Tempo mowy">
   {#each options as option (option.value)}
     <button
       type="button"
-      class="speed-option size-tap rounded-full bg-foam/80 p-2 shadow-md"
+      class="speed-option size-tap rounded-full bg-foam/80 p-2"
       class:is-chosen={speed.value === option.value}
       aria-label={option.label}
       aria-pressed={speed.value === option.value}

@@ -12,7 +12,7 @@ import { WebSpeechEngine } from './web-speech';
 
 export { Speaker, type Lang, type SpeakOutcome } from './speaker';
 export type { EngineVoice } from './engine';
-export { spokenForm, type Segment } from './prompt';
+export { promptSegments, spokenForm, type Segment } from './prompt';
 
 let shared: Speaker | undefined;
 

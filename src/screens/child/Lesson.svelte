@@ -1,25 +1,34 @@
 <!--
-  The lesson, Phase 4 edition (PLAN.md Phase 4 task 5; STATE.md decision 39): look and listen
-  only. Each new word of the next lesson (≤ 3, from `composeLesson`) is one big picture: Polly
-  says „Popatrz i posłuchaj.” and the word, the picture pulses until the child taps it, and the
-  tap says the word again and records it as introduced. A big ▶ then moves on. After the last
-  word the island is won: the lesson is recorded and the child sails back to the map.
-  The picks (E1–E3) join in Phase 5.
+  The lesson player (PLAN.md "A lesson", Phase 5 task 1): the steps of `composeLesson`, with
+  their pictures planned once by `planLesson` (STATE.md decisions 41–42).
+
+  - Look and listen: one big picture; Polly says „Popatrz i posłuchaj.” and the word, the
+    picture pulses until the child taps it (that records it as introduced), then a big ▶.
+  - Picks (E1): „Gdzie jest {word}?” and 2–4 pictures, with errorless feedback; each solved
+    pick is recorded as an attempt at once (decision 44) and the next step follows by itself.
+  - Finish: the island gets its flag, the stars appear (decision 45), and the lesson and its
+    stars are written together. Then the child sails back to the map.
+
+  Progress dots, 🐢/🐇, Polly's reactions, 🔊 on picks, and the long-press home throughout.
 -->
 <script lang="ts">
   import { onMount } from 'svelte';
   import { replace } from 'svelte-spa-router';
   import ChildLayout from '../../lib/components/ChildLayout.svelte';
-  import ContentImage from '../../lib/components/ContentImage.svelte';
+  import FinishScreen from '../../lib/components/FinishScreen.svelte';
   import HomeButton from '../../lib/components/HomeButton.svelte';
-  import Island from '../../lib/components/Island.svelte';
+  import PickExercise from '../../lib/components/PickExercise.svelte';
+  import PollyBuddy, { type Mood } from '../../lib/components/PollyBuddy.svelte';
+  import RepeatButton from '../../lib/components/RepeatButton.svelte';
   import SpeakingPicture from '../../lib/components/SpeakingPicture.svelte';
   import SpeedToggle from '../../lib/components/SpeedToggle.svelte';
-  import { prompt, topics, word } from '../../lib/content';
+  import { prompt, topics, word, words } from '../../lib/content';
   import { loadFamily } from '../../lib/db';
-  import { liveChild } from '../../lib/domain/children';
+  import { childPlan, liveChild } from '../../lib/domain/children';
+  import { planLesson, starsFor, type PlayStep } from '../../lib/domain/exercise';
+  import { wordStates } from '../../lib/domain/learning';
   import { introducedBy, lessonFor } from '../../lib/domain/lesson';
-  import { recordIntroduced, recordLesson } from '../../lib/domain/progress';
+  import { addStars, recordAttempt, recordIntroduced, recordLesson } from '../../lib/domain/progress';
   import { localDay } from '../../lib/domain/time';
   import { sounds } from '../../lib/sound/effects';
   import { speaker, spokenForm, type Segment } from '../../lib/speech';
@@ -27,63 +36,88 @@
   import { change } from '../../lib/store';
   import { unlock } from '../../lib/unlock';
   import type { Screen } from '../../lib/screens';
-  import type { Word } from '../../lib/types';
 
   let { screen, params }: { screen: Screen; params?: Record<string, string> | null } = $props();
 
   /** The finish screen stays at least this long before sailing back. */
-  const FINISH_MS = 1500;
+  const FINISH_MS = 2500;
 
   const childId = $derived(params?.id ?? '');
   const lessonId = crypto.randomUUID();
   const startedAt = new Date().toISOString();
 
-  let words = $state<Word[]>([]);
+  let steps = $state<PlayStep[]>([]);
   let index = $state(0);
-  /** The current picture has been tapped at least once. */
+  /** Look and listen: the picture has been tapped at least once. */
   let tapped = $state(false);
   let finished = $state(false);
+  let stars = $state(0);
+  let mood = $state<Mood>('idle');
+  let beat = $state(0);
+  let exercise = $state<{ ask: (lead?: Segment[]) => void } | undefined>();
+  /** Per solved pick, in order: right on the first try. */
+  const firstTries: boolean[] = [];
 
-  const current = $derived(words[index]);
+  const current = $derived(steps[index]);
+  const currentWord = $derived(current ? word(current.word) : undefined);
+  /** The opening line goes with the first step, whatever it is. */
+  const opening = (): Segment[] => (index === 0 ? [{ lang: 'pl', text: prompt('lesson.start') }] : []);
 
   onMount(() => {
     void (async () => {
       const file = await loadFamily();
       if (!liveChild(file, childId)) return replace('/');
-      const ids = introducedBy(lessonFor(file, childId, topics, localDay(new Date())));
-      words = ids.flatMap((id) => (word(id) ? [word(id) as Word] : []));
-      if (words.length === 0) return replace(`/child/${childId}`);
+      const composed = lessonFor(file, childId, topics, localDay(new Date()));
+      const context = { plan: childPlan(file, childId), states: wordStates(file.progress[childId]), words };
+      steps = planLesson(composed, context, lessonId).filter((s) => word(s.word));
+      if (steps.length === 0) return replace(`/child/${childId}`);
       present();
     })();
   });
 
+  function react(next: Mood) {
+    mood = next;
+    beat += 1;
+  }
+
+  /** Look and listen speaks here; a pick asks its own question when it appears. */
   function present() {
-    const w = words[index];
-    if (!w) return;
-    const lead: Segment[] =
-      index === 0
-        ? [
-            { lang: 'pl', text: prompt('lesson.start') },
-            { lang: 'pl', text: prompt('intro.look') }
-          ]
-        : [{ lang: 'pl', text: prompt('intro.next') }];
+    const w = currentWord;
+    if (current?.kind !== 'introduce' || !w) return;
+    const first = introducedBy(steps)[0] === w.id;
+    const lead: Segment[] = [...opening(), { lang: 'pl', text: prompt(first ? 'intro.look' : 'intro.next') }];
     void speaker().saySegments([...lead, { lang: 'en', text: spokenForm(w) }], speed.value);
   }
 
-  function onTap() {
-    const w = current;
+  function onIntroTap() {
+    const w = currentWord;
     if (!w || tapped) return;
     tapped = true;
+    react('happy');
     const at = new Date().toISOString();
     void change((file, _now, device) => recordIntroduced(file, childId, device, w.id, at));
   }
 
-  async function next() {
+  function onSolved(misses: number) {
+    const w = currentWord;
+    if (!w) return;
+    firstTries.push(misses === 0);
+    const day = localDay(new Date());
+    void change((file, _now, device) => recordAttempt(file, childId, device, w.id, day, misses));
+    void advance();
+  }
+
+  function next() {
     unlock();
     sounds().play('tap');
-    if (index < words.length - 1) {
+    void advance();
+  }
+
+  async function advance() {
+    if (index < steps.length - 1) {
       index += 1;
       tapped = false;
+      react('idle');
       present();
       return;
     }
@@ -92,8 +126,12 @@
 
   async function finish() {
     finished = true;
-    const record = { at: startedAt, words: words.map((w) => w.id) };
-    const saved = change((file, _now, device) => recordLesson(file, childId, device, lessonId, record));
+    stars = starsFor(steps.length, firstTries);
+    const record = { at: startedAt, words: introducedBy(steps) };
+    const earned = stars;
+    const saved = change((file, _now, device) =>
+      addStars(recordLesson(file, childId, device, lessonId, record), childId, device, earned)
+    );
     sounds().play('sparkle');
     const minimum = new Promise((r) => setTimeout(r, FINISH_MS));
     await Promise.all([saved, minimum, speaker().sayPrompt(prompt('lesson.finish'), speed.value)]);
@@ -104,38 +142,53 @@
 <ChildLayout>
   <h1 class="sr-only">{screen.title}</h1>
   {#if finished}
-    <div class="flex flex-1 flex-col items-center justify-center gap-4 p-6" data-testid="lesson-finished">
-      <span class="finish-island">
-        <Island flag class="h-full w-full" />
-      </span>
-      <ContentImage id="parrot" class="finish-polly pointer-events-none size-32 object-contain drop-shadow-xl" />
+    <div class="flex flex-1 flex-col" data-testid="lesson-finished">
+      <FinishScreen {stars} flag />
     </div>
-  {:else if current}
+  {:else if current && currentWord}
     <header class="flex items-center justify-between gap-3 p-3">
       <HomeButton onexit={() => replace(`/child/${childId}`)} />
-      <ol class="flex gap-2" aria-label="Postęp">
-        {#each words as w, i (w.id)}
-          <li class="lesson-dot" class:is-done={i < index || (i === index && tapped)} class:is-now={i === index}></li>
+      <ol class="flex flex-wrap justify-center gap-2" aria-label="Postęp" data-testid="dots">
+        {#each steps as step, i (i)}
+          <li class="lesson-dot" class:is-done={i < index || (i === index && step.kind === 'introduce' && tapped)} class:is-now={i === index}></li>
         {/each}
       </ol>
       <SpeedToggle />
     </header>
 
-    <div class="flex flex-1 flex-col items-center justify-center gap-6 p-4">
-      {#key current.id}
-        <div class="lesson-picture" class:is-cued={!tapped} data-testid="lesson-word" data-word={current.id}>
-          <SpeakingPicture word={current} class="lesson-picture-button" ontap={onTap} />
-        </div>
-      {/key}
-      <div class="grid h-28 place-items-center">
-        {#if tapped}
-          <button type="button" class="next-button" aria-label="Dalej" data-testid="next" onclick={next}>
-            <svg viewBox="0 0 48 48" class="pointer-events-none h-full w-full" aria-hidden="true" focusable="false">
-              <path d="M18 12 L 36 24 L 18 36 Z" class="fill-white" />
-            </svg>
-          </button>
+    <div class="flex flex-1 flex-col items-center justify-center gap-6 p-4" data-testid="step" data-kind={current.kind} data-index={index}>
+      {#key index}
+        {#if current.kind === 'introduce'}
+          <div class="lesson-picture" class:is-cued={!tapped} data-testid="lesson-word" data-word={currentWord.id}>
+            <SpeakingPicture word={currentWord} class="lesson-picture-button" ontap={onIntroTap} />
+          </div>
+          <div class="grid h-28 place-items-center">
+            {#if tapped}
+              <button type="button" class="next-button" aria-label="Dalej" data-testid="next" onclick={next}>
+                <svg viewBox="0 0 48 48" class="pointer-events-none h-full w-full" aria-hidden="true" focusable="false">
+                  <path d="M18 12 L 36 24 L 18 36 Z" class="fill-white" />
+                </svg>
+              </button>
+            {/if}
+          </div>
+        {:else}
+          <PickExercise
+            bind:this={exercise}
+            target={current.word}
+            choices={current.choices}
+            lead={opening()}
+            onsolved={onSolved}
+            onmood={react}
+          />
         {/if}
-      </div>
+      {/key}
     </div>
+
+    <footer class="flex items-end justify-between p-3">
+      <PollyBuddy {mood} {beat} class="size-20" />
+      {#if current.kind === 'pick'}
+        <RepeatButton onrepeat={() => exercise?.ask()} />
+      {/if}
+    </footer>
   {/if}
 </ChildLayout>

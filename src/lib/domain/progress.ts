@@ -3,7 +3,7 @@
  * every change bumps `seq`, so the newer copy wins the merge (PLAN.md "Sync model").
  */
 
-import type { ChildId, DeviceId, DeviceProgress, FamilyFile, Instant, LessonRecord, WordId } from '../types';
+import type { ChildId, Day, DeviceId, DeviceProgress, FamilyFile, Instant, LessonRecord, WordId } from '../types';
 import { emptyProgress } from './family';
 
 type ChildProgress = Record<DeviceId, DeviceProgress> | undefined;
@@ -31,6 +31,26 @@ export function recordLesson(file: FamilyFile, child: ChildId, device: DeviceId,
   return change(file, child, device, (p) =>
     id in p.lessons ? undefined : { ...p, lessons: { ...p.lessons, [id]: { at: lesson.at, words: [...lesson.words] } } }
   );
+}
+
+/**
+ * One solved exercise for `word` on `day` (STATE.md decision 44): one correct answer, the wrong
+ * taps before it, and a first-try correct when there were none.
+ */
+export function recordAttempt(file: FamilyFile, child: ChildId, device: DeviceId, word: WordId, day: Day, misses: number): FamilyFile {
+  const wrong = Math.max(0, Math.floor(misses));
+  return change(file, child, device, (p) => {
+    const byDay = p.attempts[word] ?? {};
+    const a = byDay[day] ?? { c: 0, w: 0, first: 0 };
+    const next = { ...a, c: a.c + 1, w: a.w + wrong, first: a.first + (wrong === 0 ? 1 : 0) };
+    return { ...p, attempts: { ...p.attempts, [word]: { ...byDay, [day]: next } } };
+  });
+}
+
+/** Stars earned on this device. Monotonic: nothing is ever taken away. */
+export function addStars(file: FamilyFile, child: ChildId, device: DeviceId, stars: number): FamilyFile {
+  const n = Math.floor(stars);
+  return change(file, child, device, (p) => (n > 0 ? { ...p, stars: p.stars + n } : undefined));
 }
 
 /** Lessons finished on every device: the islands with a flag. */
