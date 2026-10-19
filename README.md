@@ -27,7 +27,7 @@ Pre A1 Starters). The code, comments and documentation are in English.
 
 | Treasure map (child) | Look and listen (child) | Listen and tap (child) |
 |---|---|---|
-| ![Islands in a blue sea: one with a flag, the next with Polly on her sailboat, two more ahead](docs/screenshots/map.png) | ![A big red heart to tap, progress dots, the turtle and rabbit speed buttons and a house to hold for leaving](docs/screenshots/lesson.png) | ![Two hearts to choose from after two wrong taps: the right one glows coral; Polly and a speaker button below](docs/screenshots/pick.png) |
+| ![Islands in a blue sea: one with a flag, the next with Polly on her sailboat, two more ahead](docs/screenshots/map.png) | ![A big red flag to tap, progress dots, the turtle and rabbit speed buttons and a house to hold for leaving](docs/screenshots/lesson.png) | ![Two flags to choose from after two wrong taps: the right one glows coral; Polly and a speaker button below](docs/screenshots/pick.png) |
 | **Cyferki (child)** | **Island won (child)** | **Start (child)** |
 | ![Four fruit pictures above four digit tiles 1–4; digit 2 is picked and ringed in gold](docs/screenshots/digits.png) | ![The island with its flag, Polly, and a row of gold stars earned](docs/screenshots/finish.png) | ![Polly the parrot on the sea, ringed by a pulsing gold circle: tap to begin](docs/screenshots/start.png) |
 | **Parent gate** | **Word plan (parent)** | **Speech and voices (parent)** |

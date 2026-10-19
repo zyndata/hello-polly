@@ -76,7 +76,7 @@ test('the child screens need no reading', async ({ page }) => {
 
   await openPanel(page);
   await page.getByRole('button', { name: 'Dodaj dziecko' }).click();
-  await fillChild(page, 'Staś', 'owl');
+  await fillChild(page, 'Staś', 'hippopotamus');
   await page.getByRole('button', { name: 'Dodaj dziecko' }).click();
   await page.getByTestId('to-child').click();
   await expect(page.getByTestId('picker')).toBeVisible();

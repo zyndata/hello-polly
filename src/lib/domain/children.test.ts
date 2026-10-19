@@ -21,13 +21,13 @@ describe('children', () => {
     const plan = { ...defaultPlan(), queue: ['fruit.mango'] };
     const file = addChild(emptyFamily('f'), 'c1', { name: 'Ola', avatar: 'fox' }, T1, 'dev-a', plan);
     expect(childPlan(file, 'c1').queue).toEqual(['fruit.mango']);
-    expect(() => addChild(file, 'c1', { name: 'Staś', avatar: 'owl' }, T2, 'dev-a')).toThrow();
+    expect(() => addChild(file, 'c1', { name: 'Staś', avatar: 'hippopotamus' }, T2, 'dev-a')).toThrow();
   });
 
   it('lists live children by name in Polish order, without the deleted ones', () => {
     let file = emptyFamily('f');
     file = addChild(file, 'c1', { name: 'Zosia', avatar: 'fox' }, T1, 'd');
-    file = addChild(file, 'c2', { name: 'Łucja', avatar: 'owl' }, T1, 'd');
+    file = addChild(file, 'c2', { name: 'Łucja', avatar: 'hippopotamus' }, T1, 'd');
     file = addChild(file, 'c3', { name: 'Ala', avatar: 'frog' }, T1, 'd');
     expect(liveChildren(file).map((c) => c.profile.name)).toEqual(['Ala', 'Łucja', 'Zosia']);
     file = deleteChild(file, 'c2', T2, 'd');

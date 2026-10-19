@@ -281,7 +281,7 @@ Recorded with the device and voice named (PLAN.md "Speech and pictures are repla
 |----------|------------------------------|---------|----------------|
 | Pictures | end of Phase 2               | open: owner's verdict pending | Contact sheet of the 45 pictures rendered in Chromium (Linux) at 96 px, sent to the owner on 2026-10-18. Own pre-check: all decode; possible confusions are white heart (reads lavender), orange vs mango vs lemon (three round fruit), and the stylised bird. |
 | Speech   | end of Phase 3               | open: owner's verdict pending | Needs real voices on an Android phone and an iPhone (see Phase 3 acceptance). Tool: `/#/parent/speech`, every word at 🐢. Criteria: every word of the first four topics told apart at slow speed by a first-time listener; `say` overrides ≤ ~10 % of words (≤ 4 of 45). |
-| Pictures | Phase 5, with the child      | open: needs the owner and the child | Criterion: the child names or points to ≥ 90 % of the first four topics' pictures when asked in Polish. Tool: the lesson's picks, or `/#/parent/speech`'s word board, asked „Gdzie jest…?” by the parent. Watch: white heart, orange vs mango vs lemon, the bird, and the 🐇 toggle being the *rabbit* word (decision 26). |
+| Pictures | Phase 5, with the child      | open: needs the owner and the child | Criterion: the child names or points to ≥ 90 % of the first four topics' pictures when asked in Polish. Tool: the lesson's picks, or `/#/parent/speech`'s word board, asked „Gdzie jest…?” by the parent. Watch: white flag, orange vs mango vs lemon, the bird, and the 🐇 toggle being the *rabbit* word (decision 26). |
 | Speech   | Phase 5, with the child      | open: needs the owner and the child | Same criteria as Phase 3, judged with the child on the phone the child uses; record the device and the voice names `/#/parent/speech` reports. |
 
 ## Decisions
@@ -662,6 +662,25 @@ Not a phase: the manual setup PLAN.md lists under "Owner prerequisites", then `/
     fix is in Cloudflare, by turning JavaScript detections off for the zone, not in the CSP.
     Until then, "zero CSP violations" on the live site means zero besides this one. The
     local `test:e2e:csp` gate has no edge and stays at zero.
+
+### 2026-10-19 — Avatar set and colour pictures (owner requests)
+
+54. **Owl and octopus out, hippopotamus and dog in** (changes decision 33). The avatar set is
+    now fox, lion, panda, hippopotamus, frog, service-dog, penguin, koala. The owner asked for
+    a German shepherd: Fluent has none, and its *Service dog* (pointed ears, dark muzzle) is
+    the closest, vest and leash included; the plain `dog` word picture was the alternative.
+    `service-dog` needs `floatPrecision: 2` to fit the 25 kB budget. `owl.svg` and
+    `octopus.svg` are deleted outright: the owner is the only user of this test version and
+    no profile uses them, so no migration and no `CONTENT_VERSION` bump.
+55. **Colours are flags, not hearts** (changes decision 10). Fluent has no flag in all 11
+    colours, so the 11 `<colour>-flag` pictures are Fluent's *Triangular flag* recoloured: a
+    new optional `recolor` map (upstream `#RRGGBB` → new) per entry in `content/images.json`,
+    applied by `scripts/lib/recolor.mjs` before SVGO, in attributes and in `feColorMatrix`
+    inner shadows; a mapped colour missing from the picture fails the build. Only the four
+    fabric colours change (two gradient stops, the highlight, the inner shadow); the wooden
+    pole stays. ATTRIBUTION.md marks these files *recoloured* (MIT allows modification).
+    The 11 hearts are deleted. The pictures quality gate's "white heart" watch item now
+    reads "white flag". No new package, no CSP change.
 
 ## Open questions
 

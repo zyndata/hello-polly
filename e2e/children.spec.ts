@@ -32,7 +32,7 @@ test('with one child the picker never appears; a second makes it appear; removin
   // A second child, added in the parent panel.
   await openPanel(page);
   await page.getByRole('button', { name: 'Dodaj dziecko' }).click();
-  await fillChild(page, 'Staś', 'owl');
+  await fillChild(page, 'Staś', 'hippopotamus');
   await page.getByRole('button', { name: 'Dodaj dziecko' }).click();
   await expect(page.getByTestId('children').locator('li')).toHaveCount(2);
   await page.getByTestId('to-child').click();
