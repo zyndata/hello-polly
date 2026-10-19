@@ -98,12 +98,12 @@ curl -I --resolve hellopolly.gorny.dev:443:127.0.0.1 https://hellopolly.gorny.de
 
 ## GitHub repository configuration
 
-**Secrets** (Settings → Secrets and variables → Actions → *Secrets*), the same values as Eat
-My Way's when the same deploy user is used:
+**Secrets** (Settings → Secrets and variables → Actions → *Secrets*). The deploy user, host and
+WAF token are the same as Eat My Way's; the SSH key is Hello Polly's own (STATE.md decision 52):
 
 | Secret | Value |
 |---|---|
-| `SSH_PRIVATE_KEY` | Private key of a deploy user that can write `/var/www/hellopolly` and run `docker` |
+| `SSH_PRIVATE_KEY` | Private half of the `hello-polly-deploy@github-actions` key, whose public half is in the deploy user's `authorized_keys`. The user can write `/var/www/hellopolly` and is in the `docker` group. To rotate: new key pair, replace the line on the server, overwrite this secret |
 | `SSH_KNOWN_HOSTS` | Output of `ssh-keyscan <host>`. It pins the server's host key, and the workflow relies on it (no `StrictHostKeyChecking=no`) |
 | `SSH_USER` | Deploy user name |
 | `SSH_HOST` | The VM's raw IP, not a hostname (every name in the zone is proxied and never reaches :22) |

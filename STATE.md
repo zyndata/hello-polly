@@ -32,14 +32,14 @@ Statuses: `pending` → `in-progress` → `done` (or `blocked` with a note).
       (injecting an inline script and an inline style) produced `script-src-elem` and
       `style-src-attr` violations, so the listener does catch them. `/assets/*` answers
       `immutable`, the document `no-cache`.
-- [ ] **CI green on `dev`. A `v0.1.0` tag deploys and `https://<domain>` serves the shell.**
+- [x] **CI green on `dev`. A `v0.1.0` tag deploys and `https://<domain>` serves the shell.**
       CI: **green** on `dev` (run 39159075235 on `dc65ced`: check, unit, build, and e2e
-      34/34 in Chromium + WebKit). Half met: the `v0.1.0`
-      deploy is **open**: releasing is a separate act (`/release`), and it needs the owner
-      prerequisites first: the `SSH_*` secrets and `DEPLOY_CHECK_TOKEN`, DNS for
-      `hellopolly.gorny.dev`, the nginx site and certificate, and the Cloudflare rules
-      (docs/DEPLOYMENT.md). Closed by: owner sets those up → `/release` → v0.1.0 → the
-      workflow's health check returns 200.
+      34/34 in Chromium + WebKit). Deploy: **met 2026-10-19** once the owner prerequisites
+      were in place (decision 51). `v0.1.0` (tagged on `f0789ec`, released from `fb32444`
+      whose CI run 39290289871 was green) ran `deploy.yml` 39303275715 green, including the
+      health check through Cloudflare. https://hellopolly.gorny.dev serves the shell with the
+      Caddyfile CSP; `/`, `/sw.js` and `/manifest.webmanifest` are `no-cache` and
+      `cf-cache-status: DYNAMIC`, `/assets/*` is `immutable` and `HIT`.
 - [ ] **Works from a clean checkout on Windows and Linux.** Linux: verified (fresh clone →
       `npm ci` → check → test → build → e2e 34/34 in both engines). Windows: **open**; this
       environment has no Windows machine. Nothing in the build path is platform-specific (no
@@ -72,7 +72,7 @@ unset (docs/DEVELOPMENT.md). Not a repository problem.
       word.** `scripts/content-rules.test.ts` runs both CLIs exactly as the npm script does
       against temporary fixture checkouts (plus a stray file and a stale attribution), and
       the pure rules against fixtures (also the prompt catalog, duplicates, ids vs file names).
-- [ ] **Images load from jsDelivr in a production build (verified after the next tag) and
+- [x] **Images load from jsDelivr in a production build (verified after the next tag) and
       from the origin in dev.** Origin: **verified**. `e2e/images.spec.ts` loads every
       picture the content uses from the origin in Chromium and WebKit under `vite preview`
       and under Caddy with the production CSP (`test:e2e:csp` 38 passed, 2 opt-in skipped,
@@ -83,6 +83,11 @@ unset (docs/DEVELOPMENT.md). Not a repository problem.
       `vX.Y.Z` → on the live site, the first screen with a picture requests
       `cdn.jsdelivr.net/gh/zyndata/hello-polly@vX.Y.Z/content/img/…` with no CSP report.
       The CSP half was checked before that (see the CI note below).
+      **Met 2026-10-19 with `v0.1.0`:** the live bundle builds its picture URLs with ref
+      `v0.1.0`, and on https://hellopolly.gorny.dev all 64 pictures in `content/img/` load
+      from `cdn.jsdelivr.net/gh/zyndata/hello-polly@v0.1.0/content/img/` in Chromium and
+      WebKit with no `img-src` violation. (The one violation on the page is Cloudflare's own
+      injected script, decision 53, not a picture.)
 
 Tests: 111 unit tests (11 files), e2e 38 + 2 opt-in in Chromium and WebKit. Content: 4 topics,
 45 words, 17 prompts, 48 pictures, 470.8 kB, the largest 24.7 kB (cow).
@@ -630,6 +635,33 @@ need the owner and the child; they stay open in "Quality gates" until the owner 
     params. (d) Two e2e races: a lesson walker that waited on a step the finish screen had
     replaced, and the Phase 3 speed test that reloaded before the setting was written.
     Lessons are now 8–12 steps, so the tests that play them get 90–120 s.
+
+### 2026-10-19 — Owner prerequisites & first release (v0.1.0)
+
+Not a phase: the manual setup PLAN.md lists under "Owner prerequisites", then `/release`.
+
+51. **Owner prerequisites done as docs/DEPLOYMENT.md describes.** DNS A record (proxied);
+    the existing WAF rule *Deploy health check* extended to `hellopolly.gorny.dev` (same
+    token as Eat My Way and Szok); the two host-scoped cache rules; `/var/www/hellopolly`
+    owned by the deploy user; the nginx site and a DNS-01 certificate (renewal dry run
+    green). The five `SSH_*` / `DEPLOY_CHECK_TOKEN` secrets are set. The `VITE_GOOGLE_*`
+    variables are not, as nothing reads them before Phase 7.
+52. **Deviation: a deploy key of its own.** DEPLOYMENT.md assumed Eat My Way's key would be
+    reused, but GitHub secrets cannot be read back and the developer's own key is not on the
+    server. Hello Polly therefore has its own ed25519 key (`hello-polly-deploy@github-actions`)
+    in `authorized_keys` of the deploy user. Its private half exists only as the
+    `SSH_PRIVATE_KEY` secret, so revoking it touches no other project. The rulesets
+    *Protect release tags* (`refs/tags/v*`: deletion, update, force-push blocked) and
+    *Protect main* (deletion, force-push blocked), both without bypass actors, were created
+    from the documentation, because Eat My Way's could not be read (private repository on
+    the free plan).
+53. **Known, not ours: one CSP violation from Cloudflare.** The edge injects an inline
+    `window.__CF$cv$params` script (Bot Fight Mode / JavaScript detections) into every HTML
+    response in the zone, Eat My Way included. `script-src` blocks it, as it should: its
+    hash changes per request, and `unsafe-inline` is ruled out. The app is unaffected. The
+    fix is in Cloudflare, by turning JavaScript detections off for the zone, not in the CSP.
+    Until then, "zero CSP violations" on the live site means zero besides this one. The
+    local `test:e2e:csp` gate has no edge and stays at zero.
 
 ## Open questions
 

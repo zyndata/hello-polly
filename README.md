@@ -20,7 +20,8 @@ Pre A1 Starters). The code, comments and documentation are in English.
 > child has learned four words, a game shelf opens with three games: *Posłuchaj i dotknij*,
 > *Cyferki* (tap a digit, hear a word, find its picture) and *Memory*. The parent panel sits
 > behind a parent gate (a number in Polish words). The treasure chest, sync and stories come in
-> later phases. [STATE.md](STATE.md) records what was decided and what is still open.
+> later phases. The development build is live at https://hellopolly.gorny.dev (v0.1.0).
+> [STATE.md](STATE.md) records what was decided and what is still open.
 
 ## What it looks like (so far)
 
