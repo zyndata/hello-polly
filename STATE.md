@@ -325,6 +325,9 @@ both under `vite preview` and with `test:e2e:csp` against the container (zero CS
 the CSP is unchanged in this phase). `rewards.spec.ts` also ran 3 × 3 repeats in both engines
 (90 runs) with no failure. Bundle: 255.6 kB JS (86.1 kB gzip), 34.7 kB CSS.
 
+CI: **green** on `dev` (run 39311290913 on `5a34b58`: check, unit 258, `check:content`,
+build, e2e 106 passed + 2 opt-in skipped in Chromium + WebKit).
+
 ## Quality gates
 
 Recorded with the device and voice named (PLAN.md "Speech and pictures are replaceable").
