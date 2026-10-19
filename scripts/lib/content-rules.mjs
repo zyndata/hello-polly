@@ -32,7 +32,11 @@ export const REQUIRED_PROMPT_IDS = /** @type {const} */ ([
   'games.locked',
   'speed.slow',
   'speed.normal',
-  'home.hold'
+  'home.hold',
+  'picker.who',
+  'map.go',
+  'map.later',
+  'gate.parents'
 ]);
 
 /**
@@ -50,10 +54,11 @@ export const STORY_FUNCTION_WORDS = /** @type {const} */ ([
 ]);
 
 /**
- * Pictures the screens use directly rather than through content: Polly on the start screen,
- * and the 🐢/🐇 speed toggle. They count as used, and must exist like any content picture.
+ * Pictures the screens use directly rather than through content: Polly, the 🐢/🐇 speed
+ * toggle, Polly's ship on the map, the gear of the parent gate and the home button. They count
+ * as used, and must exist like any content picture.
  */
-export const UI_IMAGE_IDS = /** @type {const} */ (['parrot', 'turtle', 'rabbit']);
+export const UI_IMAGE_IDS = /** @type {const} */ (['parrot', 'turtle', 'rabbit', 'sailboat', 'gear', 'house']);
 
 /**
  * @typedef {object} ContentSet
@@ -63,6 +68,7 @@ export const UI_IMAGE_IDS = /** @type {const} */ (['parrot', 'turtle', 'rabbit']
  * @property {any[]} praise
  * @property {any[]} stories
  * @property {any[]} stickers
+ * @property {any[]} avatars   image ids a child profile may use
  */
 
 /**
@@ -235,6 +241,17 @@ export function validateContent(content, imageBytes) {
     if (!isText(sticker.set)) errors.push(`${where}: no set`);
     if (sticker.word !== undefined && !words.has(sticker.word)) errors.push(`${where}: word "${sticker.word}" does not exist`);
     checkImage(where, sticker.image);
+  }
+
+  // Avatars: a non-empty list of distinct picture ids.
+  if (!Array.isArray(content.avatars) || content.avatars.length === 0) errors.push('avatars: empty');
+  else {
+    const seen = new Set();
+    for (const id of content.avatars) {
+      if (seen.has(id)) errors.push(`avatar "${id}": duplicate`);
+      seen.add(id);
+      checkImage('avatar', id);
+    }
   }
 
   for (const id of UI_IMAGE_IDS) checkImage(`UI picture`, id);

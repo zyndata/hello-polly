@@ -4,8 +4,9 @@
  * decides which words, how many, in what order, and how many pictures to choose from.
  */
 
-import type { Day, WordId, WordPlan } from '../types';
-import { isDue, type WordState } from './learning';
+import type { ChildId, Day, FamilyFile, Topic, WordId, WordPlan } from '../types';
+import { childPlan } from './children';
+import { isDue, nextWords, wordStates, type WordState } from './learning';
 
 export const MAX_STEPS = 12;
 export const MIN_STEPS = 8;
@@ -81,3 +82,14 @@ export function composeLesson({ plan, states, candidates, today }: LessonInput):
   }
   return [...intro, ...practice];
 }
+
+/** The next lesson of one child, from the merged family file. */
+export function lessonFor(file: FamilyFile, child: ChildId, topics: readonly Topic[], today: Day): LessonStep[] {
+  const plan = childPlan(file, child);
+  const states = wordStates(file.progress[child]);
+  return composeLesson({ plan, states, candidates: nextWords(plan, states, topics, child), today });
+}
+
+/** The words a lesson introduces, in order. */
+export const introducedBy = (steps: readonly LessonStep[]): WordId[] =>
+  steps.flatMap((s) => (s.kind === 'introduce' ? [s.word] : []));

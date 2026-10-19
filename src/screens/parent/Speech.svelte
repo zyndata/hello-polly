@@ -9,23 +9,21 @@
   import ParentLayout from '../../lib/components/ParentLayout.svelte';
   import SpeakingPicture from '../../lib/components/SpeakingPicture.svelte';
   import SpeedToggle from '../../lib/components/SpeedToggle.svelte';
-  import { prompt, topics, word } from '../../lib/content';
+  import VoiceCheck from '../../lib/components/VoiceCheck.svelte';
+  import { topics, word } from '../../lib/content';
   import { getDeviceId, getPreferredVoices, loadFamily, setPreferredVoice, updateFamily, type PreferredVoiceIds } from '../../lib/db';
   import { DEFAULT_SETTINGS, RATE_RANGES, readSettings, setSetting } from '../../lib/domain/family';
   import { EFFECT_NAMES, sounds, type Effect } from '../../lib/sound/effects';
   import { speaker, type EngineVoice } from '../../lib/speech';
   import { speed } from '../../lib/speech/speed.svelte';
-  import { baseLang, chooseVoice, normaliseLang } from '../../lib/speech/voices';
+  import { baseLang } from '../../lib/speech/voices';
   import { unlock } from '../../lib/unlock';
   import type { Screen } from '../../lib/screens';
-  import type { Accent, FamilySettings, Speed, Word } from '../../lib/types';
+  import type { Accent, FamilySettings } from '../../lib/types';
 
   let { screen }: { screen: Screen; params?: Record<string, string> | null } = $props();
 
-  /** How long an empty voice list counts as "still loading". */
-  const SEARCH_MS = 3000;
   const POLISH = 'pl-PL';
-  const TEST_WORD = word('fruit.banana') as Word;
 
   const ACCENTS: { value: Accent; label: string; adjective: string }[] = [
     { value: 'en-GB', label: 'Brytyjski (en-GB)', adjective: 'brytyjski' },
@@ -46,11 +44,8 @@
   let settings = $state<FamilySettings>({ ...DEFAULT_SETTINGS });
   let preferred = $state<PreferredVoiceIds>({});
   let voices = $state<readonly EngineVoice[]>(voice.engine.voices());
-  let searching = $state(true);
   let deviceId = '';
 
-  const english = $derived(chooseVoice(voices, settings.accent, preferred[settings.accent]));
-  const polish = $derived(chooseVoice(voices, POLISH, preferred[POLISH]));
   const accentName = $derived(ACCENTS.find((a) => a.value === settings.accent)?.adjective ?? '');
   const englishVoices = $derived(sortVoices(voices.filter((v) => baseLang(v.lang) === 'en')));
   const polishVoices = $derived(sortVoices(voices.filter((v) => baseLang(v.lang) === 'pl')));
@@ -63,7 +58,6 @@
 
   onMount(() => {
     const stop = voice.engine.onVoicesChanged(() => (voices = voice.engine.voices()));
-    const timer = setTimeout(() => (searching = false), SEARCH_MS);
     void (async () => {
       const [family, ids, device] = await Promise.all([loadFamily(), getPreferredVoices(), getDeviceId()]);
       settings = readSettings(family);
@@ -71,10 +65,7 @@
       deviceId = device;
       voices = voice.engine.voices();
     })();
-    return () => {
-      stop();
-      clearTimeout(timer);
-    };
+    return stop;
   });
 
   async function save<K extends keyof FamilySettings>(key: K, value: FamilySettings[K]) {
@@ -89,16 +80,6 @@
     voice.configure(settings, preferred);
   }
 
-  function playEnglish(at: Speed) {
-    unlock();
-    void voice.sayWord(TEST_WORD, at);
-  }
-
-  function playPolish() {
-    unlock();
-    void voice.speak(prompt('start.hello'), { lang: 'pl', speed: 'normal' });
-  }
-
   function playEffect(effect: Effect) {
     unlock();
     sounds().play(effect);
@@ -111,64 +92,7 @@
 <ParentLayout title={screen.title}>
   <section class="card" aria-labelledby="check">
     <h2 id="check" class="card-title">Sprawdzenie głosu</h2>
-    {#if !available}
-      <p class="notice" data-testid="no-speech">
-        Ta przeglądarka nie potrafi mówić. Otwórz Hello Polly w Chrome na Androidzie albo w Safari na
-        iPhonie lub iPadzie.
-      </p>
-    {:else if voices.length === 0 && searching}
-      <p class="text-ink-muted">Szukam głosów na tym urządzeniu…</p>
-    {:else}
-      <dl class="grid gap-3">
-        <div data-testid="voice-en">
-          <dt class="font-bold">Angielski ({accentName})</dt>
-          <dd>
-            {#if english && normaliseLang(english.lang) === settings.accent}
-              <strong>{english.name}</strong> <span class="text-ink-muted">({english.lang}, {where(english)})</span>
-            {:else if english}
-              Nie ma głosu w akcencie {accentName === 'brytyjski' ? 'brytyjskim' : 'amerykańskim'}, więc mówi
-              <strong>{english.name}</strong> <span class="text-ink-muted">({english.lang}, {where(english)})</span>.
-            {:else}
-              <span class="notice">Na tym urządzeniu nie ma angielskiego głosu. Bez niego słówek nie będzie słychać.</span>
-            {/if}
-          </dd>
-        </div>
-        <div data-testid="voice-pl">
-          <dt class="font-bold">Polski (polecenia)</dt>
-          <dd>
-            {#if polish}
-              <strong>{polish.name}</strong> <span class="text-ink-muted">({polish.lang}, {where(polish)})</span>
-            {:else}
-              <span class="notice">
-                Na tym urządzeniu nie ma polskiego głosu. Polecenia dla dziecka będą wtedy tylko obrazkami i
-                animacją, a angielskie słówka nadal będzie słychać.
-              </span>
-            {/if}
-          </dd>
-        </div>
-      </dl>
-      {#if !english || !polish}
-        <div class="text-sm text-ink-muted" data-testid="install-help">
-          <p class="font-bold">Jak dodać głos:</p>
-          <ul class="list-disc pl-5">
-            <li>
-              Android: Ustawienia → System → Języki → Zamiana tekstu na mowę → Usługi mowy Google → Zainstaluj
-              dane głosowe (angielski i polski).
-            </li>
-            <li>iPhone i iPad: Ustawienia → Dostępność → Treść mówiona → Głosy → Angielski / Polski.</li>
-          </ul>
-          <p>Po instalacji odśwież tę stronę.</p>
-        </div>
-      {/if}
-    {/if}
-
-    {#if available}
-      <div class="flex flex-wrap gap-2">
-        <button type="button" class="button" onclick={() => playEnglish('slow')}>🐢 „{TEST_WORD.en}” wolno</button>
-        <button type="button" class="button" onclick={() => playEnglish('normal')}>🐇 „{TEST_WORD.en}” normalnie</button>
-        <button type="button" class="button" onclick={playPolish}>Polski: „{prompt('start.hello')}”</button>
-      </div>
-    {/if}
+    <VoiceCheck accent={settings.accent} {preferred} />
   </section>
 
   <section class="card" aria-labelledby="accent">
@@ -335,5 +259,8 @@
     </div>
   </section>
 
-  <p><a class="link" href="#/">Wróć do ekranu startowego</a></p>
+  <p class="flex flex-wrap gap-4">
+    <a class="link" href="#/parent">Panel rodzica</a>
+    <a class="link" href="#/">Wróć do dziecka</a>
+  </p>
 </ParentLayout>

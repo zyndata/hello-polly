@@ -2,7 +2,8 @@
  * The shapes of PLAN.md "Content model" and "Local data model (synced)".
  *
  * Deviations from the plan's sketch are STATE.md decisions: image fields hold image ids, not
- * file names (9), and `AttemptDay` carries an optional `days` on the compacted bucket (16).
+ * file names (9), `AttemptDay` carries an optional `days` on the compacted bucket (16), and
+ * `DeviceProgress` records finished lessons (35).
  */
 
 // ---------------------------------------------------------------------------------------------
@@ -157,6 +158,12 @@ export interface ChestOpening {
   stickers: string[];
 }
 
+/** A lesson (one island) finished on one device, and the new words it introduced. */
+export interface LessonRecord {
+  at: Instant;
+  words: WordId[];
+}
+
 /** Everything one device recorded about one child. Only that device ever writes it. */
 export interface DeviceProgress {
   /** Bumped on every local change. */
@@ -169,6 +176,8 @@ export interface DeviceProgress {
   stars: number;
   /** Keyed by an event id unique to the opening. */
   chestsOpened: Record<string, ChestOpening>;
+  /** Lessons finished on this device, keyed by an event id (STATE.md decision 35). */
+  lessons: Record<string, LessonRecord>;
   minutes: Record<Day, number>;
   storiesHeard: Record<string, number>;
 }

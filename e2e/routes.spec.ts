@@ -6,8 +6,11 @@ function sample(path: string): string {
   return path.replace(/:[A-Za-z]+/g, 'x1');
 }
 
+/** Built child screens need a real child: with the sample id they lead back to `/` (children.spec). */
+const needsChild = (s: (typeof screens)[number]) => s.path.startsWith('/child/:id') && s.built === true;
+
 test.describe('every screen renders, under its Polish title', () => {
-  for (const screen of screens) {
+  for (const screen of screens.filter((s) => !needsChild(s))) {
     test(`${screen.path} → ${screen.title}`, async ({ page }) => {
       await page.goto(`/#${sample(screen.path)}`);
       await expect(page.getByRole('heading', { level: 1, name: screen.title })).toBeVisible();

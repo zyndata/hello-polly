@@ -142,6 +142,98 @@
     background: var(--color-deep-sea);
   }
 
+  .button:disabled,
+  .button-quiet:disabled,
+  .keypad-key:disabled,
+  .icon-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .button-quiet {
+    min-height: 44px;
+    border: 2px solid var(--color-ocean);
+    border-radius: 9999px;
+    background: white;
+    padding: 0.375rem 1rem;
+    font-weight: 700;
+    color: var(--color-deep-sea);
+  }
+
+  .button-danger {
+    min-height: 44px;
+    border-radius: 9999px;
+    background: #b3261e;
+    padding: 0.5rem 1rem;
+    font-weight: 700;
+    color: white;
+  }
+
+  .icon-button {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border-radius: 9999px;
+    background: white;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-deep-sea);
+    box-shadow: 0 1px 2px rgb(13 71 161 / 0.2);
+  }
+
+  /* A toggle on a word in the plan editor. */
+  .chip {
+    min-height: 36px;
+    border: 1px solid var(--color-sky);
+    border-radius: 9999px;
+    background: white;
+    padding: 0.125rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-deep-sea);
+  }
+
+  .chip.is-on {
+    border-color: var(--color-ocean);
+    background: var(--color-ocean);
+    color: white;
+  }
+
+  .avatar-option {
+    cursor: pointer;
+    min-height: 44px;
+    outline: 3px solid transparent;
+  }
+
+  .avatar-option.is-chosen {
+    outline-color: var(--color-gold);
+    background: var(--color-foam);
+  }
+
+  .avatar-option:focus-within {
+    box-shadow: 0 0 0 3px var(--color-ocean);
+  }
+
+  /* Parent gate. */
+  .keypad-key {
+    min-height: 56px;
+    border-radius: 1rem;
+    background: white;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--color-deep-sea);
+    box-shadow: 0 1px 3px rgb(13 71 161 / 0.25);
+  }
+
+  .keypad-key:active:not(:disabled) {
+    background: var(--color-foam);
+  }
+
+  .gate-number.is-missed {
+    animation: wiggle 400ms ease-in-out;
+  }
+
   .choice {
     display: flex;
     min-height: 44px;
@@ -214,6 +306,213 @@
     opacity: 0;
   }
 
+  /* The long-press home: a gold ring fills while it is held. */
+  .home-button {
+    position: relative;
+  }
+
+  .home-ring {
+    position: absolute;
+    inset: -5px;
+    border-radius: 9999px;
+    border: 5px solid var(--color-gold);
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  .home-button.is-holding .home-ring {
+    animation: hold-fill 1000ms linear forwards;
+  }
+
+  /* Child picker. */
+  .picker-child {
+    min-width: 9rem;
+    transition: transform 120ms ease-out;
+  }
+
+  .picker-child:active {
+    transform: scale(0.95);
+  }
+
+  /* Treasure map: islands zigzag down the sea. */
+  .map-path {
+    display: grid;
+    align-content: start;
+    gap: 0.5rem;
+    overscroll-behavior: contain;
+  }
+
+  .map-stop {
+    display: flex;
+    justify-content: center;
+  }
+
+  .map-stop-0 {
+    padding-right: 30%;
+  }
+
+  .map-stop-1 {
+    padding-left: 10%;
+  }
+
+  .map-stop-2 {
+    padding-left: 30%;
+  }
+
+  .map-stop-3 {
+    padding-right: 10%;
+  }
+
+  .island-still,
+  .island-current {
+    display: block;
+    width: 9rem;
+    height: 7rem;
+  }
+
+  .island-still.is-ahead {
+    opacity: 0.45;
+    filter: saturate(0.5);
+  }
+
+  .island-current {
+    width: 11rem;
+    height: 8.5rem;
+  }
+
+  .island-wrap {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .island-wrap.is-nudged {
+    animation: wiggle 500ms ease-in-out;
+  }
+
+  .ship {
+    position: absolute;
+    right: -1.5rem;
+    bottom: -0.5rem;
+    width: 5.5rem;
+    height: 5.5rem;
+  }
+
+  .ship.is-waiting {
+    animation: bob 2s ease-in-out infinite;
+  }
+
+  .ship-polly {
+    position: absolute;
+    left: 1.6rem;
+    top: -1.2rem;
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+
+  /* Look and listen. */
+  .lesson-dot {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.45);
+  }
+
+  .lesson-dot.is-now {
+    box-shadow: 0 0 0 3px var(--color-foam);
+  }
+
+  .lesson-dot.is-done {
+    background: var(--color-gold);
+  }
+
+  .lesson-picture {
+    position: relative;
+    border-radius: var(--radius-card);
+  }
+
+  .lesson-picture.is-cued::after {
+    content: '';
+    position: absolute;
+    inset: -0.75rem;
+    border-radius: calc(var(--radius-card) + 0.75rem);
+    border: 6px solid var(--color-gold);
+    animation: pulse-ring 1.6s ease-out infinite;
+    pointer-events: none;
+  }
+
+  .lesson-picture-button {
+    width: min(70vw, 45dvh, 22rem);
+    height: min(70vw, 45dvh, 22rem);
+  }
+
+  /* ▶: still under the finger, with a ring pulsing around it as the cue. */
+  .next-button {
+    position: relative;
+    width: 6rem;
+    height: 6rem;
+    border-radius: 9999px;
+    background: var(--color-leaf);
+    padding: 1rem;
+    box-shadow: 0 6px 0 rgb(0 0 0 / 0.15);
+  }
+
+  .next-button::after {
+    content: '';
+    position: absolute;
+    inset: -0.5rem;
+    border-radius: 9999px;
+    border: 5px solid var(--color-gold);
+    animation: pulse-ring 1.6s ease-out infinite;
+    pointer-events: none;
+  }
+
+  .finish-island {
+    display: block;
+    width: 16rem;
+    height: 12rem;
+    animation: pop-in 500ms ease-out;
+  }
+
+  .finish-polly {
+    animation: bounce 900ms ease-in-out infinite;
+  }
+
+  @keyframes hold-fill {
+    0% {
+      opacity: 0.3;
+      transform: scale(0.6);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    25% {
+      transform: rotate(-6deg);
+    }
+    75% {
+      transform: rotate(6deg);
+    }
+  }
+
+  @keyframes pop-in {
+    0% {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
   @keyframes bounce {
     0%,
     100% {
@@ -259,6 +558,27 @@
     .start-ring {
       animation: none;
       opacity: 0.8;
+    }
+
+    .ship.is-waiting,
+    .finish-polly,
+    .finish-island,
+    .island-wrap.is-nudged,
+    .gate-number.is-missed {
+      animation: none;
+    }
+
+    .lesson-picture.is-cued::after,
+    .next-button::after {
+      animation: none;
+      opacity: 0.8;
+    }
+
+    /* The hold still shows, as a ring that is simply there. */
+    .home-button.is-holding .home-ring {
+      animation: none;
+      opacity: 1;
+      transform: none;
     }
   }
 }

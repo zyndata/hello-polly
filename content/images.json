@@ -60,6 +60,18 @@
     "chicken": "assets/Chicken/Color/chicken_color.svg",
     "duck": "assets/Duck/Color/duck_color.svg",
     "parrot": "assets/Parrot/Color/parrot_color.svg",
-    "turtle": "assets/Turtle/Color/turtle_color.svg"
+    "turtle": "assets/Turtle/Color/turtle_color.svg",
+    "sailboat": "assets/Sailboat/Color/sailboat_color.svg",
+    "gear": "assets/Gear/Color/gear_color.svg",
+    "house": "assets/House/Color/house_color.svg",
+
+    "fox": "assets/Fox/Color/fox_color.svg",
+    "lion": { "path": "assets/Lion/Color/lion_color.svg", "floatPrecision": 1 },
+    "panda": "assets/Panda/Color/panda_color.svg",
+    "owl": "assets/Owl/Color/owl_color.svg",
+    "frog": "assets/Frog/Color/frog_color.svg",
+    "octopus": "assets/Octopus/Color/octopus_color.svg",
+    "penguin": "assets/Penguin/Color/penguin_color.svg",
+    "koala": "assets/Koala/Color/koala_color.svg"
   }
 }

@@ -25,7 +25,8 @@ function valid(): ContentSet {
         pages: [{ text: 'I like fruit. Look! An apple and a banana.', scene: [{ word: 'fruit.apple', image: 'red-apple', x: 0, y: 0, size: 1 }] }]
       }
     ],
-    stickers: [{ id: 'sticker.banana', image: 'banana', word: 'fruit.banana', set: 'food' }]
+    stickers: [{ id: 'sticker.banana', image: 'banana', word: 'fruit.banana', set: 'food' }],
+    avatars: ['red-apple']
   };
 }
 /** The content pictures above, plus the pictures the screens use directly. */
@@ -43,6 +44,14 @@ describe('validateContent', () => {
     expect(errorsOf(valid(), sizes)).toEqual([
       'word "fruit.banana": image "banana" has no file in content/img/',
       'sticker "sticker.banana": image "banana" has no file in content/img/'
+    ]);
+  });
+
+  it('fails on an empty avatar list, a duplicate avatar and an avatar with no picture', () => {
+    expect(errorsOf({ ...valid(), avatars: [] })).toEqual(['avatars: empty']);
+    expect(errorsOf({ ...valid(), avatars: ['red-apple', 'red-apple', 'unicorn'] })).toEqual([
+      'avatar "red-apple": duplicate',
+      'avatar: image "unicorn" has no file in content/img/'
     ]);
   });
 

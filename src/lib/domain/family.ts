@@ -11,7 +11,7 @@ import {
   type Instant,
   type WordPlan
 } from '../types';
-import { DEFAULT_STAMP, lww } from './lww';
+import { DEFAULT_STAMP, lww, nextStamp } from './lww';
 
 export const DEFAULT_SETTINGS: FamilySettings = {
   accent: 'en-GB',
@@ -42,6 +42,7 @@ export const emptyProgress = (): DeviceProgress => ({
   attempts: {},
   stars: 0,
   chestsOpened: {},
+  lessons: {},
   minutes: {},
   storiesHeard: {}
 });
@@ -87,9 +88,8 @@ export function readSettings(file: FamilyFile): FamilySettings {
 }
 
 /**
- * The file with one setting changed by this device. The stamp is `now`, or 1 ms after the
- * register's current stamp when that is later (another device's clock ran ahead): the latest
- * local intent must win the merge (STATE.md decision 31).
+ * The file with one setting changed by this device, stamped by `nextStamp` (STATE.md
+ * decision 31).
  */
 export function setSetting<K extends keyof FamilySettings>(
   file: FamilyFile,
@@ -99,7 +99,5 @@ export function setSetting<K extends keyof FamilySettings>(
   device: DeviceId
 ): FamilyFile {
   const v = (key === 'slowRate' || key === 'normalRate' ? clampRate(key, value as number) : value) as FamilySettings[K];
-  const previous = file.settings[key]?.t ?? DEFAULT_STAMP.t;
-  const t = now > previous ? now : new Date(Date.parse(previous) + 1).toISOString();
-  return { ...file, settings: { ...file.settings, [key]: lww(v, t, device) } };
+  return { ...file, settings: { ...file.settings, [key]: lww(v, nextStamp(file.settings[key]?.t, now), device) } };
 }

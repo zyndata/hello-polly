@@ -14,9 +14,11 @@
   interface Props {
     word: Word;
     class?: string;
+    /** Called on every tap, before the word is spoken. */
+    ontap?: () => void;
   }
 
-  let { word, class: className = '' }: Props = $props();
+  let { word, class: className = '', ontap }: Props = $props();
 
   let speaking = $state(false);
   /** Each tap gets a number, so an older tap finishing does not stop the newer bounce. */
@@ -25,6 +27,7 @@
   async function say() {
     unlock();
     sounds().play('tap');
+    ontap?.();
     const tap = ++taps;
     speaking = true;
     await speaker().sayWord(word, speed.value);

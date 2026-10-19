@@ -16,5 +16,9 @@
   {"id":"games.locked","pl":"Najpierw poznajmy więcej słówek!"},
   {"id":"speed.slow","pl":"Powoli."},
   {"id":"speed.normal","pl":"Normalnie."},
-  {"id":"home.hold","pl":"Przytrzymaj dłużej, żeby wyjść."}
+  {"id":"home.hold","pl":"Przytrzymaj dłużej, żeby wyjść."},
+  {"id":"picker.who","pl":"Kto dziś płynie z Polly? Dotknij swojego zwierzątka!"},
+  {"id":"map.go","pl":"Dotknij statku i płyniemy!"},
+  {"id":"map.later","pl":"Nowe słówka już niedługo!"},
+  {"id":"gate.parents","pl":"To jest miejsce dla rodzica. Dotknij Polly, żeby wrócić."}
 ]

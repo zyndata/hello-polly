@@ -1,5 +1,6 @@
 import type { Request } from '@playwright/test';
 import { expect, test } from './fixtures';
+import { gotoParent } from './gate';
 
 const AUDIO_FILE = /\.(mp3|wav|ogg|oga|m4a|aac|opus|flac|weba|webm)(\?|$)/i;
 
@@ -16,9 +17,11 @@ test('speech and sound make no request, and nothing audio is ever fetched', asyn
   const origin = new URL(baseURL as string).origin;
 
   await page.goto('/');
+  // Playwright's WebKit for Windows ships no speech engine; Linux WebKit (CI) and Chromium do.
+  test.skip(!(await page.evaluate(() => Boolean(window.speechSynthesis))), 'this browser build has no speech engine');
   await page.getByTestId('start').click();
   await expect(page).toHaveURL(/#\/setup$/);
-  await page.goto('/#/parent/speech');
+  await gotoParent(page, '/parent/speech');
   await expect(page.locator('[data-word-id="fruit.banana"]')).toBeVisible();
   // Everything the screen needs (its pictures) has loaded; from here on, only speech and sound.
   await expect

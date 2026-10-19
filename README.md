@@ -10,20 +10,24 @@ It runs in the browser and installs as a PWA on a phone, tablet or computer. The
 **Polish**; the only English the child hears is the vocabulary itself (CEFR A1 / Cambridge
 Pre A1 Starters). The code, comments and documentation are in English.
 
-> **Status: in development. Phases 1–3 of 11 are done**: the scaffold, the content and the
-> local data layer, and speech. The start screen is real (Polly; the first tap unlocks the
-> device's voice and she says hello), and so is the parent's *Mowa i głosy* screen: a voice
-> check that names the English and Polish voices found, the accent, both speeds, and every word
-> of the first four topics (colours, numbers 1–10, fruit, pets and farm animals: 45 words) to
-> tap and hear 🐢 slowly or 🐇 normally. The other screens are still Polish placeholders, and
-> nothing a child can learn with exists yet. [STATE.md](STATE.md) records what was decided and
-> what is still open.
+> **Status: in development. Phases 1–4 of 11 are done**: the scaffold, the content and the
+> local data layer, speech, and the first things a child can do. A parent sets up a child
+> (nickname and an animal picture), chooses the topics and, if they like, the exact words to
+> start with. The child gets a treasure map of islands: Polly's ship sails to the next one, and
+> each island is a short *look and listen* lesson of up to three new words, a big picture each,
+> spoken 🐢 slowly or 🐇 normally. With two or more children the start screen shows a picker.
+> The parent panel sits behind a parent gate (a number in Polish words), and holds each child's
+> word plan: topics, a queue of "these words next", words already known or paused. Exercises,
+> rewards and sync come in later phases. [STATE.md](STATE.md) records what was decided and what
+> is still open.
 
 ## What it looks like (so far)
 
-| Start (child) | Speech and voices (parent) |
-|---|---|
-| ![Polly the parrot on the sea, ringed by a pulsing gold circle: tap to begin](docs/screenshots/start.png) | ![The parent's speech screen: voice check, accent, speeds](docs/screenshots/speech.png) |
+| Treasure map (child) | Look and listen (child) | Start (child) |
+|---|---|---|
+| ![Islands in a blue sea: one with a flag, the next with Polly on her sailboat, two more ahead](docs/screenshots/map.png) | ![A big red heart to tap, progress dots, the turtle and rabbit speed buttons and a house to hold for leaving](docs/screenshots/lesson.png) | ![Polly the parrot on the sea, ringed by a pulsing gold circle: tap to begin](docs/screenshots/start.png) |
+| **Parent gate** | **Word plan (parent)** | **Speech and voices (parent)** |
+| ![The parent gate: „dziesięć” written in words above a number keypad](docs/screenshots/gate.png) | ![A child's next new words and the word plan: queue, random order, topics](docs/screenshots/plan.png) | ![The parent's speech screen: voice check, accent, speeds](docs/screenshots/speech.png) |
 
 ## What it will and will not do
 

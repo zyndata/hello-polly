@@ -28,3 +28,13 @@ export function lww<T>(v: T, t: Instant, d: DeviceId): Lww<T> {
 
 /** The stamp of a default value: older than any real write, identical on every device. */
 export const DEFAULT_STAMP = { t: '1970-01-01T00:00:00.000Z', d: '' } as const;
+
+/**
+ * The stamp for a local write over a register stamped `previous`: `now`, or 1 ms after
+ * `previous` when that is later (another device's clock ran ahead). The latest local intent
+ * must win the merge (STATE.md decisions 31 and 34).
+ */
+export function nextStamp(previous: Instant | undefined, now: Instant): Instant {
+  const before = previous ?? DEFAULT_STAMP.t;
+  return now > before ? now : new Date(Date.parse(before) + 1).toISOString();
+}

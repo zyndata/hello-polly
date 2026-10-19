@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures';
+import { gotoParent, passGate } from './gate';
 import { fakeSpeech, lastSpoken, speechCalls, spoken } from './speech';
 import words from '../content/words.json' with { type: 'json' };
 
@@ -25,7 +26,7 @@ test.describe('start screen', () => {
 test.describe('/parent/speech', () => {
   test.beforeEach(async ({ page }) => {
     await fakeSpeech(page);
-    await page.goto('/#/parent/speech');
+    await gotoParent(page, '/parent/speech');
     await expect(page.getByTestId('voice-en')).toContainText('Fake English (UK)');
   });
 
@@ -88,6 +89,7 @@ test.describe('/parent/speech', () => {
       ]);
 
     await page.reload();
+    await passGate(page);
     await expect(page.getByLabel('Amerykański (en-US)')).toBeChecked();
     await expect(page.getByTestId('slow-rate')).toHaveText('0,50');
     await expect(page.getByLabel('Powtarzaj wolno dwa razy')).toBeChecked();
@@ -96,6 +98,7 @@ test.describe('/parent/speech', () => {
   test('the default speed starts the toggle', async ({ page }) => {
     await page.getByRole('radio', { name: '🐇 normalnie' }).check();
     await page.reload();
+    await passGate(page);
     await expect(page.locator('[data-speed="normal"]')).toHaveAttribute('aria-pressed', 'true');
     await page.locator('[data-word-id="colours.red"]').click();
     await expect.poll(() => lastSpoken(page)).toEqual(['red', 'en-GB', 0.9]);
@@ -107,6 +110,7 @@ test.describe('/parent/speech', () => {
     await page.locator('[data-word-id="fruit.apple"]').click();
     await expect.poll(() => spoken(page).then((s) => s.at(-1)?.voice)).toBe('Fake English (US)');
     await page.reload();
+    await passGate(page);
     await expect(page.getByTestId('voice-en')).toContainText('Fake English (US)');
   });
 });
@@ -114,7 +118,7 @@ test.describe('/parent/speech', () => {
 test('a new tap cuts off the word being spoken', async ({ page }) => {
   // A fake so slow (about 30 s a word) that the first word is still going at the second tap.
   await fakeSpeech(page, { msPerChar: 2000 });
-  await page.goto('/#/parent/speech');
+  await gotoParent(page, '/parent/speech');
   await page.locator('[data-word-id="fruit.watermelon"]').click();
   await expect.poll(() => page.evaluate(() => window.__speech?.spoken.at(-1)?.outcome)).toBe('speaking');
   await page.locator('[data-word-id="fruit.pear"]').click();
@@ -128,7 +132,7 @@ test('a new tap cuts off the word being spoken', async ({ page }) => {
 
 test('without a Polish voice, the check says so and prompts drop their Polish', async ({ page }) => {
   await fakeSpeech(page, { voices: [{ name: 'Only English', lang: 'en-GB' }] });
-  await page.goto('/#/parent/speech');
+  await gotoParent(page, '/parent/speech');
   await expect(page.getByTestId('voice-en')).toContainText('Only English');
   await expect(page.getByTestId('voice-pl')).toContainText('nie ma polskiego głosu');
   await expect(page.getByTestId('install-help')).toBeVisible();
@@ -139,7 +143,7 @@ test('without a Polish voice, the check says so and prompts drop their Polish', 
 
 test('without a British voice, the check names the American one in use', async ({ page }) => {
   await fakeSpeech(page, { voices: [{ name: 'Samantha', lang: 'en-US' }, { name: 'Zosia', lang: 'pl-PL' }] });
-  await page.goto('/#/parent/speech');
+  await gotoParent(page, '/parent/speech');
   await expect(page.getByTestId('voice-en')).toContainText('Nie ma głosu w akcencie brytyjskim');
   await expect(page.getByTestId('voice-en')).toContainText('Samantha');
 });
@@ -148,6 +152,6 @@ test('without any speech, the check says so plainly', async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(window, 'speechSynthesis', { value: undefined, configurable: true });
   });
-  await page.goto('/#/parent/speech');
+  await gotoParent(page, '/parent/speech');
   await expect(page.getByTestId('no-speech')).toBeVisible();
 });

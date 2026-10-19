@@ -1,9 +1,15 @@
 import type { Component } from 'svelte';
 import { wrap } from 'svelte-spa-router/wrap';
 import type { WrappedComponent } from 'svelte-spa-router/wrap';
+import Gated from './components/Gated.svelte';
 import Placeholder from './components/Placeholder.svelte';
 import { notFound, screens, type Screen } from './screens';
+import Setup from '../screens/Setup.svelte';
 import Start from '../screens/Start.svelte';
+import Lesson from '../screens/child/Lesson.svelte';
+import TreasureMap from '../screens/child/Map.svelte';
+import ParentChild from '../screens/parent/Child.svelte';
+import Panel from '../screens/parent/Panel.svelte';
 import Speech from '../screens/parent/Speech.svelte';
 
 /**
@@ -11,21 +17,28 @@ import Speech from '../screens/parent/Speech.svelte';
  * one document, so Caddy needs no per-route rules.
  *
  * A screen marked `built` renders its component below; every other route is a placeholder
- * until its phase builds it. The catch-all is last, because the router matches in insertion
- * order.
+ * until its phase builds it. Every `/parent` route, built or not, sits behind the parent gate
+ * (STATE.md decision 37). The catch-all is last, because the router matches in insertion order.
  */
 /** What the router hands every screen. */
 type ScreenComponent = Component<{ screen: Screen; params?: Record<string, string> | null }>;
 
 const built: Record<string, ScreenComponent> = {
   '/': Start,
-  '/parent/speech': Speech
+  '/child/:id': TreasureMap,
+  '/child/:id/lesson': Lesson,
+  '/parent': Panel,
+  '/parent/child/:id': ParentChild,
+  '/parent/speech': Speech,
+  '/setup': Setup
 };
 
+export const isGated = (screen: Screen): boolean => screen.path === '/parent' || screen.path.startsWith('/parent/');
+
 function route(screen: Screen): WrappedComponent {
-  if (!screen.built) return wrap({ component: Placeholder, props: { screen } });
-  const component = built[screen.path];
+  const component = screen.built ? built[screen.path] : (Placeholder as ScreenComponent);
   if (!component) throw new Error(`Screen ${screen.path} is marked built but has no component`);
+  if (isGated(screen)) return wrap({ component: Gated as ScreenComponent, props: { screen, inner: component } });
   return wrap({ component, props: { screen } });
 }
 

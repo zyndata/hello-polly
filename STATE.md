@@ -10,7 +10,7 @@ Any deviation from [PLAN.md](PLAN.md) must be recorded here before proceeding.
 | 1     | Scaffold & Docker                                   | done        | 2026-10-18 |
 | 2     | Content pipeline & local data layer                 | done        | 2026-10-18 |
 | 3     | Speech                                              | done        | 2026-10-19 |
-| 4     | Children, word plan, parent gate, look-and-listen   | pending     |           |
+| 4     | Children, word plan, parent gate, look-and-listen   | done        | 2026-10-19 |
 | 5     | Lessons & first exercises                           | pending     |           |
 | 6     | Rewards                                             | pending     |           |
 | 7     | Drive sync (one account, many devices)              | pending     |           |
@@ -138,6 +138,74 @@ build, e2e 62 passed + 2 opt-in skipped in Chromium + WebKit).
 Found on the way: WebKit with espeak on Linux reports an empty `voiceURI` for every voice,
 which crashed the voice list (duplicate keys). Voice ids now fall back to name + language
 and are made unique (decision 22); a unit test covers it.
+
+### Phase 4 acceptance (2026-10-19)
+
+- [x] **With one child the picker never appears; adding a second child makes it appear;
+      removing it makes it disappear again.** `e2e/children.spec.ts`: first run → one child →
+      the start tap goes straight to her map (no picker, and no home button on it); a second
+      child added in the parent panel → `/` shows the picker with two avatars and speaks
+      `picker.who`; the long-press home on the second child's map leads back to it (a short
+      press only says `home.hold`); deleting the second child (inline „Na pewno?”, tombstone)
+      → `/` goes straight to the first child's map again, also after a reload and the tap.
+      Unit: `children.test.ts` (add, edit, tombstone without the name, the tombstone beating a
+      newer offline rename in both merge orders, Polish name order, the stamp rule).
+- [x] **A queued word is the next word introduced, ahead of topic order.** e2e: *mango*
+      queued during the first run is the first picture of the first lesson (then *red*,
+      *blue*); after that lesson, *duck* queued in the parent panel jumps to the head of
+      „Następne nowe słówka” and is the first picture of the next lesson. A second test: the
+      queue reordered with ↑ (*lemon* before *mango*), *red* marked known and *blue* paused →
+      the lesson is *lemon*, *mango*, *yellow*. Unit: `plan.test.ts` (queue, ↑/↓, the three
+      exclusive marks, the queue keeping only words not met yet) and `progress.test.ts`.
+- [x] **The gate cannot be passed by tapping randomly (e2e: 50 random taps do not open
+      it).** `e2e/parent-gate.spec.ts`: 50 taps at seeded random points of the keypad, 100 ms
+      apart, with the page's `Math.random` seeded too; the gate stays shut, the panel is not
+      rendered, and the taps made at least one wrong guess (the pause appeared). Also: a
+      wrong number pauses the keypad and draws a new one, and the right one opens the panel;
+      every `/parent` route (panel, child, speech, family) shows the gate, and showing a child
+      screen closes it again. Honestly: a random two-digit guess is right 1 time in 90, so the
+      gate is a child lock, not a wall. The 5 s pause (doubling) bounds the luck: unit-tested
+      over 2000 seeded bursts, 50 quick taps open it in < 2.5 % of bursts and 50 slow ones in
+      < 3.5 % (decision 37). A pre-reader cannot read the number, which is the real lock.
+- [x] **Every child screen is operable with no reading (review against the screen list;
+      recorded).** Review, screen by screen:
+      - `/` start: Polly with a pulsing ring; the whole screen is the target. Spoken greeting.
+      - `/` picker (≥ 2 children): one big avatar per child; the names under them are for the
+        parent (marked `data-for-parent`). Spoken: „Kto dziś płynie z Polly? Dotknij swojego
+        zwierzątka!”
+      - `/child/:id` map: islands, the ship with Polly (bobbing) on the one to tap, a gear and
+        (≥ 2 children) the house. Spoken on arrival: „Dotknij statku i płyniemy!”, or „Nowe
+        słówka już niedługo!” (also on tapping the ship, with a wiggle) when nothing is new.
+      - `/child/:id/lesson` (look and listen): one big picture with a pulsing ring until it is
+        tapped, then a pulsing green ▶; progress dots, 🐢/🐇, the house. Spoken: „Płyniemy na
+        nową wyspę! Popatrz i posłuchaj.” + the word; „A teraz następny obrazek.” + the word;
+        „Brawo! Wyspa zdobyta!” on the finish screen (an island with a flag, Polly
+        bouncing), which sails back to the map by itself.
+      - The gear leads to the gate, a parent screen with text by design; it says „To jest
+        miejsce dla rodzica. Dotknij Polly, żeby wrócić.” and has a big Polly button back.
+      - Not built yet and reachable from no child screen (decision 39): games, a game,
+        stories, a story, album, chest.
+      Automated: `e2e/no-reading.spec.ts` walks start → map → lesson (before and after the
+      tap, finished) → map with a flag → picker → map with home, and asserts that no visible
+      text appears outside screen-reader text and the picker's names, and that every button
+      shows a picture. Without a Polish voice the cues (pulsing ring, ▶, ship) still carry
+      each screen (decision 23). Whether a real 4-year-old finds their way is the Phase 5
+      test with the child.
+
+Tests: 219 unit tests (22 files); e2e 81 passed + 3 skipped in Chromium and WebKit, both
+under `vite preview` and with `test:e2e:csp` against the container (zero CSP violations; the
+CSP is unchanged in this phase). The 3 skips: the 2 opt-in jsDelivr checks, and the real-speech
+network check in WebKit on Windows, whose Playwright build has no speech engine (it runs in
+WebKit on Linux and in CI; docs/DEVELOPMENT.md). Bundle: 219.9 kB JS (75.9 kB gzip), 25.9 kB
+CSS. Content: 61 pictures, 661.8 kB, the largest 24.7 kB.
+
+Found on the way: Svelte state proxies cannot be stored in IndexedDB (structured clone fails),
+so a plan edited on the child's page was silently not saved; the screen now saves
+`$state.snapshot(…)` and shows „Nie udało się zapisać…” if a save ever fails.
+
+The Phase 2 jsDelivr criterion is still open until the next tag; from this phase on, the map,
+the lesson and the parent screens render pictures, so the live check after `/release` is
+simply opening the map.
 
 ## Quality gates
 
@@ -370,6 +438,71 @@ Newest last. Every deviation from PLAN.md lands here **before** it is acted on.
     no request at all is made while speaking. Chrome's own "Google …" voices are fetched by
     the browser outside the page and are not visible to it; that is one more reason local
     voices are preferred (decision 22).
+
+### 2026-10-19 — Phase 4: Children, word plan, parent gate, look-and-listen
+
+No open question names Phase 4.
+
+33. **Avatars and new UI pictures.** The avatar set is eight Fluent "Color" SVGs from the same
+    pinned commit (fox, lion, panda, owl, frog, octopus, penguin, koala; a unicorn stayed over the 25 kB
+    budget even at precision 1), listed in a new
+    `content/avatars.json` that `check:content` validates (non-empty, unique, every picture
+    exists). None is current vocabulary. New UI pictures: `sailboat` (Polly's ship on the
+    map), `gear` (the parent gate's entry) and `house` (the long-press home button), added to
+    `UI_IMAGE_IDS`. The islands and the flag are hand-made inline SVG in a component, as
+    PLAN.md says for map islands. No CSP change.
+34. **Children and plans in the domain layer.** `domain/children.ts` and `domain/plan.ts` are
+    pure functions over the family file; screens go through them. Every `Lww` write uses one
+    stamp rule (`nextStamp`, factored out of `setSetting`): `now`, or 1 ms after the
+    register's stamp when another device's clock ran ahead. Adding a child writes its profile,
+    a default plan and default limits. Deleting writes the tombstone
+    `{ name: '', avatar: '', deleted: true }`: the nickname does not linger in the file. The
+    deleted child's progress subtrees stay (each device owns its own; pruning them is a sync
+    concern for Phase 7). In a plan, *queued*, *known* and *paused* are mutually exclusive:
+    marking one removes the word from the other two. A queued word leaves the queue once it
+    is introduced: the editor shows only queued words not met yet, and the parent's next save
+    drops the others. The child's device never rewrites the plan for it, since a whole-plan
+    `Lww` write from there could undo a parent's edit made on another phone.
+35. **`DeviceProgress` gains `lessons: Record<eventId, { at, words }>`**, the lessons finished
+    on this device and the new words each introduced. Islands on the map are lessons, and
+    nothing in the Phase 2 model counted them. It is an event log like `chestsOpened`, merged
+    with the whole device copy by `seq`, so the merge does not change. No stored progress
+    predates it (there was no way to create a child before this phase), so it is required,
+    not optional. `introduced[word]` is written on the child's first tap on the big picture
+    (PLAN.md: "tapped at least once"), so a lesson left halfway still counts what was seen.
+36. **The child picker lives on `/`, after the tap**, not on a route of its own: `/` with
+    0 live children → `/setup`; 1 → that child's map; ≥ 2 → the picker (avatars, names under
+    them for the parent, spoken prompt). Once speech is unlocked in this session, `/` skips
+    the tap. The long-press home button is on the map only when there are ≥ 2 children (it
+    leads back to the picker; with one child the map *is* home), and on the lesson (back to
+    the map). A short press says „Przytrzymaj dłużej, żeby wyjść.” (`home.hold`).
+37. **Parent gate.** A number 10–99 written in Polish words and a 0–9 keypad. The second digit
+    checks the answer. A wrong answer clears the entry, draws a new number and locks the
+    keypad for 5 s, doubling with each further miss up to 60 s. A random guess is right 1 time
+    in 90, so the pause is what bounds random tapping: 50 quick taps (150 ms apart) fit two
+    guesses (≈ 2 %), 50 slow ones (400 ms) three (≈ 3 %), unit-tested over 2000 seeded bursts.
+    A 2 s first pause allowed three guesses even for quick taps (3.4 %). Passing opens the parent
+    area until a child screen is shown again (or a reload); nothing is stored. Every
+    `/parent/*` route renders the gate until then. `/setup` is not gated (first run, no child
+    yet) and redirects to `/` once a child exists. The gear on the map speaks „To jest
+    miejsce dla rodzica…” and the gate has a big Polly button back to the child. The e2e
+    "50 random taps" seeds `Math.random` in the page, so the number and the taps are fixed
+    and the test is deterministic; the gate logic (new number, cool-down) is unit-tested.
+38. **The word queue is reordered with ↑/↓ buttons, not by drag; `svelte-dnd-action` is not
+    installed.** PLAN.md's task allows "by drag or buttons". Buttons work the same with a
+    finger, a mouse and a keyboard, need no package, and set no inline style (drag libraries
+    position the dragged element with styles, which would need checking against
+    `style-src 'self'`). Likewise **Bits UI stays unused**: deleting a child asks for
+    confirmation inline („Na pewno?”), which needs no dialog.
+39. **The Phase 4 lesson is look-and-listen only**: the `introduce` steps of `composeLesson`
+    (≤ 3 new words), each a big picture the child taps; then „Brawo! Wyspa zdobyta!” and the
+    lesson is recorded. The picks are Phase 5. When `composeLesson` has no new word, the
+    ship's island says „Nowe słówka już niedługo!” instead of opening an empty lesson. The
+    map's bottom bar (🎲 📖 📒) appears with the first of those screens (Phase 5); a bar of
+    placeholders would lead a child onto screens with text and no way back. Unbuilt child
+    routes are not reachable from any child screen.
+40. **New prompts** (`check:content` requires them): `picker.who`, `map.go`, `map.later`,
+    `gate.parents`.
 
 ## Open questions
 

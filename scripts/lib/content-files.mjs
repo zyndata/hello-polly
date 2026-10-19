@@ -42,7 +42,8 @@ export function loadContent(root) {
     prompts: list('prompts'),
     praise: list('praise'),
     stories: list('stories'),
-    stickers: list('stickers')
+    stickers: list('stickers'),
+    avatars: list('avatars')
   };
 }
 

@@ -44,6 +44,7 @@ function progress(g: Gen): DeviceProgress {
     attempts: {},
     stars: g.int(40),
     chestsOpened: {},
+    lessons: {},
     minutes: {},
     storiesHeard: {}
   };
@@ -56,6 +57,7 @@ function progress(g: Gen): DeviceProgress {
     }
   }
   if (g.chance(0.4)) p.chestsOpened[`chest-${g.int(5)}`] = { at: g.pick(TIMES), stickers: [`s${g.int(6)}`] };
+  if (g.chance(0.4)) p.lessons[`lesson-${g.int(5)}`] = { at: g.pick(TIMES), words: [g.pick(WORDS)] };
   if (g.chance(0.5)) p.minutes[g.pick(DAYS)] = g.int(20);
   // A compacted copy, as its owner would have written it (seq bumped).
   return g.chance(0.3) ? compactProgress(p, TODAY) : p;

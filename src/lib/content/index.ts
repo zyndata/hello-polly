@@ -4,7 +4,8 @@
  */
 
 import type { REQUIRED_PROMPT_IDS } from '../../../scripts/lib/content-rules.mjs';
-import type { Prompt, Sticker, Story, Topic, TopicId, Word, WordId } from '../types';
+import type { ImageId, Prompt, Sticker, Story, Topic, TopicId, Word, WordId } from '../types';
+import avatarsJson from '../../../content/avatars.json';
 import promptsJson from '../../../content/prompts.json';
 import praiseJson from '../../../content/praise.json';
 import stickersJson from '../../../content/stickers.json';
@@ -21,6 +22,8 @@ export const topics: readonly Topic[] = [...(topicsJson as Topic[])].sort((a, b)
 export const words: readonly Word[] = wordsJson as Word[];
 export const stories: readonly Story[] = storiesJson as Story[];
 export const stickers: readonly Sticker[] = stickersJson as Sticker[];
+/** The pictures a child profile may use as its avatar. */
+export const avatars: readonly ImageId[] = avatarsJson;
 /** English praise for a correct answer, spoken by the English voice. */
 export const praise: readonly string[] = praiseJson;
 

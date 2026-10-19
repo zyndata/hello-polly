@@ -29,9 +29,8 @@
         Ten ekran powstanie w fazie {screen.phase}.
       {/if}
     </p>
-    {#if screen.path === '/parent' || screen.path === '/setup'}
-      <!-- Until Phase 4 builds these, the one finished parent screen is reached from here. -->
-      <p><a class="link" href="#/parent/speech">Sprawdź mowę i głosy</a></p>
+    {#if screen.path.startsWith('/parent')}
+      <p><a class="link" href="#/parent">Panel rodzica</a></p>
     {/if}
     <p><a class="link" href="#/">Wróć do ekranu startowego</a></p>
   </ParentLayout>
