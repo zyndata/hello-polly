@@ -11,14 +11,17 @@ project adheres to [Semantic Versioning](https://semver.org).
 ### Documentation
 
 - Record the v0.1.0 release and the owner prerequisites
+- Record the phase 6 CI result in STATE.md
 
 ### Features
 
 - **content:** Colour flags instead of hearts, hippo and dog avatars
 - Phase 6 — rewards
+- Phase 7 — Drive sync (one account, many devices)
 
 ### Miscellaneous
 
+- Update CHANGELOG
 - Update CHANGELOG
 
 ## [0.1.0] - 2026-10-19
