@@ -442,6 +442,9 @@ page in Phases 6–7). Under 8 parallel workers two older specs on real timing (
 start screen, a full lesson) missed their 5 s waits once each; both pass alone and the whole
 suite passes with 4 workers. Not from this phase: they touch nothing it changed.
 
+CI: **green** on `dev` (run 39426928459 on `de9c7bd`: check, unit 300, `check:content`, build,
+e2e 140 passed + 2 opt-in skipped in Chromium + WebKit, no flaky test).
+
 ## Quality gates
 
 Recorded with the device and voice named (PLAN.md "Speech and pictures are replaceable").
