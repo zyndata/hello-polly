@@ -561,6 +561,9 @@ CI: the first run (39468402601 on `2bd8761`) was green with one flaky test, the 
 one in WebKit: it jumped the clock three times back to back, and when two jumps fell into one
 tick the 220 s looked like a suspended device and counted nothing (decision 91, working as
 designed). The test now waits for each minute to be written before the next jump.
+Then **green** on `dev` (run 39470078605 on `7166fdb`: check, unit 345, `check:content`, build,
+e2e 184 passed + 2 opt-in skipped in Chromium + WebKit, no flaky test). So every Phase 10 spec
+passed in WebKit too, in CI.
 
 ## Quality gates
 
