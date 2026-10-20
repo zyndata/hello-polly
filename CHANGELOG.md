@@ -14,6 +14,7 @@ project adheres to [Semantic Versioning](https://semver.org).
 - Record the phase 6 CI result in STATE.md
 - Record the phase 7 CI result in STATE.md
 - Record the phase 8 CI result in STATE.md
+- Record the phase 9 CI result in STATE.md
 
 ### Features
 
@@ -23,9 +24,11 @@ project adheres to [Semantic Versioning](https://semver.org).
 - **sync:** Keep the family file in a HelloPolly folder
 - Phase 8 — inviting the second parent
 - Phase 9 — stories & more games
+- Phase 10 — screen time & the progress dashboard
 
 ### Miscellaneous
 
+- Update CHANGELOG
 - Update CHANGELOG
 - Update CHANGELOG
 - Update CHANGELOG
