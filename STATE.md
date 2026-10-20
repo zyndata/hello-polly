@@ -517,7 +517,7 @@ game and the stories passed in WebKit too, in CI.
       lock, and a lesson opened by its address never starts. A mutation that drops the lesson's
       hold turns both lesson tests red. Also e2e: the gate lifts the lock (fresh session; the
       1-minute limit applies again), the next day lifts it by itself, the map has no home button
-      when locked, no limits means no lock through 5 minutes of play. Unit
+      when locked, no limits means no lock through 12 minutes of play (past the default 10-minute session). Unit
       (`screentime.test.ts`): whole minutes written and the rest kept, no counting across a
       suspended gap or while asleep, a new day and a 30-minute break, sticky sleep, the gate's
       waiver only for the daily limit.
@@ -556,6 +556,11 @@ link, which no directive governs). **WebKit could not run on this machine** (the
 encountered an internal error` fault of Phases 6, 7 and 9; even the untouched `routes.spec.ts`
 fails to load a page); CI runs it. Bundle: 354.4 kB JS (113.9 kB gzip, +5.6 kB), 44.6 kB CSS.
 Content: 80 pictures, 819.2 kB (+`zzz`, 12.6 kB); 42 prompts.
+
+CI: the first run (39468402601 on `2bd8761`) was green with one flaky test, the new „no limits”
+one in WebKit: it jumped the clock three times back to back, and when two jumps fell into one
+tick the 220 s looked like a suspended device and counted nothing (decision 91, working as
+designed). The test now waits for each minute to be written before the next jump.
 
 ## Quality gates
 

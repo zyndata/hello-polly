@@ -189,10 +189,16 @@ test("the daily limit counts another device's minutes; the gate waives it for th
   await expect(asleep(page)).toHaveCount(0);
 });
 
-test('no limits: hours of play never lock', async ({ page }) => {
+test('no limits: a long play never locks', async ({ page }) => {
+  test.setTimeout(60_000);
   const child = await childWithLimits(page, { dailyMinutes: null, sessionMinutes: null });
-  for (let i = 0; i < 3; i++) await page.clock.fastForward(110_000);
-  await expect.poll(async () => (await ownProgress(page, child))?.minutes[localDay(new Date(await page.evaluate(() => Date.now())))]).toBeGreaterThanOrEqual(5);
+  const minutes = async () => (await ownProgress(page, child))?.minutes[localDay(new Date(await page.evaluate(() => Date.now())))] ?? 0;
+  // One jump at a time, each seen by the ticker before the next: two jumps that land in one
+  // tick would be a gap of over two minutes, which counts as a suspended device (decision 91).
+  for (let i = 1; i <= 12; i++) {
+    await page.clock.fastForward(61_000);
+    await expect.poll(minutes, { timeout: 10_000 }).toBeGreaterThanOrEqual(i);
+  }
   await expect(asleep(page)).toHaveCount(0);
   await expect(page.getByTestId('map')).toBeVisible();
 });
