@@ -3,7 +3,7 @@
  * decision 34). Pure functions; the screens write their result through `updateFamily`.
  */
 
-import type { ChildId, ChildProfile, DeviceId, FamilyFile, Instant, WordPlan } from '../types';
+import type { ChildId, ChildLimits, ChildProfile, DeviceId, FamilyFile, Instant, WordPlan } from '../types';
 import { defaultLimits, defaultPlan } from './family';
 import { lww, nextStamp } from './lww';
 
@@ -87,4 +87,14 @@ export function childPlan(file: FamilyFile, id: ChildId): WordPlan {
 
 export function setPlan(file: FamilyFile, id: ChildId, plan: WordPlan, now: Instant, device: DeviceId): FamilyFile {
   return { ...file, plans: { ...file.plans, [id]: lww(plan, nextStamp(file.plans[id]?.t, now), device) } };
+}
+
+/** The child's screen-time limits, or the defaults if none were ever written. */
+export function childLimits(file: FamilyFile, id: ChildId): ChildLimits {
+  return file.limits[id]?.v ?? defaultLimits();
+}
+
+export function setLimits(file: FamilyFile, id: ChildId, limits: ChildLimits, now: Instant, device: DeviceId): FamilyFile {
+  const value: ChildLimits = { dailyMinutes: limits.dailyMinutes, sessionMinutes: limits.sessionMinutes };
+  return { ...file, limits: { ...file.limits, [id]: lww(value, nextStamp(file.limits[id]?.t, now), device) } };
 }

@@ -5,7 +5,8 @@
  * A script rather than a test because it asserts nothing: it walks a short session on a
  * phone-sized viewport (the first run, one lesson with a pick after two misses and its stars,
  * the map, *Cyferki*, *Pokoloruj* and *Gdzie jest…?* over a few learned words, a story page, a
- * chest and the album, the parent gate, the word plan, the speech screen)
+ * chest and the album, the parent gate, the word plan, the progress dashboard, the speech
+ * screen, and the lock once the day's minutes are used up)
  * and writes PNGs into `docs/screenshots/`. Re-run it whenever a screen in the README changes.
  *
  *   npm run docker:up          # or: npx vite preview --port 4173
@@ -126,7 +127,9 @@ await page.evaluate(async (child) => {
     const get = db.transaction('family').objectStore('family').get('local');
     get.onsuccess = () => resolve(get.result);
   });
-  const progress = { seq: 1, introduced: {}, attempts, stars: 20, chestsOpened: {}, lessons: {}, minutes: {}, storiesHeard: {} };
+  // Some minutes on earlier days, for the dashboard's calendar.
+  const minutes = { [day(1)]: 9, [day(2)]: 12, [day(4)]: 6, [day(8)]: 22, [day(9)]: 4 };
+  const progress = { seq: 1, introduced: {}, attempts, stars: 20, chestsOpened: {}, lessons: {}, minutes, storiesHeard: {} };
   row.file.progress[child] = { ...row.file.progress[child], 'screenshot-device': progress };
   await new Promise((resolve) => {
     const tx = db.transaction('family', 'readwrite');
@@ -182,10 +185,36 @@ await passGate();
 await page.getByTestId('children').locator('a').first().click();
 await page.getByTestId('upcoming').waitFor();
 await shot('plan');
+await page.getByRole('heading', { name: 'Postępy' }).evaluate((h) => h.scrollIntoView({ block: 'start' }));
+await shot('dashboard');
 
 await page.goto(`${BASE_URL}/#/parent/speech`);
 await page.getByTestId('voice-en').waitFor();
 await shot('speech');
+
+// The lock: today's 15 minutes played on the other device, then back to the child.
+await page.evaluate(async (child) => {
+  const today = new Date().toLocaleDateString('sv-SE');
+  const db = await new Promise((resolve) => {
+    const open = indexedDB.open('hello-polly');
+    open.onsuccess = () => resolve(open.result);
+  });
+  const row = await new Promise((resolve) => {
+    const get = db.transaction('family').objectStore('family').get('local');
+    get.onsuccess = () => resolve(get.result);
+  });
+  const other = row.file.progress[child]['screenshot-device'];
+  row.file.progress[child]['screenshot-device'] = { ...other, seq: other.seq + 1, minutes: { ...other.minutes, [today]: 15 } };
+  await new Promise((resolve) => {
+    const tx = db.transaction('family', 'readwrite');
+    tx.objectStore('family').put(row);
+    tx.oncomplete = resolve;
+  });
+  db.close();
+}, childId);
+await page.goto(`${BASE_URL}/#/child/${childId}/play`);
+await page.getByTestId('sleep').waitFor();
+await shot('sleep');
 
 await context.close();
 await browser.close();

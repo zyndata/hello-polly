@@ -56,7 +56,8 @@ export const REQUIRED_PROMPT_IDS = /** @type {const} */ ([
   'simon.say',
   'paint.colour',
   'paint.pot',
-  'sort.which'
+  'sort.which',
+  'sleep.night'
 ]);
 
 /**
@@ -81,7 +82,8 @@ export const STORY_FUNCTION_WORDS = /** @type {const} */ ([
  */
 export const UI_IMAGE_IDS = /** @type {const} */ ([
   'parrot', 'turtle', 'rabbit', 'sailboat', 'gear', 'house', 'game-die', 'locked', 'speaker-high-volume', 'ledger',
-  'open-book', 'check-mark-button', 'bubbles', 'magnifying-glass-tilted-left', 'fork-and-knife-with-plate', 'basket'
+  'open-book', 'check-mark-button', 'bubbles', 'magnifying-glass-tilted-left', 'fork-and-knife-with-plate', 'basket',
+  'zzz'
 ]);
 
 /** A story has this many pages (PLAN.md "Content model": 5–8, about 30 seconds). */

@@ -22,3 +22,8 @@ export function addDays(day: Day, n: number): Day {
 export function daysBetween(a: Day, b: Day): number {
   return Math.round((toUtc(b) - toUtc(a)) / MS_PER_DAY);
 }
+
+/** The day of the week, Monday first: 0 is Monday, 6 is Sunday. */
+export function weekday(day: Day): number {
+  return (new Date(toUtc(day)).getUTCDay() + 6) % 7;
+}

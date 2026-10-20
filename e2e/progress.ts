@@ -1,7 +1,8 @@
 import type { Page } from '@playwright/test';
 import { BOX_INTERVALS } from '../src/lib/domain/learning';
 import { addDays, localDay } from '../src/lib/domain/time';
-import type { AttemptDay, Day, DeviceProgress, FamilyFile, WordId } from '../src/lib/types';
+import type { AttemptDay, ChildLimits, Day, DeviceProgress, FamilyFile, WordId } from '../src/lib/types';
+import type { SessionClock } from '../src/lib/domain/screentime';
 
 /** The device id under which seeded progress is written: another phone, as far as the app knows. */
 export const SEED_DEVICE = 'e2e-seed-device';
@@ -25,7 +26,7 @@ export async function readFamily(page: Page): Promise<FamilyFile> {
   );
 }
 
-async function writeFamily(page: Page, file: FamilyFile): Promise<void> {
+export async function writeFamily(page: Page, file: FamilyFile): Promise<void> {
   await page.evaluate(
     (file) =>
       new Promise<void>((resolve, reject) => {
@@ -115,4 +116,40 @@ export async function seedStars(page: Page, child: string, stars: number, opened
   };
   file.progress[child] = { ...file.progress[child], [SEED_DEVICE]: seeded };
   await writeFamily(page, file);
+}
+
+/** The child's limits, written as a parent's change made just now on another device. */
+export async function seedLimits(page: Page, child: string, limits: ChildLimits): Promise<void> {
+  const file = await readFamily(page);
+  file.limits[child] = { v: limits, t: new Date(Date.now() + 1000).toISOString(), d: SEED_DEVICE };
+  await writeFamily(page, file);
+}
+
+/** Minutes played on another device on `day` (today by default), as if synced from it. */
+export async function seedMinutes(page: Page, child: string, minutes: number, day = localDay(new Date())): Promise<void> {
+  const file = await readFamily(page);
+  const current = file.progress[child]?.[SEED_DEVICE];
+  const base: DeviceProgress = current ?? { seq: 0, introduced: {}, attempts: {}, stars: 0, chestsOpened: {}, lessons: {}, minutes: {}, storiesHeard: {} };
+  file.progress[child] = { ...file.progress[child], [SEED_DEVICE]: { ...base, seq: base.seq + 1, minutes: { ...base.minutes, [day]: minutes } } };
+  await writeFamily(page, file);
+}
+
+/** This device's session clock for a child (local only, `meta.screenTime`). */
+export async function sessionClock(page: Page, child: string): Promise<SessionClock | undefined> {
+  return page.evaluate(
+    (child) =>
+      new Promise<SessionClock | undefined>((resolve, reject) => {
+        const open = indexedDB.open('hello-polly');
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const get = open.result.transaction('meta').objectStore('meta').get('screenTime');
+          get.onsuccess = () => {
+            open.result.close();
+            resolve((get.result as { value: Record<string, SessionClock> } | undefined)?.value[child]);
+          };
+          get.onerror = () => reject(get.error);
+        };
+      }),
+    child
+  );
 }

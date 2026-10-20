@@ -67,3 +67,9 @@ export function recordChest(file: FamilyFile, child: ChildId, device: DeviceId, 
     id in p.chestsOpened ? undefined : { ...p, chestsOpened: { ...p.chestsOpened, [id]: { at: opening.at, stickers: [...opening.stickers] } } }
   );
 }
+
+/** Whole minutes played on this device on `day` (STATE.md decision 91). */
+export function addMinutes(file: FamilyFile, child: ChildId, device: DeviceId, day: Day, minutes: number): FamilyFile {
+  const n = Math.floor(minutes);
+  return change(file, child, device, (p) => (n > 0 ? { ...p, minutes: { ...p.minutes, [day]: (p.minutes[day] ?? 0) + n } } : undefined));
+}

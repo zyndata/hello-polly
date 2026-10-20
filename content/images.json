@@ -73,6 +73,7 @@
     "bubbles": "assets/Bubbles/Color/bubbles_color.svg",
     "magnifying-glass-tilted-left": "assets/Magnifying glass tilted left/Color/magnifying_glass_tilted_left_color.svg",
     "fork-and-knife-with-plate": "assets/Fork and knife with plate/Color/fork_and_knife_with_plate_color.svg",
+    "zzz": "assets/Zzz/Color/zzz_color.svg",
     "basket": { "path": "assets/Basket/Color/basket_color.svg", "floatPrecision": 1 },
 
     "eyes": "assets/Eyes/Color/eyes_color.svg",

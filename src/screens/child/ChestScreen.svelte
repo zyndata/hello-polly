@@ -28,12 +28,16 @@
   import { sounds } from '../../lib/sound/effects';
   import { speaker } from '../../lib/speech';
   import { speed } from '../../lib/speech/speed.svelte';
+  import { holdScreen } from '../../lib/screentime/hold';
   import { change } from '../../lib/store';
   import { unlock } from '../../lib/unlock';
   import type { Screen } from '../../lib/screens';
   import type { Sticker, Word } from '../../lib/types';
 
   let { screen, params }: { screen: Screen; params?: Record<string, string> | null } = $props();
+
+  // A chest opens to its end before Polly falls asleep (STATE.md decision 93).
+  holdScreen();
 
   /** Taps that open the chest. */
   const TAPS_TO_OPEN = 3;

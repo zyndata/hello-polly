@@ -1,7 +1,7 @@
 <!--
   /setup, the first run (PLAN.md "First run"): the voice check, „Mam zaproszenie”, „Mam już
   rodzinę na Dysku Google” (STATE.md decision 68: another device of the same account loads the
-  family instead of adding the child twice) or „Zaczynamy”, the first child, the starting topics (and, if the parent wants,
+  family instead of adding the child twice), „Mam kopię zapasową” (decision 97) or „Zaczynamy”, the first child, the starting topics (and, if the parent wants,
   specific words in the queue), and one sentence about the parent gate. The last tap creates
   the child and hands the phone over to the child's map. Once a child exists, this screen
   sends the visitor to `/` (STATE.md decision 37: it is not behind the gate).
@@ -9,6 +9,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { push, replace } from 'svelte-spa-router';
+  import BackupImport from '../lib/components/BackupImport.svelte';
   import ChildForm from '../lib/components/ChildForm.svelte';
   import ContentImage from '../lib/components/ContentImage.svelte';
   import ParentLayout from '../lib/components/ParentLayout.svelte';
@@ -28,7 +29,7 @@
 
   let { screen }: { screen: Screen; params?: Record<string, string> | null } = $props();
 
-  type Step = 'voice' | 'start' | 'invite' | 'child' | 'words' | 'gate';
+  type Step = 'voice' | 'start' | 'invite' | 'backup' | 'child' | 'words' | 'gate';
   const NUMBERED: Step[] = ['voice', 'start', 'child', 'words', 'gate'];
 
   let step = $state<Step>('voice');
@@ -43,7 +44,7 @@
   let inviteLink = $state('');
   let inviteInvalid = $state(false);
 
-  const number = $derived(NUMBERED.indexOf(step === 'invite' ? 'start' : step) + 1);
+  const number = $derived(NUMBERED.indexOf(step === 'invite' || step === 'backup' ? 'start' : step) + 1);
 
   onMount(() => {
     void (async () => {
@@ -124,6 +125,7 @@
         <div class="flex flex-wrap gap-2">
           <button type="button" class="button" onclick={() => (step = 'child')}>Zaczynamy</button>
           <button type="button" class="button-quiet" onclick={() => (step = 'invite')}>Mam zaproszenie</button>
+          <button type="button" class="button-quiet" onclick={() => (step = 'backup')} data-testid="setup-backup">Mam kopię zapasową</button>
         </div>
         {#if isDriveConfigured()}
           <p>Jeśli Hello Polly działa już na innym twoim urządzeniu i zapisuje rodzinę na Dysku Google, wczytaj ją stąd.</p>
@@ -154,6 +156,18 @@
             <button type="button" class="button-quiet" onclick={() => (step = 'start')}>Wróć</button>
           </div>
         </form>
+      </section>
+    {:else if step === 'backup'}
+      <section class="card" aria-labelledby="backup-title">
+        <h2 id="backup-title" class="card-title">Mam kopię zapasową</h2>
+        <p>Wybierz plik pobrany w panelu rodzica („Kopia zapasowa”). Dzieci, postępy i ustawienia wrócą z niego.</p>
+        <BackupImport
+          onimported={(file) => {
+            if (liveChildren(file).length > 0) void replace('/');
+            else step = 'child';
+          }}
+        />
+        <button type="button" class="button-quiet justify-self-start" onclick={() => (step = 'start')}>Wróć</button>
       </section>
     {:else if step === 'child'}
       <section class="card" aria-labelledby="child-title">

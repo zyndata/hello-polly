@@ -22,6 +22,7 @@
   import { sounds } from '../../lib/sound/effects';
   import { speaker } from '../../lib/speech';
   import { speed } from '../../lib/speech/speed.svelte';
+  import { holdScreen } from '../../lib/screentime/hold';
   import { change } from '../../lib/store';
   import type { Screen } from '../../lib/screens';
   import type { WordId } from '../../lib/types';
@@ -39,6 +40,9 @@
 
   /** The finish screen stays at least this long. */
   const FINISH_MS = 2000;
+
+  // A game plays to its end before Polly falls asleep (STATE.md decision 93).
+  holdScreen();
 
   const childId = $derived(params?.id ?? '');
   const shelf = $derived(`/child/${childId}/play`);

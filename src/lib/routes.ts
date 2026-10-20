@@ -1,6 +1,7 @@
 import type { Component } from 'svelte';
 import { wrap } from 'svelte-spa-router/wrap';
 import type { WrappedComponent } from 'svelte-spa-router/wrap';
+import ChildGuard from './components/ChildGuard.svelte';
 import Gated from './components/Gated.svelte';
 import Placeholder from './components/Placeholder.svelte';
 import { notFound, screens, type Screen } from './screens';
@@ -26,7 +27,8 @@ import Speech from '../screens/parent/Speech.svelte';
  *
  * A screen marked `built` renders its component below; every other route is a placeholder
  * until its phase builds it. Every `/parent` route, built or not, sits behind the parent gate
- * (STATE.md decision 37). The catch-all is last, because the router matches in insertion order.
+ * (STATE.md decision 37), and every `/child/:id` route behind the screen-time guard (decisions
+ * 91–94). The catch-all is last, because the router matches in insertion order.
  */
 /** What the router hands every screen. */
 type ScreenComponent = Component<{ screen: Screen; params?: Record<string, string> | null }>;
@@ -50,11 +52,13 @@ const built: Record<string, ScreenComponent> = {
 };
 
 export const isGated = (screen: Screen): boolean => screen.path === '/parent' || screen.path.startsWith('/parent/');
+export const isChildRoute = (screen: Screen): boolean => screen.path.startsWith('/child/');
 
 function route(screen: Screen): WrappedComponent {
   const component = screen.built ? built[screen.path] : (Placeholder as ScreenComponent);
   if (!component) throw new Error(`Screen ${screen.path} is marked built but has no component`);
   if (isGated(screen)) return wrap({ component: Gated as ScreenComponent, props: { screen, inner: component } });
+  if (isChildRoute(screen)) return wrap({ component: ChildGuard as ScreenComponent, props: { screen, inner: component } });
   return wrap({ component, props: { screen } });
 }
 

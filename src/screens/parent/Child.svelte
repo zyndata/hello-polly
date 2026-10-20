@@ -1,7 +1,8 @@
 <!--
   /parent/child/:id (behind the gate): one child's word plan (topics, queue, known, paused,
-  random order), what comes next, and the profile, including deleting it (a tombstone, after an
-  inline „Na pewno?”, STATE.md decisions 34 and 38). Limits and progress are Phase 10.
+  random order), what comes next, the screen-time limits (STATE.md decision 95), the progress
+  dashboard (decision 96), and the profile, including deleting it (a tombstone, after an
+  inline „Na pewno?”, decisions 34 and 38).
 -->
 <script lang="ts">
   import { onMount } from 'svelte';
@@ -9,25 +10,33 @@
   import ChildForm from '../../lib/components/ChildForm.svelte';
   import ContentImage from '../../lib/components/ContentImage.svelte';
   import ParentLayout from '../../lib/components/ParentLayout.svelte';
+  import ProgressDashboard from '../../lib/components/ProgressDashboard.svelte';
   import WordPlanEditor from '../../lib/components/WordPlanEditor.svelte';
   import { topics, word } from '../../lib/content';
   import { loadFamily } from '../../lib/db';
-  import { childPlan, deleteChild, liveChild, setPlan, updateChild } from '../../lib/domain/children';
+  import { childLimits, childPlan, deleteChild, liveChild, setLimits, setPlan, updateChild } from '../../lib/domain/children';
   import { nextWords, wordStates, type WordState } from '../../lib/domain/learning';
+  import { localDay } from '../../lib/domain/time';
   import { change } from '../../lib/store';
   import type { Screen } from '../../lib/screens';
-  import type { ChildProfile, FamilyFile, WordId, WordPlan } from '../../lib/types';
+  import type { ChildLimits, ChildProfile, DeviceId, DeviceProgress, FamilyFile, WordId, WordPlan } from '../../lib/types';
 
   let { screen, params }: { screen: Screen; params?: Record<string, string> | null } = $props();
 
   /** How many upcoming words the preview lists. */
   const PREVIEW = 6;
+  /** The limits a parent can choose, in minutes (decision 95); `null` is „brak limitu”. */
+  const DAILY_CHOICES = [null, 10, 15, 20, 30, 45, 60];
+  const SESSION_CHOICES = [null, 5, 10, 15, 20, 30];
 
   const childId = $derived(params?.id ?? '');
   let loaded = $state(false);
   let profile = $state<ChildProfile | undefined>();
   let plan = $state<WordPlan | undefined>();
   let states = $state<ReadonlyMap<WordId, WordState>>(new Map());
+  let limits = $state<ChildLimits | undefined>();
+  let progress = $state<Record<DeviceId, DeviceProgress> | undefined>();
+  const today = localDay(new Date());
   let editing = $state(false);
   let confirming = $state(false);
   /** The outcome of the last save, announced (and shown when it failed). */
@@ -39,7 +48,20 @@
     profile = liveChild(file, childId);
     plan = childPlan(file, childId);
     states = wordStates(file.progress[childId]);
+    limits = childLimits(file, childId);
+    progress = file.progress[childId];
   }
+
+  async function saveLimit(key: keyof ChildLimits, value: string) {
+    if (!limits) return;
+    const next: ChildLimits = { ...limits, [key]: value === '' ? null : Number(value) };
+    await save((file, now, device) => setLimits(file, childId, next, now, device));
+  }
+
+  /** The choices, with the stored value among them even if it is not one of the usual ones. */
+  const choicesWith = (choices: (number | null)[], current: number | null) =>
+    choices.includes(current) ? choices : [...choices, current].sort((a, b) => (a ?? Infinity) - (b ?? Infinity));
+  const choiceLabel = (n: number | null) => (n === null ? 'brak limitu' : `${n} min`);
 
   onMount(() => {
     void (async () => {
@@ -108,6 +130,40 @@
         {#if status === 'failed'}<span class="notice">Nie udało się zapisać zmiany. Odśwież stronę i spróbuj jeszcze raz.</span>
         {:else if status === 'saved'}<span class="sr-only">Zapisano.</span>{/if}
       </p>
+    </section>
+
+    {#if limits}
+      <section class="card" aria-labelledby="limits-title">
+        <h2 id="limits-title" class="card-title">Czas zabawy</h2>
+        <div class="flex flex-wrap gap-4">
+          <label class="grid gap-1">
+            <span class="font-bold">Dziennie</span>
+            <select class="select" data-testid="limit-daily" value={limits.dailyMinutes ?? ''} onchange={(e) => saveLimit('dailyMinutes', e.currentTarget.value)}>
+              {#each choicesWith(DAILY_CHOICES, limits.dailyMinutes) as n (n)}
+                <option value={n ?? ''}>{choiceLabel(n)}</option>
+              {/each}
+            </select>
+          </label>
+          <label class="grid gap-1">
+            <span class="font-bold">Jedna sesja</span>
+            <select class="select" data-testid="limit-session" value={limits.sessionMinutes ?? ''} onchange={(e) => saveLimit('sessionMinutes', e.currentTarget.value)}>
+              {#each choicesWith(SESSION_CHOICES, limits.sessionMinutes) as n (n)}
+                <option value={n ?? ''}>{choiceLabel(n)}</option>
+              {/each}
+            </select>
+          </label>
+        </div>
+        <p class="text-sm text-ink-muted">
+          Gdy czas minie, dziecko kończy bieżące ćwiczenie, a potem Polly idzie spać. Ekran dziecka odblokuje się po
+          przejściu bramki dla rodzica albo następnego dnia. Minuty liczy każde urządzenie osobno i sumuje je przez
+          synchronizację, więc bez internetu limit jest przybliżony.
+        </p>
+      </section>
+    {/if}
+
+    <section class="card" aria-labelledby="progress-title">
+      <h2 id="progress-title" class="card-title">Postępy</h2>
+      <ProgressDashboard {progress} {plan} {states} {today} />
     </section>
 
     <section class="card" aria-labelledby="profile-title">

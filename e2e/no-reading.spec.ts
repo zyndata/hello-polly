@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { fillChild, firstRun, openPanel } from './family';
 import { playLesson } from './lesson';
-import { seedLearned, seedStars } from './progress';
+import { seedLearned, seedMinutes, seedStars } from './progress';
 import { fakeSpeech } from './speech';
 
 /**
@@ -192,4 +192,14 @@ test('the stories and games E4â€“E9 need no reading (the sentence is the parentâ
   await page.goto(`/#/child/${ola}/play/sort`);
   await expect(page.getByTestId('game')).toHaveAttribute('data-game', 'sort');
   await expectNoReading(page, 'sort');
+});
+
+test('the lock (Polly asleep) needs no reading', async ({ page }) => {
+  await fakeSpeech(page);
+  const ola = await firstRun(page);
+  // The day's 15 minutes were played on another device.
+  await seedMinutes(page, ola, 15);
+  await page.goto(`/#/child/${ola}/play`);
+  await expect(page.getByTestId('sleep')).toBeVisible();
+  await expectNoReading(page, 'the lock');
 });

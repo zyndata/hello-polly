@@ -39,5 +39,6 @@
   {"id":"simon.say","pl":"Polly mówi: pokaż {word}!"},
   {"id":"paint.colour","pl":"Pomaluj na {word}!"},
   {"id":"paint.pot","pl":"Najpierw dotknij farbki!"},
-  {"id":"sort.which","pl":"Do którego koszyka?"}
+  {"id":"sort.which","pl":"Do którego koszyka?"},
+  {"id":"sleep.night","pl":"Koniec na dziś! Polly idzie spać."}
 ]

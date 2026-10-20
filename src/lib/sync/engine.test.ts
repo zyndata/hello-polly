@@ -5,8 +5,10 @@ import { addChild, deleteChild, liveChildren } from '../domain/children';
 import { gen } from '../domain/arbitrary';
 import { readSettings, setSetting } from '../domain/family';
 import { canonicalJson } from '../domain/lww';
-import { addStars, recordAttempt, recordChest, recordIntroduced } from '../domain/progress';
-import { album, chestState, totalStars } from '../domain/rewards';
+import { addMinutes, addStars, recordAttempt, recordChest, recordIntroduced } from '../domain/progress';
+import { album, chestState, minutesOn, totalStars } from '../domain/rewards';
+import { settle, freshClock, timeUp } from '../domain/screentime';
+import { minutesByDay } from '../domain/dashboard';
 import { wordStates } from '../domain/learning';
 import type { DeviceId, FamilyFile, Instant } from '../types';
 import { FakeDrive, fakeBackend, type FakeBackendOptions } from '../../test/fake-drive';
@@ -147,6 +149,40 @@ describe('sync engine over a fake Drive', () => {
     expect(derived(fa).album).toEqual(['colours.red']);
     expect(derived(fa).settings.accent).toBe('en-US');
     expect(Object.keys(fa.progress[CHILD] ?? {}).sort()).toEqual([a.id, b.id].sort());
+  });
+
+  it("two devices' minutes add up after sync, and the daily limit counts them both (Phase 10)", async () => {
+    const drive = new FakeDrive();
+    const a = await device(drive);
+    await a.edit((f, now, d) => addChild(f, CHILD, ola, now, d));
+    await a.sync();
+    const b = await device(drive);
+    await b.sync();
+
+    // The phone plays 4 minutes and then 3 more; the tablet 6, the same day, neither synced.
+    await a.edit((f, _now, d) => addMinutes(f, CHILD, d, '2026-10-19', 4));
+    await a.edit((f, _now, d) => addMinutes(f, CHILD, d, '2026-10-19', 3));
+    await b.edit((f, _now, d) => addMinutes(f, CHILD, d, '2026-10-19', 6));
+    await b.edit((f, _now, d) => addMinutes(f, CHILD, d, '2026-10-18', 2));
+    expect(minutesOn((await a.file()).progress[CHILD], '2026-10-19')).toBe(7);
+
+    await a.sync();
+    await b.sync();
+    await a.sync();
+
+    const [fa, fb] = [await a.file(), await b.file()];
+    expect(canonicalJson(fa)).toBe(canonicalJson(fb));
+    for (const file of [fa, fb]) {
+      expect(minutesOn(file.progress[CHILD], '2026-10-19')).toBe(13);
+      expect(Object.fromEntries(minutesByDay(file.progress[CHILD]))).toEqual({ '2026-10-19': 13, '2026-10-18': 2 });
+      expect(file.progress[CHILD]?.[a.id]?.minutes).toEqual({ '2026-10-19': 7 });
+      expect(file.progress[CHILD]?.[b.id]?.minutes).toEqual({ '2026-10-19': 6, '2026-10-18': 2 });
+    }
+    // With a 15-minute day, 13 synced minutes plus two unwritten ones on this phone are the limit.
+    const limits = { dailyMinutes: 15, sessionMinutes: null };
+    const clock = { ...freshClock('2026-10-19', 0), pendingMs: 119_000 };
+    expect(timeUp(clock, limits, minutesOn(fa.progress[CHILD], '2026-10-19'))).toBeUndefined();
+    expect(settle({ ...clock, pendingMs: 120_000 }, limits, minutesOn(fa.progress[CHILD], '2026-10-19')).asleep).toBe(true);
   });
 
   it('a guarded race: the file moves before the upload, the cycle re-merges, nothing is lost', async () => {

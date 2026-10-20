@@ -26,12 +26,16 @@
   import { speaker } from '../../lib/speech';
   import { speed } from '../../lib/speech/speed.svelte';
   import { wordRanges } from '../../lib/speech/timing';
+  import { holdScreen } from '../../lib/screentime/hold';
   import { change } from '../../lib/store';
   import { unlock } from '../../lib/unlock';
   import type { Screen } from '../../lib/screens';
   import type { Story } from '../../lib/types';
 
   let { screen, params }: { screen: Screen; params?: Record<string, string> | null } = $props();
+
+  // A story plays to its end before Polly falls asleep (STATE.md decision 93).
+  holdScreen();
 
   /** After a tap cut the sentence, this much quiet before it is read again. */
   const AFTER_TAP_MS = 700;

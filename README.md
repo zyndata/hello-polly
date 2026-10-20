@@ -10,9 +10,10 @@ It runs in the browser and installs as a PWA on a phone, tablet or computer. The
 **Polish**; the only English the child hears is the vocabulary itself (CEFR A1 / Cambridge
 Pre A1 Starters). The code, comments and documentation are in English.
 
-> **Status: in development. Phases 1–9 of 11 are done**: the scaffold, the content and the
+> **Status: in development. Phases 1–10 of 11 are done**: the scaffold, the content and the
 > local data layer, speech, children and the word plan, real lessons, rewards, Drive sync,
-> inviting the second parent, and stories with more games. A parent sets up a
+> inviting the second parent, stories with more games, and screen time with the progress
+> dashboard. A parent sets up a
 > child (nickname and an animal picture), chooses the topics and, if they like, the exact words
 > to start with. The child gets a treasure map of islands: each island is a lesson of about
 > 8–12 steps, up to three new words in *look and listen*, then „Gdzie jest…?” picks with 2–4
@@ -34,8 +35,13 @@ Pre A1 Starters). The code, comments and documentation are in English.
 > never sees sign-in or sync. From *Rodzina* that parent invites the other by e-mail: the
 > other parent opens the link, signs in with their own Google account, picks the family file
 > in Google's file picker, and both phones then share the same children, settings and
-> progress. The owner of the file can remove the other parent again. Screen time and the
-> progress dashboard come in later phases. The development build is live at
+> progress. The owner of the file can remove the other parent again. Each child has a daily
+> limit and a session length (15 and 10 minutes by default, or none): when time is up, the
+> current step or game finishes, then Polly falls asleep on a night sea until a parent passes
+> the gate or the next day comes; minutes from every device add up through sync. The parent
+> sees, per child, the words learned per topic, the words that need practice, a 4-week
+> calendar of minutes played, stickers collected and stories heard, and can download the whole
+> family as a JSON backup and load it back on any device. The development build is live at
 > https://hellopolly.gorny.dev (v0.1.0, from before Drive sync).
 > [STATE.md](STATE.md) records what was decided and what is still open.
 
@@ -48,10 +54,12 @@ Pre A1 Starters). The code, comments and documentation are in English.
 | ![Four fruit pictures above four digit tiles 1–4; digit 2 is picked and ringed in gold](docs/screenshots/digits.png) | ![The island with its flag, Polly, and a row of gold stars earned](docs/screenshots/finish.png) | ![Polly the parrot on the sea, ringed by a pulsing gold circle: tap to begin](docs/screenshots/start.png) |
 | **Treasure chest (child)** | **Sticker album (child)** | **A story (child)** |
 | ![An open pirate chest glowing gold, a new sticker (a green flag) above it and a green ▶ below](docs/screenshots/chest.png) | ![The album's colours page: topic tabs above a grid of dashed slots with flag silhouettes; the green flag sticker ringed in gold](docs/screenshots/album.png) | ![A beach scene with Polly and a big red apple, page dots above and the sentence "Look! A red apple." below](docs/screenshots/story.png) |
-| **Pokoloruj (child)** | **Gdzie jest…? (child)** | |
-| ![A pear painted yellow above three paint pots, the yellow one ringed in gold](docs/screenshots/paint.png) | ![A beach scene with eight learned things to find: flags, fruit](docs/screenshots/spy.png) | |
+| **Pokoloruj (child)** | **Gdzie jest…? (child)** | **Polly asleep: the lock (child)** |
+| ![A pear painted yellow above three paint pots, the yellow one ringed in gold](docs/screenshots/paint.png) | ![A beach scene with eight learned things to find: flags, fruit](docs/screenshots/spy.png) | ![The lock: a night sea with a moon and Polly asleep with a zzz; only the gear in the corner](docs/screenshots/sleep.png) |
 | **Parent gate** | **Word plan (parent)** | **Speech and voices (parent)** |
 | ![The parent gate: „dziesięć” written in words above a number keypad](docs/screenshots/gate.png) | ![A child's next new words and the word plan: queue, random order, topics](docs/screenshots/plan.png) | ![The parent's speech screen: voice check, accent, speeds](docs/screenshots/speech.png) |
+| **Progress (parent)** | | |
+| ![The progress dashboard: learned words per topic as bars, words to practise, a 4-week calendar of minutes](docs/screenshots/dashboard.png) | | |
 
 ## What it will and will not do
 

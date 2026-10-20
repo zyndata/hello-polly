@@ -79,3 +79,18 @@ describe('children', () => {
     expect(cleanBirthYear(undefined, 2026)).toBeUndefined();
   });
 });
+
+describe('limits', () => {
+  it('a new child has the defaults; a change is an Lww write that beats the older one', async () => {
+    const { addChild, childLimits, setLimits } = await import('./children');
+    const { emptyFamily } = await import('./family');
+    const { mergeFamily } = await import('./merge');
+    const base = addChild(emptyFamily('f'), 'c', { name: 'Ola', avatar: 'fox' }, '2026-10-20T10:00:00.000Z', 'a');
+    expect(childLimits(base, 'c')).toEqual({ dailyMinutes: 15, sessionMinutes: 10 });
+    expect(childLimits(base, 'nobody')).toEqual({ dailyMinutes: 15, sessionMinutes: 10 });
+    const phone = setLimits(base, 'c', { dailyMinutes: null, sessionMinutes: 5 }, '2026-10-20T11:00:00.000Z', 'a');
+    const tablet = setLimits(base, 'c', { dailyMinutes: 30, sessionMinutes: 20 }, '2026-10-20T10:30:00.000Z', 'b');
+    expect(childLimits(mergeFamily(phone, tablet), 'c')).toEqual({ dailyMinutes: null, sessionMinutes: 5 });
+    expect(childLimits(mergeFamily(tablet, phone), 'c')).toEqual({ dailyMinutes: null, sessionMinutes: 5 });
+  });
+});

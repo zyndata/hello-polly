@@ -1,7 +1,7 @@
 <!--
   The parent gate (STATE.md decision 37): a two-digit number in Polish words, typed on a
   keypad. A miss draws a new number and pauses the keypad, longer each time. A child who got
-  here by the gear has a big Polly to tap back to the sea.
+  here by the gear has a big Polly to tap back to the sea. Passing it wakes a sleeping Polly.
 -->
 <script lang="ts">
   import { onMount } from 'svelte';
@@ -9,6 +9,7 @@
   import ContentImage from './ContentImage.svelte';
   import { erase, isLocked, newGate, polishNumber, press } from '../gate/gate';
   import { parentGate } from '../gate/open.svelte';
+  import { screenTime } from '../screentime/clock.svelte';
   import { sounds } from '../sound/effects';
   import { renew } from '../sync/state.svelte';
 
@@ -32,6 +33,8 @@
     if (gate.passed) {
       sounds().play('correct');
       parentGate.pass();
+      // The lock lifts after the gate (PLAN.md "Screen time"; STATE.md decision 94).
+      void screenTime.wakeAll();
       // A parent's tap: the one moment a connected device may renew its Drive token without
       // the consent screen (STATE.md decision 66). Does nothing when not connected.
       void renew();

@@ -16,7 +16,7 @@ Any deviation from [PLAN.md](PLAN.md) must be recorded here before proceeding.
 | 7     | Drive sync (one account, many devices)              | done        | 2026-10-19 |
 | 8     | Inviting the second parent                          | done        | 2026-10-20 |
 | 9     | Stories & more games                                | done        | 2026-10-20 |
-| 10    | Screen time & the progress dashboard                | pending     |           |
+| 10    | Screen time & the progress dashboard                | done        | 2026-10-20 |
 | 11    | Full A1 content, PWA polish, v1.0.0                 | pending     |           |
 
 Statuses: `pending` → `in-progress` → `done` (or `blocked` with a note).
@@ -501,6 +501,61 @@ unchanged. Bundle: 333.4 kB JS (108.3 kB gzip, +16 kB), 42.7 kB CSS. Content: 79
 CI: **green** on `dev` (run 39459512304 on `c0f6fc2`: check, unit 324, `check:content`,
 build, e2e 162 passed + 2 opt-in skipped in Chromium + WebKit, no flaky test). So every new
 game and the stories passed in WebKit too, in CI.
+
+### Phase 10 acceptance (2026-10-20)
+
+- [x] **With a 1-minute session limit, the lock appears after the current exercise, never
+      mid-step.** e2e (`screentime.spec.ts`, the page's clock driven by Playwright's
+      `page.clock`): the minute runs out while a look-and-listen picture waits for its tap; the
+      step stays and works, the ▶ appears, and only its tap brings the lock (night sea, Polly
+      asleep, „Koniec na dziś! Polly idzie spać.”). The lesson stops there: 1 star for the step
+      done, no island flag, the word met, 1 minute on this device's record. The minute runs out
+      during a pick: two misses keep the same pick (with the glow), the right tap brings the lock
+      and records `{ c: 1, w: 2, first: 0 }`. A game (*Posłuchaj i dotknij*) whose minute runs
+      out in round 2 plays all five rounds to its finish screen and 6 stars; the shelf it returns
+      to is the lock. Every child address (map, lesson, shelf, stories, album) then shows the
+      lock, and a lesson opened by its address never starts. A mutation that drops the lesson's
+      hold turns both lesson tests red. Also e2e: the gate lifts the lock (fresh session; the
+      1-minute limit applies again), the next day lifts it by itself, the map has no home button
+      when locked, no limits means no lock through 5 minutes of play. Unit
+      (`screentime.test.ts`): whole minutes written and the rest kept, no counting across a
+      suspended gap or while asleep, a new day and a 30-minute break, sticky sleep, the gate's
+      waiver only for the daily limit.
+- [x] **Two devices' minutes add up after sync (fake-drive).** e2e (`dashboard.spec.ts`, two
+      browser contexts over the e2e fake Drive): the phone plays 2 minutes, the tablet 1, each
+      on its own clock; after focus both IndexedDB copies and the file on Drive are identical,
+      each device's subtree holds its own minutes, and both dashboards say „Dziś: 3 min” with 3
+      in today's calendar cell. Unit (`engine.test.ts` over `src/test/fake-drive.ts`): 7 + 6
+      minutes on one day and 2 on another from two devices merge to 13 and 2 on both, and the
+      daily limit of 15 is reached exactly when this device's unwritten 2 minutes are added.
+      e2e (`screentime.spec.ts`): 15 minutes from another device lock the child at once on this
+      one; the gate waives the daily limit for the rest of the day.
+- [x] **Export → import into a fresh profile reproduces derived state exactly.** e2e
+      (`backup.spec.ts`): a child with a played lesson, learned words, an opened chest, stars and
+      minutes is exported from the panel (`hello-polly-rodzina-<day>.json`, no device id, token,
+      Drive id or voices in it); a fresh browser context imports it from the first run („Mam
+      kopię zapasową”): its IndexedDB file equals the original (canonical JSON), and the whole
+      dashboard, the word plan, the map's islands, star meter and waiting chests read the same on
+      both. Into a device with a child of its own the import merges (both children, the device's
+      `familyId` kept, the backup's progress intact); a non-backup and a newer-schema file are
+      refused with a Polish message and change nothing. Unit (`backup.test.ts`): 200 generated
+      family files export → import into an empty profile to the identical file and identical
+      derived state (stars, chests, album, lessons, word states, every dashboard figure); 100
+      imports into a device with children lose nothing and are idempotent.
+
+Also: the parent's child screen gains „Czas zabawy” (the two limits, saved as the child's
+`limits` register; e2e) and „Postępy” (e2e checks learned per topic, the missed word first in
+„Do poćwiczenia”, today's minutes from two devices in the calendar, stickers, stories heard;
+unit `dashboard.test.ts`). `e2e/no-reading.spec.ts` covers the lock. README: status, and two
+new screenshots (the lock, the dashboard); `npm run screenshots` now walks both.
+
+Tests: 345 unit tests (36 files); e2e in Chromium 92 passed + 1 opt-in skipped under `vite
+preview`, and `test:e2e:csp` against the container (built with the e2e's never-sent Google ids):
+92 passed, 1 skipped, zero CSP violations; the CSP is unchanged (the backup download is a `blob:`
+link, which no directive governs). **WebKit could not run on this machine** (the `WebKit
+encountered an internal error` fault of Phases 6, 7 and 9; even the untouched `routes.spec.ts`
+fails to load a page); CI runs it. Bundle: 354.4 kB JS (113.9 kB gzip, +5.6 kB), 44.6 kB CSS.
+Content: 80 pictures, 819.2 kB (+`zzz`, 12.6 kB); 42 prompts.
 
 ## Quality gates
 
@@ -1220,6 +1275,65 @@ No open question names Phase 9. One scope question went to the owner (83).
     the scene's `<image>`s load from `'self'` (or jsDelivr, already allowed), the paint layer
     is CSS `mix-blend-mode` on an SVG mask, and the drag is a CSSOM write; the whole suite ran
     under the container's policy with zero violations.
+
+### 2026-10-20 — Phase 10: Screen time & the progress dashboard
+
+No open question names Phase 10. PLAN.md leaves open what a session is, what "the current
+exercise" is outside a lesson, and how an import meets data already on the device; settled here.
+
+91. **Minutes are counted by one ticker** (`src/lib/screentime/`), every 5 s, while a screen of
+    a particular child is on show and the page is visible: the map, lessons, games, stories,
+    album and chest. Not counted: the start screen and picker (no child yet), parent screens, and
+    the sleep screen. A gap of more than 2 min between two ticks (a suspended phone) counts for
+    nothing. Whole minutes are written to this device's `DeviceProgress.minutes[day]` (one
+    write, so one `seq` bump and one sync debounce, per minute of play); the part below a minute
+    waits in the local session clock (`meta.screenTime`, never synced: PLAN.md's "the current
+    session's timer"), so short sessions still add up within the day. The day is the local day.
+92. **A session** is the play time since it began. A new one begins on a new local day, after
+    a break of ≥ 30 min away from that child's screens, or when the gate wakes Polly. The daily
+    total is `minutesOn(today)` over every device in the family file (so another device's
+    minutes count as soon as sync brings them) plus this device's minutes not written yet.
+93. **"The current exercise" is the step, the game, the story or the chest.** In a lesson the
+    lock waits for the step being played (look-and-listen or a pick) to be solved; the lesson
+    then stops there: the attempts are already recorded (decision 44), the steps done are paid
+    in stars with their streak bonus (nothing earned is dropped: no loss mechanics), and the
+    island gets no flag, since the lesson was not finished. The frame of a game sees no round
+    boundary, so a game (5 rounds or one board, 1–2 min), a story (≈ 30 s) and an opening chest
+    play to their end; the screen they return to is the lock. The map, the shelves, the album
+    and the picker have no step and lock at once. A screen opened while Polly sleeps shows the
+    lock straight away.
+94. **The lock is per child, on this device, and sticky** until the parent gate is passed or
+    the next local day: a raised limit or a synced change does not wake Polly by itself, and
+    other devices lock on their own clock (PLAN.md: best-effort). Passing the gate wakes every
+    sleeping child on this device and starts a fresh session; for a child put to sleep by the
+    *daily* limit it also waives the daily limit for the rest of that day (otherwise the next
+    tick would put Polly back to sleep at once). The session limit still applies after waking.
+    The lock screen is a night sea with Polly asleep (a new UI picture, Fluent `zzz`, same pinned
+    commit) and the gear only: no home button, so it is not a way into a sibling's profile.
+    Polly says „Koniec na dziś! Polly idzie spać.” (`sleep.night`), again on a tap on Polly.
+95. **Limits are edited on `/parent/child/:id`** („Czas zabawy”) from two short lists: daily
+    *brak limitu*, 10, 15, 20, 30, 45, 60 min; session *brak limitu*, 5, 10, 15, 20, 30 min.
+    Written as the child's `limits` `Lww` register, like the plan. The e2e's 1-minute session is
+    written straight into IndexedDB; no parent needs a 1-minute choice.
+96. **The progress dashboard** is on the same screen („Postępy”), all derived
+    (`domain/dashboard.ts`, unit-tested): learned words per topic (derived *learned*, of the
+    topic's words, for enabled topics and any topic with a word met); words that need practice
+    (most first-try misses, Σ `c − first` over every day and device, at most 8, ties by the most
+    recent miss); a 4-week calendar (28 days to today in Monday-first weeks, each day its
+    minutes over every device, shaded in four steps, a day with answers but under a minute
+    marked active); stickers collected (owned of all, per set); stories heard (per story, over
+    every device). Minutes today and this week are listed above the calendar.
+97. **Export and import of the family as JSON.** Export downloads the local `FamilyFile`
+    exactly as stored (`hello-polly-rodzina-YYYY-MM-DD.json`, a `Blob` and an `<a download>`):
+    nothing local-only goes in it (no device id, no token, no Drive file id, no voices). Import
+    reads a chosen file with the sync's `parseFamilyFile` (same checks: JSON, a family file, not
+    a newer schema), shows the children it holds, and on „Wczytaj” merges it into the local
+    file with `mergeFamily`, the same join as sync, so an import never loses anything already on
+    the device. The `familyId` stays the device's when it already has children; a device with
+    none adopts the backup's, so an import into a fresh profile is the exported file byte for
+    byte and every derived state is identical. A connected device uploads the merge on its next
+    cycle like any local change. It is offered in the parent panel („Kopia zapasowa”) and in the
+    first run („Mam kopię zapasową”), because a fresh profile has no child to open the panel from.
 
 ## Open questions
 

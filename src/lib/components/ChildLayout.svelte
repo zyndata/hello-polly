@@ -11,11 +11,11 @@
    *
    * A child screen on show closes the parent gate (STATE.md decision 37).
    */
-  let { children }: { children: Snippet } = $props();
+  let { children, night = false }: { children: Snippet; night?: boolean } = $props();
 
   parentGate.close();
 </script>
 
-<main class="sea flex h-dvh flex-col overflow-hidden select-none">
+<main class="sea flex h-dvh flex-col overflow-hidden select-none" class:is-night={night}>
   {@render children()}
 </main>
