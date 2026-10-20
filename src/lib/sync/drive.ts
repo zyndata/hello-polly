@@ -3,15 +3,18 @@ import {
   RemoteChangedError,
   RemoteGoneError,
   type AccountInfo,
+  type Member,
+  type PickResult,
   type RemoteContent,
   type RemoteVersion,
   type StorageBackend
 } from './backend';
-import { currentToken, forgetAccessToken, hasAccessToken, requestToken, revokeAccess } from './google-auth';
+import { currentToken, forgetAccessToken, hasAccessToken, requestToken, revokeAccess, type TokenRequest } from './google-auth';
+import { pickFile } from './picker';
 
 /**
- * Google Drive, scope `drive.file`: the app sees only the files it created (or, from Phase 8,
- * that the parent picked for it). The family file sits in the parent's visible Drive, so it
+ * Google Drive, scope `drive.file`: the app sees only the files it created, or that the parent
+ * picked for it in the Google Picker (a file the other parent shared, decision 77). The family file sits in the parent's visible Drive, so it
  * can be shared with the second parent; `appDataFolder` cannot (PLAN.md "Research summary").
  * It is created in an app-created `HelloPolly` folder (decision 74); `find` looks for it
  * anywhere the app can see, so a file that was moved or shared is still found.
@@ -21,7 +24,7 @@ const DRIVE_FILES = 'https://www.googleapis.com/drive/v3/files';
 const DRIVE_UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files';
 const DRIVE_ABOUT = 'https://www.googleapis.com/drive/v3/about';
 
-const VERSION_FIELDS = 'id,version,modifiedTime';
+const VERSION_FIELDS = 'id,version,modifiedTime,ownedByMe';
 
 export const FOLDER_NAME = 'HelloPolly';
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
@@ -31,7 +34,19 @@ interface DriveFileResource {
   version?: string;
   modifiedTime?: string;
   trashed?: boolean;
+  ownedByMe?: boolean;
+  createdTime?: string;
 }
+
+interface DrivePermission {
+  id?: string;
+  type?: string;
+  role?: string;
+  emailAddress?: string;
+  displayName?: string;
+}
+
+const PERMISSION_FIELDS = 'id,type,role,emailAddress,displayName';
 
 interface DriveErrorBody {
   error?: { message?: string; errors?: { reason?: string }[] };
@@ -47,20 +62,32 @@ export interface DriveBackendOptions {
   /** The token for each request. Defaults to the one in hand, never asking Google (decision 66). */
   token?: () => Promise<string>;
   /** How a session is obtained in `authenticate`. Defaults to GIS, from a parent's tap. */
-  requestToken?: (options: { interactive?: boolean }) => Promise<string>;
+  requestToken?: (options: TokenRequest) => Promise<string>;
+  /** Shows the file picker. Defaults to the Google Picker. */
+  pickFile?: (fileId: string, accessToken: string) => Promise<PickResult>;
   /** Injected in tests, so the retries do not wait. */
   sleep?: (ms: number) => Promise<void>;
 }
 
 function toVersion(file: DriveFileResource): RemoteVersion | null {
   if (file.id === undefined || file.version === undefined || file.modifiedTime === undefined) return null;
-  return { fileId: file.id, version: String(file.version), modifiedTime: file.modifiedTime };
+  const found: RemoteVersion = { fileId: file.id, version: String(file.version), modifiedTime: file.modifiedTime };
+  if (typeof file.ownedByMe === 'boolean') found.ownedByMe = file.ownedByMe;
+  return found;
+}
+
+function toMember(permission: DrivePermission): Member | null {
+  if (permission.type !== 'user' || permission.id === undefined || permission.emailAddress === undefined) return null;
+  const member: Member = { id: permission.id, email: permission.emailAddress, role: permission.role === 'owner' ? 'owner' : 'writer' };
+  if (permission.displayName !== undefined) member.name = permission.displayName;
+  return member;
 }
 
 export function createDriveBackend(options: DriveBackendOptions = {}): StorageBackend {
   const doFetch = options.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
   const token = options.token ?? currentToken;
   const ask = options.requestToken ?? requestToken;
+  const picker = options.pickFile ?? pickFile;
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
 
   function retryAfterMs(response: Response): number | undefined {
@@ -137,17 +164,21 @@ export function createDriveBackend(options: DriveBackendOptions = {}): StorageBa
     return found;
   }
 
+  async function signIn(request: TokenRequest): Promise<AccountInfo> {
+    await ask(request);
+    const about = await json<{ user?: { permissionId?: string; emailAddress?: string; displayName?: string } }>(
+      `${DRIVE_ABOUT}?${query({ fields: 'user(permissionId,emailAddress,displayName)' })}`
+    );
+    const id = about.user?.permissionId;
+    if (id === undefined) throw new NotAuthenticatedError('Drive did not identify the account');
+    const label = about.user?.emailAddress ?? about.user?.displayName;
+    return label === undefined ? { id } : { id, label };
+  }
+
   return {
-    async authenticate(authOptions = {}): Promise<AccountInfo> {
-      await ask({ interactive: authOptions.interactive === true });
-      const about = await json<{ user?: { permissionId?: string; emailAddress?: string; displayName?: string } }>(
-        `${DRIVE_ABOUT}?${query({ fields: 'user(permissionId,emailAddress,displayName)' })}`
-      );
-      const id = about.user?.permissionId;
-      if (id === undefined) throw new NotAuthenticatedError('Drive did not identify the account');
-      const label = about.user?.emailAddress ?? about.user?.displayName;
-      return label === undefined ? { id } : { id, label };
-    },
+    authenticate: (authOptions = {}) => signIn({ interactive: authOptions.interactive === true }),
+
+    switchAccount: () => signIn({ selectAccount: true }),
 
     isAuthenticated: hasAccessToken,
 
@@ -166,11 +197,9 @@ export function createDriveBackend(options: DriveBackendOptions = {}): StorageBa
           pageSize: '10'
         })}`
       );
-      for (const file of result.files ?? []) {
-        const found = toVersion(file);
-        if (found !== null) return found;
-      }
-      return null;
+      // Oldest first; a file another parent shared wins over this account's own (decision 78).
+      const found = (result.files ?? []).map(toVersion).filter((f): f is RemoteVersion => f !== null);
+      return found.find((f) => f.ownedByMe === false) ?? found[0] ?? null;
     },
 
     async create(name: string, content: string): Promise<RemoteVersion> {
@@ -227,6 +256,47 @@ export function createDriveBackend(options: DriveBackendOptions = {}): StorageBa
         body: JSON.stringify({ trashed: true })
       });
       if (!response.ok && response.status !== 404) throw new Error(`Drive trash failed (${response.status})`);
+    },
+
+    async members(fileId: string): Promise<Member[]> {
+      const response = await request(
+        `${DRIVE_FILES}/${encodeURIComponent(fileId)}/permissions?${query({ fields: `permissions(${PERMISSION_FIELDS})`, pageSize: '100' })}`
+      );
+      if (response.status === 404) throw new RemoteGoneError();
+      if (!response.ok) throw new Error(`Drive permissions read failed (${response.status})`);
+      const body = (await response.json()) as { permissions?: DrivePermission[] };
+      const members = (body.permissions ?? []).map(toMember).filter((m): m is Member => m !== null);
+      return members.sort((a, b) => (a.role === b.role ? a.email.localeCompare(b.email) : a.role === 'owner' ? -1 : 1));
+    },
+
+    async share(fileId: string, email: string, message: string): Promise<Member> {
+      const response = await request(
+        `${DRIVE_FILES}/${encodeURIComponent(fileId)}/permissions?${query({
+          sendNotificationEmail: 'true',
+          emailMessage: message,
+          fields: PERMISSION_FIELDS
+        })}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+          body: JSON.stringify({ type: 'user', role: 'writer', emailAddress: email })
+        }
+      );
+      if (response.status === 404) throw new RemoteGoneError();
+      if (!response.ok) throw new Error(`Drive sharing failed (${response.status})`);
+      const member = toMember((await response.json()) as DrivePermission);
+      return member ?? { id: '', email, role: 'writer' };
+    },
+
+    async unshare(fileId: string, memberId: string): Promise<void> {
+      const response = await request(`${DRIVE_FILES}/${encodeURIComponent(fileId)}/permissions/${encodeURIComponent(memberId)}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok && response.status !== 404) throw new Error(`Drive unsharing failed (${response.status})`);
+    },
+
+    async pick(fileId: string): Promise<PickResult> {
+      return picker(fileId, await token());
     }
   };
 }

@@ -4,6 +4,7 @@ import type { WrappedComponent } from 'svelte-spa-router/wrap';
 import Gated from './components/Gated.svelte';
 import Placeholder from './components/Placeholder.svelte';
 import { notFound, screens, type Screen } from './screens';
+import Join from '../screens/Join.svelte';
 import Setup from '../screens/Setup.svelte';
 import Start from '../screens/Start.svelte';
 import Album from '../screens/child/Album.svelte';
@@ -40,6 +41,7 @@ const built: Record<string, ScreenComponent> = {
   '/parent/child/:id': ParentChild,
   '/parent/family': Family,
   '/parent/speech': Speech,
+  '/join/:fileId': Join,
   '/setup': Setup
 };
 

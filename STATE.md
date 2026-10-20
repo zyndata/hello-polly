@@ -14,7 +14,7 @@ Any deviation from [PLAN.md](PLAN.md) must be recorded here before proceeding.
 | 5     | Lessons & first exercises                           | done        | 2026-10-19 |
 | 6     | Rewards                                             | done        | 2026-10-19 |
 | 7     | Drive sync (one account, many devices)              | done        | 2026-10-19 |
-| 8     | Inviting the second parent                          | pending     |           |
+| 8     | Inviting the second parent                          | done        | 2026-10-20 |
 | 9     | Stories & more games                                | pending     |           |
 | 10    | Screen time & the progress dashboard                | pending     |           |
 | 11    | Full A1 content, PWA polish, v1.0.0                 | pending     |           |
@@ -380,6 +380,67 @@ untouched `routes.spec.ts`), an environment fault since Phase 6; CI runs WebKit.
 CI: **green** on `dev` (run 39317063495 on `d2e9200`: check, unit 282, `check:content`,
 build, e2e 124 passed + 2 opt-in skipped in Chromium + WebKit, no flaky test). So the sync
 specs did pass in WebKit, in CI.
+
+### Phase 8 acceptance (2026-10-20)
+
+- [x] **Parent B, on a different Google account, joins from the link in ≤ 3 taps after sign-in
+      and sees A's children and settings.** e2e (`sharing.spec.ts`, two contexts on two accounts
+      over one fake Drive): A sets the American accent, connects, invites B from *Rodzina*; the
+      fake Drive records the invitation, whose note carries `<origin>/#/join/<fileId>`. B opens
+      that link → „Połącz z Google” → in the Picker frame the file and „Wybierz”: **2 taps**
+      after the sign-in. „Gotowe!” lists Ola; B's IndexedDB equals the file on Drive; B's
+      *Mowa i głosy* has the American accent; *Rodzina* names B's account and marks B „to ty”,
+      with no „Usuń”. The Picker was built for that one file id, with the build's key and app
+      id, for this origin. A phone with a child of its own needs a third tap, „Dołącz”, and A
+      then has both children. Unit (`engine.test.ts`): before picking, the shared file is out
+      of reach for B (drive.file); after, B's copy has A's children, settings and `familyId`.
+- [x] **Progress made on B's phone appears on A's phone after a focus or 3 minutes.** e2e: B's
+      child meets a word; B's debounce uploads it; A's focus brings B's device subtree into
+      A's IndexedDB, and after B's focus both copies are identical. The 3-minute timer is the
+      Phase 7 trigger, unchanged. Unit: B's stars reach A on A's next cycle, derived state equal.
+- [x] **Removing B stops B's sync with a clear message; A's data is untouched.** e2e: A's „Usuń”
+      → „Na pewno usunąć?” takes B off the file (Drive's permissions: A alone). B's child plays
+      on: the map stays, no alert, only the gear's dot; B's *Rodzina* says „Dostęp cofnięty” and
+      „Dostęp do wspólnej rodziny został cofnięty…”. The file is byte-identical to before the
+      removal, nothing was re-created, A's own copy is unchanged after a focus, and B keeps
+      Ola and her progress. After a reload and the gate, B's device asks Drive nothing at all.
+      Unit: the revoked error for a removed member and for a file its owner trashed (PLAN.md's
+      edge case); a mutation that dropped the rule turned both red, and one that kept the
+      status at `error` turned the e2e red.
+- [x] **B signed in with the wrong account gets a message naming that account.** e2e: signed in
+      as `obcy@example.com`, the Picker lists nothing; closed, the screen says „Plik rodziny nie
+      został wybrany. Zalogowano jako obcy@example.com…”, nothing changed (one file on Drive,
+      no family on the phone); „Zmień konto” (the account chooser) → B's account → the file →
+      „Gotowe!”. A closed Picker on the right account changes nothing either, and „Spróbuj
+      jeszcze raz” opens it again.
+
+Open, with what closes it:
+
+- **The spike (task 5, open question 4): not run** (decision 75). It needs the web manifest
+  (Phase 11) and the two phones; the procedure is in docs/DEPLOYMENT.md ("Spike: the Picker in
+  an installed PWA"). The fallback it would choose is built already.
+- **Live check against real Google, second parent: not run.** Checklist in docs/DEPLOYMENT.md
+  ("Live check against real Google (the second parent)"). It needs two Google accounts, both
+  test users while the consent screen is in *Testing*. The Cloud project and the three
+  `VITE_GOOGLE_*` repository variables now exist (the owner set them since Phase 7), so this
+  and the Phase 7 live check can both run: locally under `docker:up` now, live after the next
+  `/release`. What it must show: the one expected `style-src-elem` report (decision 81), the
+  key accepted with `Referrer-Policy: no-referrer`, and the real invitation e-mail.
+
+Also: *Rodzina* before connecting explains that the family must be on Drive first and offers no
+invitation; the invite link is shown with „Kopiuj link”; the first run's „Mam zaproszenie” takes
+a pasted link (or bare id) to the join screen (`invite.test.ts`); no screen loads the Picker
+until a parent signs in on the join screen. Unit (`drive.test.ts`): the search prefers a shared
+file, the invitation's query and body, the member list (owner first, users only), removal,
+the picker gets the token in hand, „Zmień konto” asks for `select_account`.
+
+Tests: 300 unit tests (31 files); e2e in Chromium 70 passed + 1 opt-in skipped, in WebKit 69
+passed + 2 skipped (the opt-in and the real-speech check, no speech engine in Windows WebKit),
+both under `vite preview`; and `test:e2e:csp` against the container in both engines: 139
+passed, 3 skipped, zero violations. WebKit runs on this machine again (it could not load any
+page in Phases 6–7). Under 8 parallel workers two older specs on real timing (the real-speech
+start screen, a full lesson) missed their 5 s waits once each; both pass alone and the whole
+suite passes with 4 workers. Not from this phase: they touch nothing it changed.
 
 ## Quality gates
 
@@ -932,6 +993,82 @@ docs/DEPLOYMENT.md, open until the owner runs it.
     devices racing may each create a folder; the duplicate file is settled as before (decision
     64) and an empty extra folder is harmless. No new scope, no CSP change.
 
+### 2026-10-20 — Phase 8: Inviting the second parent
+
+Open question 4 names this phase (the Picker in an installed PWA, the spike of task 5).
+
+75. **The spike cannot run in this phase; the fallback is built so that it does not have to
+    wait.** The app has no web manifest yet (vite-plugin-pwa is Phase 11), so neither phone
+    can install it as a standalone app, and the spike needs the two real phones in any case.
+    What is built regardless of its outcome: (a) the Picker is an iframe in the page, never a
+    popup; (b) on iOS an e-mailed link always opens in Safari, never in an installed web app,
+    and the `drive.file` grant the Picker gives belongs to the parent's *account* and the
+    OAuth client, not to the browser, so after joining in Safari the installed app finds the
+    shared file with „Mam już rodzinę na Dysku Google” (decision 78) without any Picker; (c)
+    the first run's „Mam zaproszenie” takes a pasted link and runs the join in place. Open
+    question 4 stays open until the spike runs (procedure in docs/DEPLOYMENT.md).
+76. **Owner's answer: no „Zachowaj osobno”.** A device holds one family (decision 64), so the
+    join offers only „Dołącz do wspólnej rodziny” (this device's children are merged into the
+    shared family) or „Anuluj” (nothing changes). PLAN.md's second button is dropped.
+77. **The join flow.** `/join/:fileId` is a parent screen, not gated (like `/setup`; a child
+    does not open e-mail). „Połącz z Google” signs in, and **does not connect the device**
+    until the file is picked: a closed Picker leaves everything as it was, not even a new
+    file of the parent's own. After the sign-in the app first asks Drive for the file; when
+    it is already reachable (picked before, or the owner opening their own link) the Picker
+    is skipped. Otherwise the Picker opens by itself (an iframe needs no gesture), so the taps
+    after sign-in are: the file, „Wybierz”, and „Dołącz” only when this device has children
+    the family lacks. Joining adopts the shared family's `familyId`, merges, and uploads.
+    When the device was syncing a family file of its own, that file goes to the Drive trash
+    after the merge (Drive keeps it 30 days), so the parent's other devices follow: their
+    file is gone, they look again, and the search prefers the shared file (78).
+78. **Shared or own.** The file's `ownedByMe` is read with its version and kept locally
+    (`meta.driveFileShared`). `find` prefers a file shared with the account over one it
+    owns, then the oldest. A shared file that is gone (404, `appNotAuthorizedToFile`,
+    trashed) means **access was taken away**: sync stops (status `revoked`, kept in
+    `meta.driveRevoked`, so a reload makes no request), the parent panel says „Dostęp do
+    wspólnej rodziny został cofnięty”, the local copy stays, and nothing is re-created. An
+    own file that is gone behaves as before (decision 70: look again, then re-create). A
+    shared file trashed by its owner is told the same way, as PLAN.md asks.
+79. **Members come from Drive, live; `FamilyFile.members` is not written.** The merge keeps
+    members as a union, which can never forget a removed parent, and PLAN.md calls Drive the
+    authority anyway. *Rodzina* lists `permissions.list` (users only), marks the owner and
+    „ty”, and offers „Usuń” only to the owner, for the others (`permissions.delete`). The
+    invite is `permissions.create` (`writer`, Drive's notification e-mail with a Polish
+    message and the link `<origin>/#/join/<fileId>`, built from the current origin so it
+    also works on localhost); the link is also shown with „Kopiuj link”. A writer may
+    invite too (Drive's default `writersCanShare`).
+80. **The wrong account.** The link carries only the file id (PLAN.md), so the app cannot
+    know which address was invited. It names the signed-in account whenever the file does
+    not come back: the Picker closed or empty, or the picked file still unreachable. The
+    message says „Zalogowano jako <e-mail>…” and offers „Zmień konto” (GIS
+    `prompt: 'select_account'`) and „Spróbuj jeszcze raz”.
+81. **CSP widened for the Picker, measured against the real one** (task 4). Under the container's
+    policy, the real `https://apis.google.com/js/api.js` → `gapi.load('picker')` → a Picker
+    built with this project's key and app id (a probe token, so Google's frame answers 403) needed
+    exactly: `script-src` + `https://apis.google.com` (the loader and its two module scripts) and
+    `frame-src` + `https://docs.google.com` (the Picker's frame). **Nothing in `connect-src`**
+    (PLAN.md's `https://accounts.google.com` there is still not granted) and no `img-src` (the
+    Picker's pictures load inside its own frame). The one report: the loader injects an inline
+    `<style>` with the dialog's layout rules, which `style-src 'self'` blocks. A hash would be
+    brittle (the loader's build changed between two runs an hour apart), so the five rules are
+    copied verbatim into `app.css` and the report is expected, like Eat My Way decision 88;
+    with them the dialog renders as Google intends (checked in a screenshot). The dialog's
+    position and size are CSSOM writes, which the CSP allows. `Referrer-Policy: no-referrer`
+    is kept: the Picker's document answered the same with and without a `Referer`, whatever
+    its value; whether the key's referrer restriction holds once a real token is in hand is
+    on the live checklist.
+82. **e2e: several accounts, and the Picker at its real URLs.** `e2e/fake-google.ts` now tells
+    accounts apart by their token, and models `drive.file`: an account reaches a file only
+    while it has a permission *and* the app is authorised for it (it created it, or picked it).
+    Permissions (`list`, `create` with the invitation e-mail recorded, `delete` by the owner
+    only) and `ownedByMe` are answered like Drive. The Picker's loader is served at
+    `https://apis.google.com/js/api.js` and its frame at `https://docs.google.com/picker`, so
+    `script-src` and `frame-src` are exercised as shipped; picking in that frame authorises the
+    app for the account, as the real Picker does. The GIS stub's `select_account` switches to a
+    test-chosen token. The unit fake (`src/test/fake-drive.ts`) models the same rules. Drive
+    helpers shared by the sync and sharing specs moved to `e2e/drive.ts`. The e2e build gets a
+    fixed, never-sent Picker key and app id, like the client id.
+
 ## Open questions
 
 Copied from PLAN.md. Each is settled in the phase named and the answer recorded here.
@@ -943,6 +1080,10 @@ Copied from PLAN.md. Each is settled in the phase named and the answer recorded 
 3. **Sticker art**: 3D PNG (richer, larger) or Color SVG (Phase 6). **Settled** (decision 56):
    Color SVG, and a word's sticker is its own picture, so stickers add 0 kB.
 4. **Picker in an installed iOS PWA**: unknown until measured; fallback defined (Phase 8 spike).
+   **Still open after Phase 8** (decision 75): the app cannot be installed standalone before
+   the web manifest (Phase 11), and the spike needs both phones. The fallback is built (join
+   in the browser, then „Mam już rodzinę na Dysku Google” in the installed app); the procedure
+   is in docs/DEPLOYMENT.md. To run with Phase 11, or as soon as a manifest exists.
 5. **Should one family file per Google account allow several families?** **Settled**
    (decision 64): no, one family per account, the owner's choice.
 6. **Speech engine and picture set**: kept or replaced by the quality gates in "Speech and

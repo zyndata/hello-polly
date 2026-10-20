@@ -6,8 +6,21 @@
 -->
 <script lang="ts">
   import ParentLayout from '../../lib/components/ParentLayout.svelte';
+  import type { Member } from '../../lib/sync/backend';
   import { FAMILY_FILE_NAME } from '../../lib/sync/engine';
-  import { connect, disconnect, renew, syncNow, syncState, type SyncStatus } from '../../lib/sync/state.svelte';
+  import {
+    connect,
+    disconnect,
+    familyFileId,
+    invite,
+    joinLink,
+    listMembers,
+    removeMember,
+    renew,
+    syncNow,
+    syncState,
+    type SyncStatus
+  } from '../../lib/sync/state.svelte';
   import type { Screen } from '../../lib/screens';
 
   let { screen }: { screen: Screen; params?: Record<string, string> | null } = $props();
@@ -22,7 +35,8 @@
     paused: 'Wstrzymano',
     syncing: 'Zapisuję…',
     ok: 'Połączono',
-    error: 'Błąd'
+    error: 'Błąd',
+    revoked: 'Dostęp cofnięty'
   };
 
   const when = (iso: string | undefined): string =>
@@ -52,6 +66,78 @@
       await disconnect();
       confirming = false;
     }, 'Nie udało się odłączyć.');
+
+  // --- The second parent (decision 79) ---
+
+  let fileId = $state<string | undefined>();
+  let members = $state<Member[] | undefined>();
+  let membersFailed = $state(false);
+  let email = $state('');
+  let inviting = $state(false);
+  let invited = $state<string | undefined>();
+  let inviteFailure = $state<string | undefined>();
+  let removing = $state<string | undefined>();
+  let copied = $state(false);
+
+  const canShare = $derived(syncState.status === 'ok' || syncState.status === 'syncing' || syncState.status === 'paused');
+  const iAmOwner = $derived(members?.some((m) => m.id === syncState.accountId && m.role === 'owner') === true);
+
+  /** Only with a token in hand: opening this screen is not a reason to ask Google for one. */
+  async function loadMembers() {
+    fileId = await familyFileId();
+    if (fileId === undefined || syncState.status !== 'ok') return;
+    try {
+      members = await listMembers();
+      membersFailed = false;
+    } catch {
+      membersFailed = true;
+    }
+  }
+
+  // Once a token is in hand; after that, only invitations and removals reload the list.
+  $effect(() => {
+    if (syncState.status === 'ok' && members === undefined && !membersFailed) void loadMembers();
+  });
+
+  async function onInvite(event: SubmitEvent) {
+    event.preventDefault();
+    if (inviting || email.trim() === '') return;
+    inviting = true;
+    invited = undefined;
+    inviteFailure = undefined;
+    try {
+      const member = await invite(email);
+      invited = member.email;
+      email = '';
+      await loadMembers();
+    } catch {
+      inviteFailure = 'Nie udało się wysłać zaproszenia. Sprawdź adres e-mail i połączenie z internetem, i spróbuj jeszcze raz.';
+    } finally {
+      inviting = false;
+    }
+  }
+
+  async function onRemove(member: Member) {
+    if (removing !== member.id) {
+      removing = member.id;
+      return;
+    }
+    await act(async () => {
+      await removeMember(member.id);
+      removing = undefined;
+      await loadMembers();
+    }, 'Nie udało się usunąć tej osoby z rodziny.');
+  }
+
+  async function onCopy() {
+    if (fileId === undefined) return;
+    try {
+      await navigator.clipboard.writeText(joinLink(fileId));
+      copied = true;
+    } catch {
+      copied = false;
+    }
+  }
 </script>
 
 <ParentLayout title={screen.title}>
@@ -82,7 +168,7 @@
         <dt class="font-bold">Ostatni zapis</dt>
         <dd data-testid="sync-last">{when(syncState.lastSync)}</dd>
       </dl>
-      {#if syncState.message && (syncState.status === 'paused' || syncState.status === 'error')}
+      {#if syncState.message && (syncState.status === 'paused' || syncState.status === 'error' || syncState.status === 'revoked')}
         <p class="notice" data-testid="sync-message">{syncState.message}</p>
       {/if}
       {#if syncState.unsynced}
@@ -91,7 +177,7 @@
       <div class="flex flex-wrap gap-2">
         {#if syncState.status === 'paused'}
           <button type="button" class="button" disabled={busy} onclick={onRenew} data-testid="renew">Wznów</button>
-        {:else}
+        {:else if syncState.status !== 'revoked'}
           <button type="button" class="button" disabled={busy || syncState.status === 'syncing'} onclick={onSync} data-testid="sync-now">
             Zapisz teraz
           </button>
@@ -116,9 +202,76 @@
     {/if}
   </section>
 
-  <section class="card" aria-labelledby="second-title">
+  <section class="card" aria-labelledby="second-title" data-testid="second-parent">
     <h2 id="second-title" class="card-title">Drugi rodzic</h2>
-    <p class="text-ink-muted">Zapraszanie drugiego rodzica do wspólnej rodziny pojawi się w jednej z kolejnych wersji.</p>
+    {#if syncState.status === 'revoked'}
+      <p>
+        Ta rodzina nie jest już wspólna. „Odłącz” powyżej zostawia wszystko na tym urządzeniu; nowe zaproszenie od
+        drugiego rodzica połączy was znowu.
+      </p>
+    {:else if !syncState.connected}
+      <p class="text-ink-muted">
+        Najpierw zapisz rodzinę na Dysku Google (powyżej). Potem zaprosisz tutaj drugiego rodzica: będziecie widzieć te
+        same dzieci, ustawienia i postępy, każde na swoim telefonie i swoim koncie Google.
+      </p>
+    {:else}
+      <p>
+        Zaproś drugiego rodzica jego adresem e-mail z kontem Google. Dysk Google wyśle mu wiadomość z linkiem; po
+        otwarciu linku wybierze plik rodziny i zobaczy te same dzieci, ustawienia i postępy.
+      </p>
+
+      {#if members}
+        <ul class="grid gap-2" data-testid="members">
+          {#each members as member (member.id)}
+            <li class="flex flex-wrap items-center gap-x-3 gap-y-1" data-member={member.email}>
+              <span class="font-bold">{member.name ?? member.email}</span>
+              {#if member.name}<span class="text-sm text-ink-muted">{member.email}</span>{/if}
+              <span class="text-sm text-ink-muted" data-testid="member-role">
+                {member.role === 'owner' ? 'właściciel pliku' : 'może zmieniać'}{member.id === syncState.accountId ? ' · to ty' : ''}
+              </span>
+              {#if iAmOwner && member.role !== 'owner'}
+                <button type="button" class="button-quiet" disabled={busy} onclick={() => onRemove(member)} data-testid="remove-member">
+                  {removing === member.id ? 'Na pewno usunąć?' : 'Usuń'}
+                </button>
+              {/if}
+            </li>
+          {/each}
+        </ul>
+        {#if removing}
+          <p class="text-sm text-ink-muted">
+            Ta osoba straci dostęp do pliku rodziny, a jej urządzenia przestaną się synchronizować. Dzieci i postępy tutaj
+            zostają.
+          </p>
+        {/if}
+      {:else if membersFailed}
+        <p class="notice">Nie udało się wczytać listy osób z dostępem. Spróbuj „Zapisz teraz” i wróć tutaj.</p>
+      {:else if syncState.status === 'paused'}
+        <p class="text-sm text-ink-muted">Lista osób pojawi się po wznowieniu połączenia.</p>
+      {/if}
+
+      {#if canShare}
+        <form class="grid gap-2" onsubmit={onInvite} data-testid="invite-form">
+          <label class="grid gap-1">
+            <span class="font-bold">Adres e-mail drugiego rodzica</span>
+            <input class="select" type="email" name="email" autocomplete="email" required bind:value={email} />
+          </label>
+          <button type="submit" class="button justify-self-start" disabled={inviting} data-testid="invite">Zaproś</button>
+        </form>
+        {#if invited}
+          <p data-testid="invite-sent">Wysłano zaproszenie na adres {invited}.</p>
+        {/if}
+        {#if inviteFailure}
+          <p class="notice" role="alert" data-testid="invite-failure">{inviteFailure}</p>
+        {/if}
+        {#if fileId}
+          <p class="text-sm text-ink-muted">
+            Link z zaproszenia możesz też wysłać sam, na przykład SMS-em. Bez zaproszenia na Dysku nikomu nic nie da.
+          </p>
+          <p class="break-all text-sm" data-testid="invite-link">{joinLink(fileId)}</p>
+          <button type="button" class="button-quiet justify-self-start" onclick={onCopy}>{copied ? 'Skopiowano' : 'Kopiuj link'}</button>
+        {/if}
+      {/if}
+    {/if}
   </section>
 
   <a class="link self-start" href="#/parent">‹ Panel rodzica</a>

@@ -10,10 +10,14 @@ import { album, chestState, totalStars } from '../domain/rewards';
 import { wordStates } from '../domain/learning';
 import type { DeviceId, FamilyFile, Instant } from '../types';
 import { FakeDrive, fakeBackend, type FakeBackendOptions } from '../../test/fake-drive';
-import { NotAuthenticatedError } from './backend';
+import { NotAuthenticatedError, type StorageBackend } from './backend';
 import {
+  AccessRevokedError,
   FAMILY_FILE_NAME,
   META_FILE_ID,
+  META_FILE_SHARED,
+  joinFamily,
+  previewJoin,
   NewerSchemaError,
   InvalidRemoteError,
   hasUnsyncedChanges,
@@ -31,6 +35,7 @@ afterEach(() => {
 interface Device {
   database: HelloPollyDb;
   id: DeviceId;
+  backend: StorageBackend;
   sync(): ReturnType<typeof syncOnce>;
   edit(change: (file: FamilyFile, now: Instant, device: DeviceId) => FamilyFile): Promise<FamilyFile>;
   file(): Promise<FamilyFile>;
@@ -46,6 +51,7 @@ async function device(drive: FakeDrive, options: FakeBackendOptions = {}, now = 
   return {
     database,
     id,
+    backend,
     sync: () => syncOnce({ backend, database, now }),
     // Each edit gets its own millisecond, as real taps do.
     edit: (change) => updateFamily((file) => change(file, new Date(Date.parse('2026-10-19T10:00:00Z') + tick++).toISOString(), id), database),
@@ -381,5 +387,167 @@ describe('parseFamilyFile', () => {
     expect(() => parseFamilyFile('[]')).toThrow(InvalidRemoteError);
     expect(() => parseFamilyFile(JSON.stringify({ ...file, children: [] }))).toThrow(InvalidRemoteError);
     expect(() => parseFamilyFile(JSON.stringify({ ...file, schema: 99 }))).toThrow(NewerSchemaError);
+  });
+});
+
+describe('the second parent (Phase 8)', () => {
+  const ANNA = { id: 'account-anna', label: 'anna@example.com' };
+  const BARTEK = { id: 'account-bartek', label: 'bartek@example.com' };
+  const OBCY = { id: 'account-obcy', label: 'obcy@example.com' };
+  const stas = { name: 'Staś', avatar: 'lion' };
+
+  /** Anna's phone, with Ola, synced: the shared family. */
+  async function annasFamily(drive: FakeDrive) {
+    const anna = await device(drive, { account: ANNA });
+    await anna.edit((f, now, d) => addChild(f, CHILD, ola, now, d));
+    await anna.edit((f, now, d) => setSetting(f, 'accent', 'en-US', now, d));
+    const { version } = await anna.sync();
+    return { anna, fileId: version.fileId };
+  }
+
+  /** Bartek's device, invited by Anna, having picked the file. */
+  async function invited(drive: FakeDrive, anna: Device, fileId: string, account = BARTEK) {
+    const bartek = await device(drive, { account });
+    await anna.backend.share(fileId, account.label, 'link');
+    expect(await bartek.backend.pick(fileId)).toBe('picked');
+    return bartek;
+  }
+
+  const join = (d: Device, fileId: string) => joinFamily({ backend: d.backend, database: d.database }, fileId);
+
+  it('the invited parent reaches the file only after picking it, then sees the children and settings', async () => {
+    const drive = new FakeDrive();
+    const { anna, fileId } = await annasFamily(drive);
+    const bartek = await device(drive, { account: BARTEK });
+    await anna.backend.share(fileId, BARTEK.label, 'link');
+
+    // Shared, but drive.file does not reach it for Bartek's app until he picks it.
+    await expect(bartek.backend.version(fileId)).rejects.toThrow();
+    expect(await bartek.backend.pick(fileId)).toBe('picked');
+    await join(bartek, fileId);
+
+    const fb = await bartek.file();
+    expect(liveChildren(fb).map((c) => c.id)).toEqual([CHILD]);
+    expect(readSettings(fb).accent).toBe('en-US');
+    expect(fb.familyId).toBe((await anna.file()).familyId);
+    expect((await bartek.database.meta.get(META_FILE_SHARED))?.value).toBe(true);
+    expect((await bartek.database.meta.get(META_FILE_ID))?.value).toBe(fileId);
+  });
+
+  it("progress on the second parent's phone reaches the first parent's on their next cycle", async () => {
+    const drive = new FakeDrive();
+    const { anna, fileId } = await annasFamily(drive);
+    const bartek = await invited(drive, anna, fileId);
+    await join(bartek, fileId);
+
+    await bartek.edit((f, _now, d) => addStars(f, CHILD, d, 7));
+    await bartek.sync();
+    await anna.sync();
+
+    expect(totalStars((await anna.file()).progress[CHILD])).toBe(7);
+    expect(derived(await anna.file())).toEqual(derived(await bartek.file()));
+  });
+
+  it("„Dołącz” merges this device's own children into the shared family", async () => {
+    const drive = new FakeDrive();
+    const { anna, fileId } = await annasFamily(drive);
+    const bartek = await invited(drive, anna, fileId);
+    await bartek.edit((f, now, d) => addChild(f, 'child-stas', stas, now, d));
+
+    const preview = await previewJoin({ backend: bartek.backend, database: bartek.database }, fileId);
+    expect(preview.localOnly.map((c) => c.name)).toEqual(['Staś']);
+    expect(liveChildren(preview.remote).map((c) => c.id)).toEqual([CHILD]);
+
+    await join(bartek, fileId);
+    await anna.sync();
+    expect(liveChildren(await anna.file()).map((c) => c.profile.name).sort()).toEqual(['Ola', 'Staś']);
+  });
+
+  it("the joining parent's own family file goes to the trash, and their other devices follow", async () => {
+    const drive = new FakeDrive();
+    const { anna, fileId } = await annasFamily(drive);
+    const phone = await device(drive, { account: BARTEK });
+    const tablet = await device(drive, { account: BARTEK });
+    await phone.edit((f, now, d) => addChild(f, 'child-stas', stas, now, d));
+    const own = (await phone.sync()).version.fileId;
+    await tablet.sync();
+    await anna.backend.share(fileId, BARTEK.label, 'link');
+    await phone.backend.pick(fileId);
+
+    await join(phone, fileId);
+
+    expect(drive.files.get(own)?.trashed).toBe(true);
+    // The tablet's file is gone; it looks again, prefers the shared family, and merges into it.
+    await tablet.sync();
+    expect((await tablet.database.meta.get(META_FILE_ID))?.value).toBe(fileId);
+    await anna.sync();
+    expect(liveChildren(await anna.file()).map((c) => c.profile.name).sort()).toEqual(['Ola', 'Staś']);
+    expect(derived(await tablet.file())).toEqual(derived(await anna.file()));
+  });
+
+  it('a search prefers a family shared with the account over its own', async () => {
+    const drive = new FakeDrive();
+    const { anna, fileId } = await annasFamily(drive);
+    const bartek = await device(drive, { account: BARTEK });
+    const own = (await bartek.sync()).version.fileId;
+    await anna.backend.share(fileId, BARTEK.label, 'link');
+    await bartek.backend.pick(fileId);
+    expect(own).not.toBe(fileId);
+    expect((await bartek.backend.find(FAMILY_FILE_NAME))?.fileId).toBe(fileId);
+    expect((await anna.backend.find(FAMILY_FILE_NAME))?.fileId).toBe(fileId);
+  });
+
+  it('removing the second parent stops their sync with AccessRevokedError; nothing is re-created', async () => {
+    const drive = new FakeDrive();
+    const { anna, fileId } = await annasFamily(drive);
+    const bartek = await invited(drive, anna, fileId);
+    await join(bartek, fileId);
+    const before = canonicalJson(await anna.file());
+
+    await anna.backend.unshare(fileId, BARTEK.id);
+    await bartek.edit((f, _now, d) => addStars(f, CHILD, d, 3));
+
+    await expect(bartek.sync()).rejects.toBeInstanceOf(AccessRevokedError);
+    expect(drive.files.size).toBe(1);
+    expect(liveChildren(await bartek.file()).map((c) => c.id)).toEqual([CHILD]);
+    expect(totalStars((await bartek.file()).progress[CHILD])).toBe(3);
+    await anna.sync();
+    expect(canonicalJson(await anna.file())).toBe(before);
+  });
+
+  it('a shared file trashed by its owner is revoked access for the invited parent', async () => {
+    const drive = new FakeDrive();
+    const { anna, fileId } = await annasFamily(drive);
+    const bartek = await invited(drive, anna, fileId);
+    await join(bartek, fileId);
+
+    await anna.backend.trash(fileId);
+
+    await expect(bartek.sync()).rejects.toBeInstanceOf(AccessRevokedError);
+    expect([...drive.files.values()].filter((f) => !f.trashed)).toHaveLength(0);
+  });
+
+  it('an account that was not invited cannot pick the file, and nothing is stored', async () => {
+    const drive = new FakeDrive();
+    const { fileId } = await annasFamily(drive);
+    const stranger = await device(drive, { account: OBCY });
+    expect(await stranger.backend.pick(fileId)).toBe('cancelled');
+    await expect(join(stranger, fileId)).rejects.toThrow();
+    expect((await stranger.database.meta.get(META_FILE_ID))?.value).toBeUndefined();
+  });
+
+  it('members are listed with roles, the invitation carries the message, and only the owner removes', async () => {
+    const drive = new FakeDrive();
+    const { anna, fileId } = await annasFamily(drive);
+    const bartek = await device(drive, { account: BARTEK });
+    await anna.backend.share(fileId, BARTEK.label, 'Zapraszam: https://example.test/#/join/x');
+    await bartek.backend.pick(fileId);
+
+    expect(await anna.backend.members(fileId)).toEqual([
+      { id: ANNA.id, email: ANNA.label, role: 'owner' },
+      { id: BARTEK.id, email: BARTEK.label, role: 'writer' }
+    ]);
+    expect(drive.invitations).toEqual([{ fileId, email: BARTEK.label, message: 'Zapraszam: https://example.test/#/join/x' }]);
+    await expect(bartek.backend.unshare(fileId, ANNA.id)).rejects.toThrow();
   });
 });

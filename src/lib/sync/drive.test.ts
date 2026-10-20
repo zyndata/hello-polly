@@ -120,3 +120,71 @@ describe('Drive backend (drive.file)', () => {
     expect(calls[0]?.url.pathname).toBe('/drive/v3/about');
   });
 });
+
+describe('Drive backend: sharing (Phase 8)', () => {
+  it('prefers a family file shared with the account over its own older one', async () => {
+    const own = { ...meta, ownedByMe: true };
+    const shared = { ...meta, id: 'f2', ownedByMe: false };
+    const { backend, calls } = scripted(ok({ files: [own, shared] }));
+    expect((await backend.find('hello-polly-family.json'))?.fileId).toBe('f2');
+    expect(calls[0]?.url.searchParams.get('fields')).toContain('ownedByMe');
+    const single = scripted(ok({ files: [own] }));
+    expect(await single.backend.find('hello-polly-family.json')).toEqual({ fileId: 'f1', version: '7', modifiedTime: meta.modifiedTime, ownedByMe: true });
+  });
+
+  it('invites as a writer with Drive’s notification e-mail carrying the message', async () => {
+    const { backend, calls } = scripted(ok({ id: 'p2', type: 'user', role: 'writer', emailAddress: 'b@example.com' }));
+    expect(await backend.share('f1', 'b@example.com', 'Link: https://x/#/join/f1')).toEqual({ id: 'p2', email: 'b@example.com', role: 'writer' });
+    const [call] = calls;
+    expect(call?.method).toBe('POST');
+    expect(call?.url.pathname).toBe('/drive/v3/files/f1/permissions');
+    expect(call?.url.searchParams.get('sendNotificationEmail')).toBe('true');
+    expect(call?.url.searchParams.get('emailMessage')).toBe('Link: https://x/#/join/f1');
+    expect(JSON.parse(call?.body ?? '{}')).toEqual({ type: 'user', role: 'writer', emailAddress: 'b@example.com' });
+  });
+
+  it('lists the people with access, the owner first, leaving out anything that is not a user', async () => {
+    const { backend } = scripted(
+      ok({
+        permissions: [
+          { id: 'p2', type: 'user', role: 'writer', emailAddress: 'b@example.com' },
+          { id: 'anyone', type: 'anyone', role: 'reader' },
+          { id: 'p1', type: 'user', role: 'owner', emailAddress: 'a@example.com', displayName: 'Anna' }
+        ]
+      })
+    );
+    expect(await backend.members('f1')).toEqual([
+      { id: 'p1', email: 'a@example.com', name: 'Anna', role: 'owner' },
+      { id: 'p2', email: 'b@example.com', role: 'writer' }
+    ]);
+  });
+
+  it('removes a member by permission id, and a member list of a file that is gone is RemoteGone', async () => {
+    const { backend, calls } = scripted(() => new Response(null, { status: 204 }), status(404));
+    await backend.unshare('f1', 'p2');
+    expect(calls[0]?.method).toBe('DELETE');
+    expect(calls[0]?.url.pathname).toBe('/drive/v3/files/f1/permissions/p2');
+    await expect(backend.members('f1')).rejects.toBeInstanceOf(RemoteGoneError);
+  });
+
+  it('opens the picker with the token in hand, and switches account with the chooser', async () => {
+    const asked: unknown[] = [];
+    const picked: [string, string][] = [];
+    const backend = createDriveBackend({
+      fetchImpl: (async () => new Response(JSON.stringify({ user: { permissionId: 'p9', emailAddress: 'c@example.com' } }))) as typeof fetch,
+      token: async () => 'tok',
+      requestToken: async (request) => {
+        asked.push(request);
+        return 'tok';
+      },
+      pickFile: async (fileId, token) => {
+        picked.push([fileId, token]);
+        return 'picked';
+      }
+    });
+    expect(await backend.pick('f1')).toBe('picked');
+    expect(picked).toEqual([['f1', 'tok']]);
+    expect(await backend.switchAccount()).toEqual({ id: 'p9', label: 'c@example.com' });
+    expect(asked).toEqual([{ selectAccount: true }]);
+  });
+});

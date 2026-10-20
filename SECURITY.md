@@ -42,8 +42,10 @@ Security-relevant problems are most likely to look like:
 
 - a **Content-Security-Policy regression**: anything that reintroduces `unsafe-inline` or
   `unsafe-eval`, or widens a directive beyond what [STATE.md](STATE.md) records. Today the
-  policy is `'self'` everywhere, plus `https://static.cloudflareinsights.com` in `script-src`
-  for the Cloudflare Web Analytics beacon the edge injects;
+  policy is `'self'` everywhere, plus: `script-src` the Cloudflare Web Analytics beacon, Google
+  Identity Services and the Google Picker's loader; `img-src` jsDelivr (the pictures);
+  `connect-src` the Drive API; `frame-src` Google's sign-in and Picker frames (the
+  [Caddyfile](Caddyfile) names each host and why);
 - **OAuth handling** that requests a broader scope than `drive.file`, or leaks a token;
 - **untrusted input treated as markup or code**: a family file fetched from Drive or an
   imported backup rendered without escaping;

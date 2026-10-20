@@ -10,8 +10,9 @@ It runs in the browser and installs as a PWA on a phone, tablet or computer. The
 **Polish**; the only English the child hears is the vocabulary itself (CEFR A1 / Cambridge
 Pre A1 Starters). The code, comments and documentation are in English.
 
-> **Status: in development. Phases 1–7 of 11 are done**: the scaffold, the content and the
-> local data layer, speech, children and the word plan, real lessons, rewards, and Drive sync. A parent sets up a
+> **Status: in development. Phases 1–8 of 11 are done**: the scaffold, the content and the
+> local data layer, speech, children and the word plan, real lessons, rewards, Drive sync, and
+> inviting the second parent. A parent sets up a
 > child (nickname and an animal picture), chooses the topics and, if they like, the exact words
 > to start with. The child gets a treasure map of islands: each island is a lesson of about
 > 8–12 steps, up to three new words in *look and listen*, then „Gdzie jest…?” picks with 2–4
@@ -24,8 +25,12 @@ Pre A1 Starters). The code, comments and documentation are in English.
 > sticker per word (rare gold ones shimmer), each saying its English word when tapped. A
 > parent can save the family in one file on their own Google Drive (*Rodzina*), and every
 > device signed in to that account then continues the same children's progress; the child
-> never sees sign-in or sync. This needs the Google Cloud setup, which the live site does not
-> have yet. Inviting the second parent and stories come in later phases. The development build is live at https://hellopolly.gorny.dev (v0.1.0).
+> never sees sign-in or sync. From *Rodzina* that parent invites the other by e-mail: the
+> other parent opens the link, signs in with their own Google account, picks the family file
+> in Google's file picker, and both phones then share the same children, settings and
+> progress. The owner of the file can remove the other parent again. Stories, screen time and
+> the progress dashboard come in later phases. The development build is live at
+> https://hellopolly.gorny.dev (v0.1.0, from before Drive sync).
 > [STATE.md](STATE.md) records what was decided and what is still open.
 
 ## What it looks like (so far)

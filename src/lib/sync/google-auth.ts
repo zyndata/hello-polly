@@ -191,13 +191,21 @@ async function ensureClient(): Promise<TokenClient> {
   return client;
 }
 
+export interface TokenRequest {
+  /** Show the consent screen (connecting). */
+  interactive?: boolean;
+  /** Show Google's account chooser first (decision 80). Implies `interactive`. */
+  selectAccount?: boolean;
+}
+
 /**
  * Ask Google for a token. **Only from a parent's tap.** `interactive` shows the consent
- * screen (connecting); otherwise `prompt: ''` lets Google answer without one when the grant
- * stands, with the remembered account as the hint.
+ * screen (connecting), `selectAccount` the account chooser; otherwise `prompt: ''` lets Google
+ * answer without one when the grant stands, with the remembered account as the hint.
  */
-export function requestToken(options: { interactive?: boolean } = {}): Promise<string> {
-  const interactive = options.interactive === true;
+export function requestToken(options: TokenRequest = {}): Promise<string> {
+  const select = options.selectAccount === true;
+  const interactive = options.interactive === true || select;
   if (!interactive && token !== null && valid(Date.now())) return Promise.resolve(token.value);
   // Two callers share one window. A click waiting on a silent attempt that failed asks again
   // for itself, with the consent screen.
@@ -208,7 +216,7 @@ export function requestToken(options: { interactive?: boolean } = {}): Promise<s
     return new Promise<string>((resolve, reject) => {
       settle = { resolve, reject };
       tokenClient.requestAccessToken({
-        prompt: interactive ? 'consent' : '',
+        prompt: select ? 'select_account' : interactive ? 'consent' : '',
         ...(interactive || hint === undefined ? {} : { hint })
       });
     });

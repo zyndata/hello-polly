@@ -45,8 +45,13 @@ export default defineConfig({
     url: 'http://localhost:4173',
     reuseExistingServer: !isCI,
     timeout: 180_000,
-    // A fixed client id, so the run is the same on a machine with no .env.local. It is never
-    // sent anywhere: every Google request is answered by e2e/fake-google.ts.
-    env: { VITE_GOOGLE_CLIENT_ID: 'e2e-client.apps.googleusercontent.com' }
+    // A fixed client id, Picker key and app id, so the run is the same on a machine with no
+    // .env.local. They are never sent anywhere: every Google request is answered by
+    // e2e/fake-google.ts.
+    env: {
+      VITE_GOOGLE_CLIENT_ID: 'e2e-client.apps.googleusercontent.com',
+      VITE_GOOGLE_API_KEY: 'e2e-picker-key',
+      VITE_GOOGLE_APP_ID: '123456789012'
+    }
   }
 });

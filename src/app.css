@@ -1096,3 +1096,48 @@
     }
   }
 }
+
+/*
+ * The Google Picker (Phase 8, STATE.md decision 81). Its loader injects these rules as an inline
+ * <style> element, which `style-src 'self'` blocks (one report from apis.google.com, expected).
+ * They are copied here verbatim from the loader, so the dialog is laid out the same without
+ * widening the policy. Its position and size come from CSSOM writes, which the CSP allows.
+ */
+.picker-dialog-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  overflow: hidden;
+}
+
+.picker-dialog-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #fff;
+  z-index: 1000;
+}
+
+.picker-dialog {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #fff;
+  border: 1px solid #acacac;
+  width: auto;
+  padding: 0;
+  z-index: 1001;
+  overflow: auto;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.picker-dialog-content {
+  height: 100%;
+  font-size: 0;
+  padding: 0;
+}
+
+.picker-dialog-buttons,
+.picker-dialog-title {
+  display: none;
+}

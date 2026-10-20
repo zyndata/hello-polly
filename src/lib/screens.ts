@@ -38,7 +38,7 @@ export const screens: readonly Screen[] = [
   { path: '/parent/child/:id', title: 'Dziecko', area: 'parent', phase: 4, built: true },
   { path: '/parent/family', title: 'Rodzina', area: 'parent', phase: 7, built: true },
   { path: '/parent/speech', title: 'Mowa i głosy', area: 'parent', phase: 3, built: true },
-  { path: '/join/:fileId', title: 'Dołącz do rodziny', area: 'parent', phase: 8 },
+  { path: '/join/:fileId', title: 'Dołącz do rodziny', area: 'parent', phase: 8, built: true },
   { path: '/setup', title: 'Pierwsze uruchomienie', area: 'parent', phase: 4, built: true }
 ];
 

@@ -106,14 +106,18 @@ src/
                            (long press), Island, VoiceCheck, ChildForm, WordPlanEditor,
                            ParentGate and Gated
   lib/sync/                Drive sync: backend.ts (the StorageBackend interface), drive.ts
-                           (Drive REST, drive.file), google-auth.ts (GIS token flow),
-                           engine.ts (one sync cycle), state.svelte.ts (status and triggers)
+                           (Drive REST, drive.file, sharing), google-auth.ts (GIS token
+                           flow), picker.ts (the Google Picker), engine.ts (one sync cycle,
+                           joining a shared family), state.svelte.ts (status, triggers, the
+                           second parent), invite.ts (the file id in a join link)
   screens/                 the built screens: Start (and the child picker), Setup,
                            child/Map, child/Lesson, parent/Panel, parent/Child, parent/Speech,
-                           parent/Family (Rodzina)
-  test/fake-drive.ts       an in-memory Drive for the sync engine's unit tests
+                           parent/Family (Rodzina), Join (accepting an invitation)
+  test/fake-drive.ts       an in-memory Drive for the sync engine's unit tests (several
+                           accounts, permissions, the drive.file grant)
 e2e/                       Playwright specs; every spec fails on a CSP violation;
-                           fake-google.ts fakes GIS and the Drive API at the network boundary
+                           fake-google.ts fakes GIS, the Drive API and the Google Picker at
+                           the network boundary, several accounts told apart by their token
 ```
 
 ## Speech
@@ -181,10 +185,12 @@ Two things the CSP forbids that are easy to write by accident in Svelte:
 Use `http://localhost:8081`, not `http://127.0.0.1:8081`: from Phase 7 only the former is an
 authorized JavaScript origin on the Google OAuth client.
 
-The sync specs (`e2e/sync.spec.ts`) need a container built with *some* client id, or they skip
-with a message. Any value works, since every Google request is answered by the fake: put one in
-`.env.local`, or on Linux run `VITE_GOOGLE_CLIENT_ID=e2e-client npm run docker:up` once.
+The sync specs (`e2e/sync.spec.ts`) need a container built with *some* client id, and the
+sharing specs (`e2e/sharing.spec.ts`) also a Picker key and app id, or they skip with a
+message. Any values work, since every Google request is answered by the fake: put them in
+`.env.local` (`VITE_GOOGLE_CLIENT_ID`, `VITE_GOOGLE_API_KEY`, `VITE_GOOGLE_APP_ID`).
 
-Against real Google, expect one report that is not ours: Google Identity Services may apply an
-inline style inside its own frame, which `style-src 'self'` blocks (Eat My Way decision 88).
-It has no visible effect; `style-src` stays as it is.
+Against real Google, expect two reports that are not ours, and widen nothing for them: Google
+Identity Services may apply an inline style inside its own frame (Eat My Way decision 88), and
+the Picker's loader injects an inline `<style>` with its dialog rules, which `app.css` already
+carries (STATE.md decision 81). Neither has a visible effect.

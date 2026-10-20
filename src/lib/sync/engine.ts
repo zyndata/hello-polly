@@ -5,10 +5,11 @@
  * anything, and a lost upload race only delays a delta by one cycle.
  */
 
-import { getDeviceId, getSyncBaseline, updateFamily, type HelloPollyDb } from '../db';
+import { getDeviceId, getSyncBaseline, loadFamily, updateFamily, type HelloPollyDb } from '../db';
 import { tidyOwnProgress } from '../domain/compaction';
 import { canonicalJson } from '../domain/lww';
 import { mergeFamily } from '../domain/merge';
+import { liveChildren } from '../domain/children';
 import { localDay } from '../domain/time';
 import { FAMILY_SCHEMA, type FamilyFile } from '../types';
 import { RemoteChangedError, RemoteGoneError, type RemoteVersion, type StorageBackend } from './backend';
@@ -18,6 +19,16 @@ export const FAMILY_FILE_NAME = 'hello-polly-family.json';
 /** Local-only `meta` keys (PLAN.md: the Drive file id and the account label never sync). */
 export const META_FILE_ID = 'driveFileId';
 export const META_ACCOUNT = 'driveAccount';
+/** Whether the file is another parent's, shared with this account (decision 78). */
+export const META_FILE_SHARED = 'driveFileShared';
+
+/** A shared file this account can no longer reach: the owner removed it, or trashed the file. */
+export class AccessRevokedError extends Error {
+  constructor() {
+    super('Access to the shared family file was taken away');
+    this.name = 'AccessRevokedError';
+  }
+}
 
 /** A file on Drive written by a newer app: never overwritten (STATE.md decision 70). */
 export class NewerSchemaError extends Error {
@@ -81,10 +92,25 @@ async function storedFileId(database: HelloPollyDb): Promise<string | undefined>
   return typeof row?.value === 'string' ? row.value : undefined;
 }
 
+async function isShared(database: HelloPollyDb): Promise<boolean> {
+  return (await database.meta.get(META_FILE_SHARED))?.value === true;
+}
+
+/** Use this file from now on; the baseline belonged to the previous one. */
+async function adopt(database: HelloPollyDb, found: RemoteVersion): Promise<void> {
+  await database.transaction('rw', database.meta, database.syncBaseline, async () => {
+    await database.meta.bulkPut([
+      { key: META_FILE_ID, value: found.fileId },
+      { key: META_FILE_SHARED, value: found.ownedByMe === false }
+    ]);
+    await database.syncBaseline.delete('drive');
+  });
+}
+
 /** Forget the file: its id and the baseline. Local data stays. */
 export async function forgetRemote(database: HelloPollyDb): Promise<void> {
   await database.transaction('rw', database.meta, database.syncBaseline, async () => {
-    await database.meta.delete(META_FILE_ID);
+    await database.meta.bulkDelete([META_FILE_ID, META_FILE_SHARED]);
     await database.syncBaseline.delete('drive');
   });
 }
@@ -109,7 +135,7 @@ async function locate(backend: StorageBackend, database: HelloPollyDb, local: Fa
       await backend.trash(mine.fileId).catch(() => undefined);
     }
   }
-  await database.meta.put({ key: META_FILE_ID, value: found.fileId });
+  await adopt(database, found);
   return { id: found.fileId, created };
 }
 
@@ -126,9 +152,16 @@ async function cycle(deps: SyncDeps): Promise<SyncResult> {
   try {
     version = await backend.version(id);
   } catch (error) {
-    // Gone for this account: the local copy is the source of truth, so the file is made again.
-    if (error instanceof RemoteGoneError) await forgetRemote(database);
+    if (error instanceof RemoteGoneError) {
+      // Another parent's file: access was taken away. Nothing is re-created (decision 78).
+      if (await isShared(database)) throw new AccessRevokedError();
+      // This account's own: the local copy is the source of truth, so it is found or made again.
+      await forgetRemote(database);
+    }
     throw error;
+  }
+  if (version.ownedByMe !== undefined && (version.ownedByMe === false) !== (await isShared(database))) {
+    await database.meta.put({ key: META_FILE_SHARED, value: version.ownedByMe === false });
   }
 
   const baseline = await getSyncBaseline(database);
@@ -181,6 +214,45 @@ export async function syncOnce(deps: SyncDeps): Promise<SyncResult> {
       throw error;
     }
   }
+}
+
+/** What joining a shared family would bring onto this device, for the join screen (decision 77). */
+export interface JoinPreview {
+  /** The shared family as it is on Drive. */
+  remote: FamilyFile;
+  /** This device's live children that the shared family does not have: „Dołącz” adds them. */
+  localOnly: { id: string; name: string; avatar: string }[];
+}
+
+export async function previewJoin(deps: SyncDeps, fileId: string): Promise<JoinPreview> {
+  const content = await deps.backend.read(fileId);
+  const remote = parseFamilyFile(content.content);
+  const local = await loadFamily(deps.database);
+  const theirs = new Set(liveChildren(remote).map((c) => c.id));
+  const localOnly = liveChildren(local)
+    .filter((c) => !theirs.has(c.id))
+    .map((c) => ({ id: c.id, name: c.profile.name, avatar: c.profile.avatar }));
+  return { remote, localOnly };
+}
+
+/**
+ * Make `fileId` (a family shared with this account, now reachable) this device's family:
+ * adopt its id, merge this device's copy into it, upload. A family file of this account's own
+ * that the device was syncing goes to the trash afterwards, so the parent's other devices
+ * follow to the shared one (decision 77).
+ */
+export async function joinFamily(deps: SyncDeps, fileId: string): Promise<SyncResult> {
+  const { backend, database } = deps;
+  const { remote } = await previewJoin(deps, fileId);
+  const previous = await storedFileId(database);
+  const previousOwn = previous !== undefined && previous !== fileId && !(await isShared(database));
+
+  const found = await backend.version(fileId);
+  await updateFamily((file) => ({ ...file, familyId: remote.familyId }), database);
+  await adopt(database, found);
+  const result = await syncOnce(deps);
+  if (previousOwn) await backend.trash(previous).catch(() => undefined);
+  return result;
 }
 
 /** Whether this device holds anything the file (as last seen) lacks. */
