@@ -478,7 +478,7 @@ e2e 140 passed + 2 opt-in skipped in Chromium + WebKit, no flaky test).
       inside and apart, *orange* never painted *orange*, and the opening rules. **Chromium
       passed here; WebKit could not run on this machine** (the `WebKit encountered an
       internal error` fault of Phases 6–7 is back: even the untouched `routes.spec.ts` cannot
-      load a page). CI runs WebKit; its result is below.
+      load a page). CI ran them in WebKit, green (below).
 
 Also: stories (`e2e/stories.spec.ts`): all locked with nothing learned, and a locked story's
 address leads back to the shelf; 3 of 5 words keep the picnic locked, 4 open it; the map's 📖
@@ -498,7 +498,9 @@ ids, so the sync specs ran too): 81 passed, 1 skipped, zero CSP violations; the 
 unchanged. Bundle: 333.4 kB JS (108.3 kB gzip, +16 kB), 42.7 kB CSS. Content: 79 pictures,
 806.6 kB, the largest 25.0 kB (`basket`); 53 words, 41 prompts, 5 stories, 53 stickers (5 rare).
 
-CI: pending.
+CI: **green** on `dev` (run 39459512304 on `c0f6fc2`: check, unit 324, `check:content`,
+build, e2e 162 passed + 2 opt-in skipped in Chromium + WebKit, no flaky test). So every new
+game and the stories passed in WebKit too, in CI.
 
 ## Quality gates
 
