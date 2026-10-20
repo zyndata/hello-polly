@@ -13,6 +13,7 @@ project adheres to [Semantic Versioning](https://semver.org).
 - Record the v0.1.0 release and the owner prerequisites
 - Record the phase 6 CI result in STATE.md
 - Record the phase 7 CI result in STATE.md
+- Record the phase 8 CI result in STATE.md
 
 ### Features
 
@@ -21,9 +22,11 @@ project adheres to [Semantic Versioning](https://semver.org).
 - Phase 7 — Drive sync (one account, many devices)
 - **sync:** Keep the family file in a HelloPolly folder
 - Phase 8 — inviting the second parent
+- Phase 9 — stories & more games
 
 ### Miscellaneous
 
+- Update CHANGELOG
 - Update CHANGELOG
 - Update CHANGELOG
 - Update CHANGELOG
