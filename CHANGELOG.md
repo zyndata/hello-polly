@@ -6,7 +6,7 @@ This file is generated from Conventional Commit messages by
 The format follows [Keep a Changelog](https://keepachangelog.com) and the
 project adheres to [Semantic Versioning](https://semver.org).
 
-## [Unreleased]
+## [0.2.0] - 2026-10-20
 
 ### Documentation
 
@@ -15,6 +15,7 @@ project adheres to [Semantic Versioning](https://semver.org).
 - Record the phase 7 CI result in STATE.md
 - Record the phase 8 CI result in STATE.md
 - Record the phase 9 CI result in STATE.md
+- Record the phase 10 CI result in STATE.md
 
 ### Features
 
@@ -28,6 +29,7 @@ project adheres to [Semantic Versioning](https://semver.org).
 
 ### Miscellaneous
 
+- Update CHANGELOG
 - Update CHANGELOG
 - Update CHANGELOG
 - Update CHANGELOG
