@@ -28,5 +28,16 @@
   {"id":"chest.open","pl":"Hurra! Naklejki!"},
   {"id":"album.look","pl":"Twoje naklejki! Dotknij, a powiem słówko."},
   {"id":"album.empty","pl":"Zbieraj gwiazdki, a znajdziesz skrzynię z naklejkami!"},
-  {"id":"album.missing","pl":"Tej naklejki jeszcze nie masz."}
+  {"id":"album.missing","pl":"Tej naklejki jeszcze nie masz."},
+  {"id":"stories.choose","pl":"Którą bajkę posłuchamy? Dotknij obrazka!"},
+  {"id":"stories.locked","pl":"Tę bajkę otworzymy, gdy poznasz więcej słówek!"},
+  {"id":"story.end","pl":"Koniec bajki! Brawo!"},
+  {"id":"story.new","pl":"Polly ma dla ciebie nową bajkę!"},
+  {"id":"bubbles.find","pl":"Przebij bańkę: {word}!"},
+  {"id":"feed.find","pl":"Daj Polly: {word}!"},
+  {"id":"simon.start","pl":"Rób to, co mówi Polly, a potem dotknij zielonego przycisku!"},
+  {"id":"simon.say","pl":"Polly mówi: pokaż {word}!"},
+  {"id":"paint.colour","pl":"Pomaluj na {word}!"},
+  {"id":"paint.pot","pl":"Najpierw dotknij farbki!"},
+  {"id":"sort.which","pl":"Do którego koszyka?"}
 ]

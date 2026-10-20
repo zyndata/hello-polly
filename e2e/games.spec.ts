@@ -28,7 +28,8 @@ test('with fewer than four learned words the shelf is locked', async ({ page }) 
   const ola = await firstRun(page);
   await page.getByTestId('games').click();
   const tiles = page.getByTestId('shelf').locator('[data-game]');
-  await expect(tiles).toHaveCount(3);
+  // E1–E8; E9 only when the parent switches it on (STATE.md decision 89).
+  await expect(tiles).toHaveCount(8);
   for (const tile of await tiles.all()) {
     await expect(tile).toHaveAttribute('data-open', 'false');
     await expect(tile.getByTestId('locked')).toBeVisible();

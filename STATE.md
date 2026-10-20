@@ -15,7 +15,7 @@ Any deviation from [PLAN.md](PLAN.md) must be recorded here before proceeding.
 | 6     | Rewards                                             | done        | 2026-10-19 |
 | 7     | Drive sync (one account, many devices)              | done        | 2026-10-19 |
 | 8     | Inviting the second parent                          | done        | 2026-10-20 |
-| 9     | Stories & more games                                | pending     |           |
+| 9     | Stories & more games                                | done        | 2026-10-20 |
 | 10    | Screen time & the progress dashboard                | pending     |           |
 | 11    | Full A1 content, PWA polish, v1.0.0                 | pending     |           |
 
@@ -444,6 +444,61 @@ suite passes with 4 workers. Not from this phase: they touch nothing it changed.
 
 CI: **green** on `dev` (run 39426928459 on `de9c7bd`: check, unit 300, `check:content`, build,
 e2e 140 passed + 2 opt-in skipped in Chromium + WebKit, no flaky test).
+
+### Phase 9 acceptance (2026-10-20)
+
+- [ ] **Each story plays in 25–40 s at normal speed on a real phone (measured, recorded).**
+      **Open**: it needs a phone and its voices; this environment has neither. What is checked
+      here: the page hold is set so that every story's *estimated* time (decision 28's
+      75 ms per character ÷ rate, plus intro, holds and turns) lies in 25–40 s at the normal
+      rate, unit-tested (`stories.test.ts`): picnic 32.1 s, flags 31.9 s, counts 29.5 s,
+      animals 30.8 s, body 30.0 s (at 🐢 0.6: 33.8–37.7 s). Closed by: on the child's phone
+      (a `docker:up` build on the LAN, or the live site after the next `/release`), the owner
+      plays each of the five stories at 🐇 from the first tap on its tile to the shelf
+      coming back, with a stopwatch, and records the times and the voice here. If a story
+      falls outside, the fix is `PAGE_HOLD_MS` (one constant) or the story's text.
+- [x] **No story uses a word outside the vocabulary plus the allow-list (validator in CI).**
+      `check:content` (in CI since Phase 2) runs on the five stories: every token is a word's
+      or a topic's English name or one of the function words. It now also checks the PLAN.md
+      shape (5–8 pages, 3–7 words per sentence), that every scene item fits the scene at a
+      tappable size, and that every pictured word is named in its sentence (decision 84);
+      `content-rules.test.ts` breaks each rule once.
+- [x] **Each game is completable in both engines (e2e) and only shows learned words.**
+      `e2e/play.spec.ts` plays every new game to its finish screen and back to the shelf,
+      asserting at every round that each word on screen is one the child learned: *Bańki*
+      (also with reduced motion: the bubbles stand still), *Nakarm Polly* (a drag beside
+      Polly changes nothing, a wrong food dragged onto her is a miss, the right one dragged
+      or tapped is eaten), *Gdzie jest…?* (the same scene for all five questions), *Polly
+      mówi* (learned body parts only, no attempt recorded), *Pokoloruj* (no pot: „Najpierw
+      dotknij farbki!”; a wrong pot never paints; the second miss glows) and *Kosze* (absent
+      until the parent ticks it in the word plan, then six pictures into two baskets). Each
+      checks its stars and the attempts it should or should not record. Unit
+      (`games-play.test.ts`, `games.test.ts`): 60 seeds per game for learned-only boards,
+      distinct targets, pictures that neither look nor sound alike, the scene's layout
+      inside and apart, *orange* never painted *orange*, and the opening rules. **Chromium
+      passed here; WebKit could not run on this machine** (the `WebKit encountered an
+      internal error` fault of Phases 6–7 is back: even the untouched `routes.spec.ts` cannot
+      load a page). CI runs WebKit; its result is below.
+
+Also: stories (`e2e/stories.spec.ts`): all locked with nothing learned, and a locked story's
+address leads back to the shelf; 3 of 5 words keep the picnic locked, 4 open it; the map's 📖
+and the tile glow while it is new; the story plays its intro and all six pages in order to
+„Koniec bajki! Brawo!”, is recorded once on this device (`storiesHeard`) with no stars, and is
+then no longer new. With slow speech: the spoken word is marked in the sentence and the apple
+bounces (only it) while "apple" is spoken; 🔊 and a tap on a picture both read the page again;
+leaving by the long press records nothing. After a chest, Polly says „Polly ma dla ciebie nową
+bajkę!”. `e2e/no-reading.spec.ts` now walks the story shelf (locked and open), the map with a
+new story, a story page, all six new games and a painted picture: no visible text but the
+story's sentence, which is the parent's. README: status, the new games and stories, and three
+new screenshots (a story page, *Pokoloruj*, *Gdzie jest…?*).
+
+Tests: 324 unit tests (33 files); e2e in Chromium 81 passed + 1 opt-in skipped under `vite
+preview`, and `test:e2e:csp` against the container (built with the e2e's never-sent Google
+ids, so the sync specs ran too): 81 passed, 1 skipped, zero CSP violations; the CSP is
+unchanged. Bundle: 333.4 kB JS (108.3 kB gzip, +16 kB), 42.7 kB CSS. Content: 79 pictures,
+806.6 kB, the largest 25.0 kB (`basket`); 53 words, 41 prompts, 5 stories, 53 stickers (5 rare).
+
+CI: pending.
 
 ## Quality gates
 
@@ -1071,6 +1126,98 @@ Open question 4 names this phase (the Picker in an installed PWA, the spike of t
     test-chosen token. The unit fake (`src/test/fake-drive.ts`) models the same rules. Drive
     helpers shared by the sync and sharing specs moved to `e2e/drive.ts`. The e2e build gets a
     fixed, never-sent Picker key and app id, like the client id.
+
+### 2026-10-20 — Phase 9: Stories & more games
+
+No open question names Phase 9. One scope question went to the owner (83).
+
+83. **Owner's answer: a small Body parts topic now, pulled forward from Phase 11.** E7 *Polly
+    mówi* is "body parts and actions", and the content had neither. `body` (PLAN.md topic 8,
+    level 1, not among the default topics): *eyes, ear, nose, mouth, hand, arm, leg, foot*,
+    Fluent "Color" pictures from the same pinned commit (the yellow default skin tone), one
+    sticker per word as decision 56 (`body.foot` rare), and its story. Actions stay with Phase
+    11 and open question 7 (they need animation).
+84. **A story's words are its pictures.** The words that count for the 80 % unlock rule are the
+    distinct `word`s of the story's scene items: the things the child can tap and hear. A
+    vocabulary word used only as an adjective in the text („A *red* apple”) is not counted, so a
+    fruit story does not wait for colours. *Learned* is the derived state, as for games.
+    `check:content` gains the rules PLAN.md states for stories: 5–8 pages, 3–7 words per
+    sentence, at least one scene item per page, every scene item inside the scene (`x`, `y` in
+    0–100, `size` 24–40, so a picture is ≥ 72 px wide even on a 320 px wide scene), every story has at least one
+    scene word, and every scene word is named in its page's sentence (so "objects mentioned in
+    the sentence bounce" always has an object). `Story` gains an optional Polish one-liner
+    `introPl` („Posłuchaj bajki o owocach!”), PLAN.md's optional intro.
+85. **The scene is one SVG drawn with attributes only.** A `viewBox` of 100 × 75, a hand-drawn
+    background, each item an `<image>` placed by `x`/`y`/`width`/`height` attributes inside a
+    `role="button"` group. No inline style, no CSSOM. The same rule as the star meter
+    (decision 61).
+86. **The story player.** The Polish intro, then page by page: the sentence is spoken at the
+    chosen speed (decision 28's `speakSentences`), the word being spoken is highlighted, and a
+    scene item bounces while its word is spoken. After the sentence the page holds for a moment,
+    then turns by itself. Tapping an object says its word; during the sentence that cuts it, and
+    the sentence is read again from the start. At the end the story is recorded as heard on this
+    device (`storiesHeard[id] += 1`, `seq` bumped). **Stories give no stars**: they are a reward
+    already, and a 30-second story that pays stars would out-earn a lesson. Duration: the page
+    hold is set so that every story's *estimated* time at the normal rate (decision 28's
+    estimate) is 25–40 s, unit-tested; the real-phone measurement is the acceptance criterion
+    and needs the owner's phone.
+87. **Story shelf and announcements.** `/child/:id/stories` shows one tile per story (its first
+    scene picture). A locked story shows Polly with the lock and says
+    „Tę bajkę otworzymy, gdy poznasz więcej słówek!”. An unlocked story nobody has heard yet on
+    any device is *new*: its tile (the story's first pictured word on an open book) and the map's 📖 glow, and after a chest's stickers Polly
+    says „Polly ma dla ciebie nową bajkę!” (PLAN.md: "Polly announces a new story after a
+    chest"). The map's bottom bar gains 📖 (`open-book`).
+88. **Games E4–E9.** Every game uses learned words only, ends on the finish screen and gives 1
+    star per solved item plus the streak bonus where it has first tries (decision 45).
+    Attempts are recorded where the child answers a heard English word (E4, E5, E6 and E8's
+    colour), not in E7 (ungraded) or E9 (sorting, like *Memory*). The shared pick logic of E1
+    (react, wiggle, glow after the second miss, praise) moves into one controller that E1, E4,
+    E5 and E6 use.
+    - **E4 *Bańki*:** 5 rounds; 3–4 bubbles rise in lanes and loop forever (never timed out);
+      „Przebij bańkę: {word}!”. Reduced motion: the bubbles stay put.
+    - **E5 *Nakarm Polly*:** 5 rounds; 3–4 pictures around a big Polly; „Daj Polly: {word}!”.
+      Dragging a picture onto Polly *or* tapping it gives it to her. The drag moves the picture
+      with a CSSOM `translate` write (allowed by `style-src 'self'`, like decision 81; no
+      markup style).
+    - **E6 *Gdzie jest…?*:** one scene (decision 85) with 5–8 learned items; five of them are
+      asked for in turn („Gdzie jest {word}?”). Opens with ≥ 5 learned words. Eight fixed
+      places in three rows with a little seeded jitter, items 22 % of the scene wide; the
+      scene draws each tap area 2 units wider than its picture, so it stays ≥ 72 px on a phone.
+    - **E7 *Polly mówi*:** 5 commands over learned body parts: „Polly mówi: dotknij!” and the
+      word; Polly points with the body part beside her; the child does it and taps ✅
+      („Zrobione!”). Ungraded. Opens with ≥ 4 learned body parts.
+    - **E8 *Pokoloruj*:** 5 rounds; a grey picture of a learned noun (not a colour or a number)
+      and 3 paint pots of learned colours; the noun, then „Pomaluj na {word}!” with the colour.
+      Tap a pot, then the picture: the right pot paints it (an SVG mask of the picture filled
+      with the colour, multiplied over its grey shading, so *any* colour works on any picture);
+      a wrong pot wiggles, and the right one glows after the second miss. Opens with ≥ 3
+      learned colours and ≥ 1 other learned noun. The pots' colours are a table in the domain
+      layer, unit-tested to cover every colour word.
+    - **E9 *Kosze*:** two baskets, each a topic with ≥ 3 learned words (seeded choice), and six
+      pictures one at a time: „Do którego koszyka?”. Right basket: the picture drops in; wrong:
+      the basket wiggles, the right one glows after the second miss.
+89. **E9's parent toggle is `WordPlan.sortGame?: boolean`** (absent = off), a checkbox in the
+    child's word plan („Gra „Kosze”: układanie obrazków w dwóch koszykach według tematu (dla
+    starszych dzieci)”). Optional, so no stored plan changes and no
+    migration: every plan write already spreads the whole plan, so the field survives other
+    edits. Without it the shelf does not show E9 at all.
+90. **Smaller things decided on the way.** (a) The story's sentence is shown under the scene
+    for the parent reading along (PLAN.md), marked `data-for-parent` like the picker's names,
+    so the no-reading check skips it. (b) In *Nakarm Polly* and *Polly mówi* Polly is already
+    the game's centre, so the game frame leaves out the small Polly in its corner. (c) New UI
+    pictures from the same pinned Fluent commit, in `UI_IMAGE_IDS`: `open-book` (📖),
+    `check-mark-button` (✅), and the tiles `bubbles`, `fork-and-knife-with-plate`,
+    `magnifying-glass-tilted-left` and `basket` (the basket needs `floatPrecision: 1` for the
+    budget); *Pokoloruj*'s tile reuses `artist-palette`, *Polly mówi*'s the `raised-hand`
+    word picture. The paint pot is hand-drawn SVG. (d) New prompts: `stories.choose`,
+    `stories.locked`, `story.end`, `story.new`, `bubbles.find`, `feed.find`, `simon.start`,
+    `simon.say` („Polly mówi: pokaż {word}!”: *pokaż* fits every body part, *dotknij* does
+    not fit a hand), `paint.colour`, `paint.pot`, `sort.which`. (e) With nine games the
+    shelf's tiles are smaller (still ≥ 72 px) and the shelf scrolls if it must. (f) The album
+    gains a fifth page (body) by itself, since pages are the sticker sets. (g) **No CSP change**:
+    the scene's `<image>`s load from `'self'` (or jsDelivr, already allowed), the paint layer
+    is CSS `mix-blend-mode` on an SVG mask, and the drag is a CSSOM write; the whole suite ran
+    under the container's policy with zero violations.
 
 ## Open questions
 

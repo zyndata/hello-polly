@@ -6,6 +6,9 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 import { REQUIRED_PROMPT_IDS, SVG_BUDGET_BYTES, UI_IMAGE_IDS, storyTokens, validateContent, type ContentSet } from './lib/content-rules.mjs';
 
+const apple = () => ({ word: 'fruit.apple', image: 'red-apple', x: 30, y: 50, size: 30 });
+const banana = () => ({ word: 'fruit.banana', image: 'banana', x: 70, y: 50, size: 30, anim: 'hop' });
+
 /** A small, valid content set; each test breaks one thing. */
 function valid(): ContentSet {
   return {
@@ -22,7 +25,14 @@ function valid(): ContentSet {
         title: "Polly's Picnic",
         titlePl: 'Piknik Polly',
         topic: 'fruit',
-        pages: [{ text: 'I like fruit. Look! An apple and a banana.', scene: [{ word: 'fruit.apple', image: 'red-apple', x: 0, y: 0, size: 1 }] }]
+        introPl: 'Posłuchaj bajki o owocach!',
+        pages: [
+          { text: 'I like fruit.', scene: [{ image: 'banana', x: 50, y: 50, size: 30, anim: 'bob' }] },
+          { text: 'Look! An apple.', scene: [apple()] },
+          { text: 'I see a banana.', scene: [banana()] },
+          { text: 'An apple and a banana.', scene: [apple(), banana()] },
+          { text: 'I like my apple.', scene: [apple()] }
+        ]
       }
     ],
     stickers: [{ id: 'sticker.banana', image: 'banana', word: 'fruit.banana', set: 'food' }],
@@ -43,6 +53,9 @@ describe('validateContent', () => {
     sizes.delete('banana');
     expect(errorsOf(valid(), sizes)).toEqual([
       'word "fruit.banana": image "banana" has no file in content/img/',
+      'story "picnic" page 1 scene: image "banana" has no file in content/img/',
+      'story "picnic" page 3 scene: image "banana" has no file in content/img/',
+      'story "picnic" page 4 scene: image "banana" has no file in content/img/',
       'sticker "sticker.banana": image "banana" has no file in content/img/'
     ]);
   });
@@ -65,11 +78,53 @@ describe('validateContent', () => {
 
   it('fails on an unknown story word', () => {
     const content = valid();
-    content.stories[0].pages.push({ text: 'Yum! A red pear.', scene: [] });
+    content.stories[0].pages.push({ text: 'Yum! A red pear.', scene: [apple()] });
     expect(errorsOf(content)).toEqual([
-      'story "picnic" page 2: "yum" is neither vocabulary nor a function word',
-      'story "picnic" page 2: "red" is neither vocabulary nor a function word',
-      'story "picnic" page 2: "pear" is neither vocabulary nor a function word'
+      'story "picnic" page 6: "yum" is neither vocabulary nor a function word',
+      'story "picnic" page 6: "red" is neither vocabulary nor a function word',
+      'story "picnic" page 6: "pear" is neither vocabulary nor a function word',
+      'story "picnic" page 6: the scene shows "fruit.apple", which the sentence does not name'
+    ]);
+  });
+
+  it('fails on a story too short or too long, and on sentences outside 3–7 words', () => {
+    const short = valid();
+    short.stories[0].pages.splice(4);
+    expect(errorsOf(short)).toEqual(['story "picnic": has 4 pages, not 5–8']);
+    const long = valid();
+    long.stories[0].pages.push(...Array.from({ length: 4 }, () => ({ text: 'Look! An apple.', scene: [apple()] })));
+    expect(errorsOf(long)).toEqual(['story "picnic": has 9 pages, not 5–8']);
+    const words = valid();
+    words.stories[0].pages[1].text = 'An apple!';
+    words.stories[0].pages[2].text = 'I see a banana and I like it.';
+    expect(errorsOf(words)).toEqual([
+      'story "picnic" page 2: the sentence has 2 words, not 3–7',
+      'story "picnic" page 3: the sentence has 8 words, not 3–7'
+    ]);
+  });
+
+  it('fails on an empty scene, an item outside the scene or too small to tap, and an unknown animation', () => {
+    const content = valid();
+    content.stories[0].pages[0].scene = [];
+    content.stories[0].pages[1].scene = [{ ...apple(), x: 5 }];
+    content.stories[0].pages[2].scene = [{ ...banana(), size: 12, anim: 'fly' }];
+    content.stories[0].pages[3].scene = [apple(), { ...banana(), y: 95 }];
+    expect(errorsOf(content)).toEqual([
+      'story "picnic" page 1: the scene is empty',
+      'story "picnic" page 2 scene "red-apple": does not fit inside the scene at (5, 50)',
+      'story "picnic" page 3 scene "banana": size 12 is not 24–40',
+      'story "picnic" page 3 scene "banana": unknown anim "fly"',
+      'story "picnic" page 4 scene "banana": does not fit inside the scene at (70, 95)'
+    ]);
+  });
+
+  it('fails on a story with no scene word, and on an empty intro', () => {
+    const content = valid();
+    content.stories[0].introPl = ' ';
+    for (const page of content.stories[0].pages) page.scene = page.scene.map(({ word: _w, ...rest }: { word?: string }) => rest);
+    expect(errorsOf(content)).toEqual([
+      'story "picnic": introPl is empty',
+      'story "picnic": no scene item has a word, so nothing unlocks it'
     ]);
   });
 
@@ -195,7 +250,7 @@ describe('npm run check:content (the CLIs, against fixture checkouts)', () => {
   });
 
   it('fails on an unknown story word', () => {
-    const root = fixture((content) => content.stories[0].pages.push({ text: 'A purple dragon.', scene: [] }));
+    const root = fixture((content) => content.stories[0].pages.push({ text: 'A purple dragon.', scene: [apple()] }));
     const { status, output } = checkContent(root);
     expect(status).toBe(1);
     expect(output).toContain('"purple" is neither vocabulary nor a function word');

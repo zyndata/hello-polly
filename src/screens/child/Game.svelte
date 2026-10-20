@@ -1,5 +1,5 @@
 <!--
-  One game of the shelf (`/child/:id/play/:game`; STATE.md decision 48), over learned words
+  One game of the shelf (`/child/:id/play/:game`; STATE.md decisions 48, 88), over learned words
   only. The game itself is a component below; this screen gives it the frame every child
   screen has (long-press home back to the shelf, 🐢/🐇, Polly, 🔊), and ends it: the stars are
   written (decision 45), the finish screen shows them, and the child is back on the shelf.
@@ -16,7 +16,7 @@
   import { loadFamily } from '../../lib/db';
   import { childPlan, liveChild } from '../../lib/domain/children';
   import type { ChoiceContext } from '../../lib/domain/exercise';
-  import { MIN_LEARNED, gamePool, isGameId, learnedWords, type GameId } from '../../lib/domain/games';
+  import { gameOpen, gamePool, isGameId, learnedWords, shelfGames, type GameId } from '../../lib/domain/games';
   import { wordStates } from '../../lib/domain/learning';
   import { addStars } from '../../lib/domain/progress';
   import { sounds } from '../../lib/sound/effects';
@@ -25,9 +25,15 @@
   import { change } from '../../lib/store';
   import type { Screen } from '../../lib/screens';
   import type { WordId } from '../../lib/types';
+  import BubblesGame from './games/BubblesGame.svelte';
   import DigitsGame from './games/DigitsGame.svelte';
+  import FeedGame from './games/FeedGame.svelte';
   import ListenGame from './games/ListenGame.svelte';
   import MemoryGame from './games/MemoryGame.svelte';
+  import PaintGame from './games/PaintGame.svelte';
+  import SimonGame from './games/SimonGame.svelte';
+  import SortGame from './games/SortGame.svelte';
+  import SpyGame from './games/SpyGame.svelte';
 
   let { screen, params }: { screen: Screen; params?: Record<string, string> | null } = $props();
 
@@ -58,10 +64,11 @@
     const file = await loadFamily();
     if (!liveChild(file, child)) return replace('/');
     if (!isGameId(id)) return replace(`/child/${child}/play`);
+    const plan = childPlan(file, child);
     const learned = learnedWords(file, child, words);
+    if (!shelfGames(plan).includes(id) || !gameOpen(id, learned, words)) return replace(`/child/${child}/play`);
     pool = gamePool(id, learned, words);
-    if (pool.length < MIN_LEARNED) return replace(`/child/${child}/play`);
-    context = { plan: childPlan(file, child), states: wordStates(file.progress[child]), words };
+    context = { plan, states: wordStates(file.progress[child]), words };
     seed = crypto.randomUUID();
     game = id;
   }
@@ -99,13 +106,30 @@
         <ListenGame bind:this={player} {childId} {pool} {context} {seed} onfinish={finish} onmood={react} />
       {:else if game === 'digits'}
         <DigitsGame bind:this={player} {childId} {pool} {seed} onfinish={finish} onmood={react} />
-      {:else}
+      {:else if game === 'memory'}
         <MemoryGame bind:this={player} {pool} {seed} onfinish={finish} onmood={react} />
+      {:else if game === 'bubbles'}
+        <BubblesGame bind:this={player} {childId} {pool} {context} {seed} onfinish={finish} onmood={react} />
+      {:else if game === 'feed'}
+        <FeedGame bind:this={player} {childId} {pool} {context} {seed} onfinish={finish} onmood={react} />
+      {:else if game === 'spy'}
+        <SpyGame bind:this={player} {childId} {pool} {context} {seed} onfinish={finish} onmood={react} />
+      {:else if game === 'simon'}
+        <SimonGame bind:this={player} {pool} {seed} onfinish={finish} onmood={react} />
+      {:else if game === 'paint'}
+        <PaintGame bind:this={player} {childId} {pool} {context} {seed} onfinish={finish} onmood={react} />
+      {:else}
+        <SortGame bind:this={player} {pool} {context} {seed} onfinish={finish} onmood={react} />
       {/if}
     </div>
 
     <footer class="flex items-end justify-between p-3">
-      <PollyBuddy {mood} {beat} class="size-20" />
+      {#if game === 'feed' || game === 'simon'}
+        <!-- Polly is already the game's centre. -->
+        <span></span>
+      {:else}
+        <PollyBuddy {mood} {beat} class="size-20" />
+      {/if}
       <RepeatButton onrepeat={() => player?.ask()} />
     </footer>
   {/if}

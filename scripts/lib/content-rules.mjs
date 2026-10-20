@@ -11,8 +11,8 @@ export const SVG_BUDGET_BYTES = 25 * 1024;
 
 /**
  * Every Polish prompt the app speaks: the start screen's greeting (Phase 3), and the Phase 5
- * lesson player and exercises (look and listen, E1, E2, E3, feedback, finish), and the
- * Phase 6 chest and album. `check:content` fails when one is missing from the catalog, or when
+ * lesson player and exercises (look and listen, E1, E2, E3, feedback, finish), the Phase 6
+ * chest and album, and the Phase 9 story shelf and player and games E4–E9. `check:content` fails when one is missing from the catalog, or when
  * the catalog has one that is not listed here.
  */
 export const REQUIRED_PROMPT_IDS = /** @type {const} */ ([
@@ -45,7 +45,18 @@ export const REQUIRED_PROMPT_IDS = /** @type {const} */ ([
   'chest.open',
   'album.look',
   'album.empty',
-  'album.missing'
+  'album.missing',
+  'stories.choose',
+  'stories.locked',
+  'story.end',
+  'story.new',
+  'bubbles.find',
+  'feed.find',
+  'simon.start',
+  'simon.say',
+  'paint.colour',
+  'paint.pot',
+  'sort.which'
 ]);
 
 /**
@@ -65,10 +76,25 @@ export const STORY_FUNCTION_WORDS = /** @type {const} */ ([
 /**
  * Pictures the screens use directly rather than through content: Polly, the 🐢/🐇 speed
  * toggle, Polly's ship on the map, the gear of the parent gate, the home button, the game
- * shelf's die, lock and speaker, and the album's ledger. They count
- * as used, and must exist like any content picture.
+ * shelf's die, lock and speaker, the album's ledger, the stories' book, and the Phase 9 game
+ * tiles and *Polly mówi*'s ✅. They count as used, and must exist like any content picture.
  */
-export const UI_IMAGE_IDS = /** @type {const} */ (['parrot', 'turtle', 'rabbit', 'sailboat', 'gear', 'house', 'game-die', 'locked', 'speaker-high-volume', 'ledger']);
+export const UI_IMAGE_IDS = /** @type {const} */ ([
+  'parrot', 'turtle', 'rabbit', 'sailboat', 'gear', 'house', 'game-die', 'locked', 'speaker-high-volume', 'ledger',
+  'open-book', 'check-mark-button', 'bubbles', 'magnifying-glass-tilted-left', 'fork-and-knife-with-plate', 'basket'
+]);
+
+/** A story has this many pages (PLAN.md "Content model": 5–8, about 30 seconds). */
+export const STORY_PAGES = /** @type {const} */ ([5, 8]);
+/** A page's sentence has this many words. */
+export const STORY_SENTENCE_WORDS = /** @type {const} */ ([3, 7]);
+/**
+ * A scene item's width, in percent of the scene's width (STATE.md decision 84): at 24 the
+ * picture is still ≥ 72 px wide on a 320 px wide phone scene.
+ */
+export const SCENE_ITEM_SIZE = /** @type {const} */ ([24, 40]);
+/** The scene's height in percent of its width (a 4:3 scene, `viewBox="0 0 100 75"`). */
+export const SCENE_HEIGHT = 75;
 
 /**
  * @typedef {object} ContentSet
@@ -153,6 +179,26 @@ export function validateContent(content, imageBytes) {
     }
   };
 
+  /**
+   * A scene item stays inside the scene, at a size that keeps it a tap target.
+   * @param {string} where
+   * @param {any} item
+   */
+  const checkPlace = (where, item) => {
+    const { x, y, size } = item;
+    if (![x, y, size].every((v) => typeof v === 'number' && Number.isFinite(v))) {
+      errors.push(`${where}: x, y and size must be numbers`);
+      return;
+    }
+    const [min, max] = SCENE_ITEM_SIZE;
+    if (size < min || size > max) errors.push(`${where}: size ${size} is not ${min}–${max}`);
+    const cy = (y * SCENE_HEIGHT) / 100;
+    if (x - size / 2 < 0 || x + size / 2 > 100 || cy - size / 2 < 0 || cy + size / 2 > SCENE_HEIGHT) {
+      errors.push(`${where}: does not fit inside the scene at (${x}, ${y})`);
+    }
+    if (item.anim !== undefined && !['bob', 'hop', 'spin'].includes(item.anim)) errors.push(`${where}: unknown anim "${item.anim}"`);
+  };
+
   // Topics and words.
   const topics = indexById('topic', content.topics);
   const words = indexById('word', content.words);
@@ -230,19 +276,47 @@ export function validateContent(content, imageBytes) {
       errors.push(`${where}: no pages`);
       continue;
     }
+    if ('introPl' in story && !isText(story.introPl)) errors.push(`${where}: introPl is empty`);
+    const [minPages, maxPages] = STORY_PAGES;
+    if (story.pages.length < minPages || story.pages.length > maxPages) {
+      errors.push(`${where}: has ${story.pages.length} pages, not ${minPages}–${maxPages}`);
+    }
+    let sceneWords = 0;
     story.pages.forEach((/** @type {any} */ page, /** @type {number} */ n) => {
       const at = `${where} page ${n + 1}`;
+      /** @type {string[]} */
+      let said = [];
       if (!isText(page.text)) errors.push(`${at}: no text`);
       else {
-        for (const token of storyTokens(page.text)) {
+        said = storyTokens(page.text);
+        for (const token of said) {
           if (!vocabulary.has(token)) errors.push(`${at}: "${token}" is neither vocabulary nor a function word`);
         }
+        const [minWords, maxWords] = STORY_SENTENCE_WORDS;
+        if (said.length < minWords || said.length > maxWords) {
+          errors.push(`${at}: the sentence has ${said.length} words, not ${minWords}–${maxWords}`);
+        }
       }
-      for (const item of page.scene ?? []) {
-        if (item.word !== undefined && !words.has(item.word)) errors.push(`${at}: scene word "${item.word}" does not exist`);
+      if (!Array.isArray(page.scene) || page.scene.length === 0) {
+        errors.push(`${at}: the scene is empty`);
+        return;
+      }
+      for (const item of page.scene) {
         checkImage(`${at} scene`, item.image);
+        checkPlace(`${at} scene "${item.image}"`, item);
+        if (item.word === undefined) continue;
+        const word = words.get(item.word);
+        if (!word) {
+          errors.push(`${at}: scene word "${item.word}" does not exist`);
+          continue;
+        }
+        sceneWords++;
+        if (isText(word.en) && !storyTokens(word.en).every((t) => said.includes(t))) {
+          errors.push(`${at}: the scene shows "${item.word}", which the sentence does not name`);
+        }
       }
     });
+    if (sceneWords === 0) errors.push(`${where}: no scene item has a word, so nothing unlocks it`);
   }
 
   // Stickers.

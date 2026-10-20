@@ -4,7 +4,8 @@
  *
  * A script rather than a test because it asserts nothing: it walks a short session on a
  * phone-sized viewport (the first run, one lesson with a pick after two misses and its stars,
- * the map, *Cyferki* over a few learned words, a chest and the album, the parent gate, the word plan, the speech screen)
+ * the map, *Cyferki*, *Pokoloruj* and *Gdzie jest…?* over a few learned words, a story page, a
+ * chest and the album, the parent gate, the word plan, the speech screen)
  * and writes PNGs into `docs/screenshots/`. Re-run it whenever a screen in the README changes.
  *
  *   npm run docker:up          # or: npx vite preview --port 4173
@@ -35,12 +36,14 @@ await context.addInitScript(() => {
 });
 const page = await context.newPage();
 
-/** @param {string} name */
-async function shot(name) {
+/**
+ * @param {string} name
+ * @param {number} settle  ms for entrance animations to settle
+ */
+async function shot(name, settle = 600) {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForFunction(() => [...document.images].every((img) => img.complete));
-  // Let entrance animations settle.
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(settle);
   await page.screenshot({ path: join(OUT_DIR, `${name}.png`) });
   console.log(`docs/screenshots/${name}.png`);
 }
@@ -104,13 +107,13 @@ await shot('finish');
 await page.getByTestId('map').waitFor({ timeout: 15_000 });
 await shot('map');
 
-// Four fruit learned on two earlier days and 20 stars (as another device would sync them), for
-// Cyferki and a chest.
+// Five fruit and three colours learned on two earlier days and 20 stars (as another device
+// would sync them), for the games, the picnic story and a chest.
 const childId = /** @type {string} */ (page.url().split('/child/')[1]);
 await page.evaluate(async (child) => {
   const day = (/** @type {number} */ n) => new Date(Date.now() - n * 86_400_000).toLocaleDateString('sv-SE');
   const attempts = Object.fromEntries(
-    ['fruit.apple', 'fruit.banana', 'fruit.pear', 'fruit.mango'].map((w) => [
+    ['fruit.apple', 'fruit.banana', 'fruit.pear', 'fruit.mango', 'fruit.orange', 'colours.red', 'colours.blue', 'colours.yellow'].map((w) => [
       w,
       { [day(2)]: { c: 2, w: 0, first: 2 }, [day(1)]: { c: 1, w: 0, first: 1 } }
     ])
@@ -137,6 +140,26 @@ await page.getByTestId('games').click();
 await page.locator('[data-game="digits"]').click();
 await page.locator('[data-digit="2"]').click();
 await shot('digits');
+
+// Pokoloruj: the right pot, then the picture.
+await page.goto(`${BASE_URL}/#/child/${childId}/play/paint`);
+await page.getByTestId('paint').waitFor();
+await page.waitForTimeout(600);
+const colour = await page.getByTestId('paint').getAttribute('data-colour');
+await page.getByTestId('pots').locator(`[data-word-id="${colour}"]`).click();
+await page.getByTestId('paint-picture').click();
+await page.locator('[data-testid="paint-picture"][data-painted]').waitFor();
+// Before the next round comes (with no voice to wait for, it comes quickly).
+await shot('paint', 250);
+await page.goto(`${BASE_URL}/#/child/${childId}/play/spy`);
+await page.getByTestId('spy').waitFor();
+await shot('spy');
+
+// The picnic story, on its second page.
+await page.goto(`${BASE_URL}/#/child/${childId}/stories`);
+await page.locator('[data-story="polly-picnic"]').click();
+await page.locator('[data-testid="story"][data-page="1"]').waitFor({ timeout: 20_000 });
+await shot('story');
 await page.goto(`${BASE_URL}/#/child/${childId}`);
 await page.getByTestId('map').waitFor();
 

@@ -43,5 +43,13 @@
   {"id":"pets-farm.pig","en":"pig","pl":"świnia","plAcc":"świni","topic":"pets-farm","image":"pig","level":1},
   {"id":"pets-farm.sheep","en":"sheep","pl":"owca","plAcc":"owcy","topic":"pets-farm","image":"ewe","level":1},
   {"id":"pets-farm.chicken","en":"chicken","pl":"kura","plAcc":"kury","topic":"pets-farm","image":"chicken","level":1},
-  {"id":"pets-farm.duck","en":"duck","pl":"kaczka","plAcc":"kaczki","topic":"pets-farm","image":"duck","level":1}
+  {"id":"pets-farm.duck","en":"duck","pl":"kaczka","plAcc":"kaczki","topic":"pets-farm","image":"duck","level":1},
+  {"id":"body.eyes","en":"eyes","pl":"oczy","plAcc":"oczu","topic":"body","image":"eyes","level":1},
+  {"id":"body.ear","en":"ear","pl":"ucho","plAcc":"ucha","topic":"body","image":"ear","level":1},
+  {"id":"body.nose","en":"nose","pl":"nos","plAcc":"nosa","topic":"body","image":"nose","level":1},
+  {"id":"body.mouth","en":"mouth","pl":"buzia","plAcc":"buzi","topic":"body","image":"mouth","level":1},
+  {"id":"body.hand","en":"hand","pl":"ręka","plAcc":"ręki","topic":"body","image":"raised-hand","level":1},
+  {"id":"body.arm","en":"arm","pl":"ramię","plAcc":"ramienia","topic":"body","image":"flexed-biceps","level":1},
+  {"id":"body.leg","en":"leg","pl":"noga","plAcc":"nogi","topic":"body","image":"leg","level":1},
+  {"id":"body.foot","en":"foot","pl":"stopa","plAcc":"stopy","topic":"body","image":"foot","level":1}
 ]

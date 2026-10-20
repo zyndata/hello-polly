@@ -56,6 +56,11 @@ export function setRandomWithinTopic(plan: WordPlan, on: boolean): WordPlan {
   return { ...plan, randomWithinTopic: on };
 }
 
+/** *Kosze* on or off for this child (STATE.md decision 89). */
+export function setSortGame(plan: WordPlan, on: boolean): WordPlan {
+  return { ...plan, sortGame: on };
+}
+
 /**
  * The queue as it still matters: the words not met yet. A queued word leaves the queue once it
  * is introduced; the child's device never rewrites the plan for that (a whole-plan `Lww` write

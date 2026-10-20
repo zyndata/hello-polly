@@ -43,5 +43,13 @@
   {"id":"pets-farm.pig","image":"pig","word":"pets-farm.pig","set":"pets-farm"},
   {"id":"pets-farm.sheep","image":"ewe","word":"pets-farm.sheep","set":"pets-farm"},
   {"id":"pets-farm.chicken","image":"chicken","word":"pets-farm.chicken","set":"pets-farm"},
-  {"id":"pets-farm.duck","image":"duck","word":"pets-farm.duck","set":"pets-farm"}
+  {"id":"pets-farm.duck","image":"duck","word":"pets-farm.duck","set":"pets-farm"},
+  {"id":"body.eyes","image":"eyes","word":"body.eyes","set":"body"},
+  {"id":"body.ear","image":"ear","word":"body.ear","set":"body"},
+  {"id":"body.nose","image":"nose","word":"body.nose","set":"body"},
+  {"id":"body.mouth","image":"mouth","word":"body.mouth","set":"body"},
+  {"id":"body.hand","image":"raised-hand","word":"body.hand","set":"body"},
+  {"id":"body.arm","image":"flexed-biceps","word":"body.arm","set":"body"},
+  {"id":"body.leg","image":"leg","word":"body.leg","set":"body"},
+  {"id":"body.foot","image":"foot","word":"body.foot","set":"body","rare":true}
 ]

@@ -3,7 +3,7 @@ import { topic, words } from '../content';
 import { addChild } from './children';
 import { DIGITS } from './digits';
 import { emptyFamily, defaultPlan } from './family';
-import { DIGIT_TOPIC, digitImage, gameOpen, gamePool, isGameId, learnedWords } from './games';
+import { DIGIT_TOPIC, GAME_IDS, basketTopics, digitImage, gameOpen, gamePool, isGameId, learnedWords, paintPools, shelfGames } from './games';
 import { recordAttempt } from './progress';
 
 const T = '2026-10-19T08:00:00.000Z';
@@ -44,7 +44,47 @@ describe('the game shelf', () => {
   });
 
   it('knows its game ids', () => {
+    expect(GAME_IDS).toEqual(['listen', 'digits', 'memory', 'bubbles', 'feed', 'spy', 'simon', 'paint', 'sort']);
     expect(isGameId('digits')).toBe(true);
-    expect(isGameId('bubbles')).toBe(false);
+    expect(isGameId('bubbles')).toBe(true);
+    expect(isGameId('chess')).toBe(false);
+  });
+
+  it('opens Gdzie jest…? at five learned words, and Bańki and Nakarm Polly at four', () => {
+    const four = ['fruit.apple', 'fruit.pear', 'fruit.banana', 'pets-farm.cat'];
+    expect(gameOpen('bubbles', four, words)).toBe(true);
+    expect(gameOpen('feed', four, words)).toBe(true);
+    expect(gameOpen('spy', four, words)).toBe(false);
+    expect(gameOpen('spy', [...four, 'numbers.one'], words)).toBe(true);
+  });
+
+  it('opens Polly mówi at four learned body parts, and plays only those', () => {
+    const body = ['body.eyes', 'body.nose', 'body.hand'];
+    const learned = [...body, 'fruit.apple', 'fruit.pear'];
+    expect(gameOpen('simon', learned, words)).toBe(false);
+    expect(gamePool('simon', [...learned, 'body.foot'], words)).toEqual([...body, 'body.foot']);
+    expect(gameOpen('simon', [...learned, 'body.foot'], words)).toBe(true);
+  });
+
+  it('opens Pokoloruj with three learned colours and one thing to paint (not a colour or a number)', () => {
+    const colours = ['colours.red', 'colours.blue', 'colours.yellow'];
+    expect(paintPools([...colours, 'numbers.one', 'fruit.apple'], words)).toEqual({ colours, things: ['fruit.apple'] });
+    expect(gameOpen('paint', [...colours, 'numbers.one', 'numbers.two'], words)).toBe(false);
+    expect(gameOpen('paint', [...colours.slice(0, 2), 'fruit.apple', 'fruit.pear'], words)).toBe(false);
+    expect(gameOpen('paint', [...colours, 'fruit.apple'], words)).toBe(true);
+  });
+
+  it('opens Kosze with two topics of three learned words each', () => {
+    const fruit = ['fruit.apple', 'fruit.pear', 'fruit.banana'];
+    const pets = ['pets-farm.cat', 'pets-farm.dog'];
+    expect(basketTopics([...fruit, ...pets], words)).toEqual(['fruit']);
+    expect(gameOpen('sort', [...fruit, ...pets], words)).toBe(false);
+    expect(gameOpen('sort', [...fruit, ...pets, 'pets-farm.cow'], words)).toBe(true);
+  });
+
+  it('puts Kosze on the shelf only when the parent switched it on', () => {
+    expect(shelfGames(defaultPlan())).not.toContain('sort');
+    expect(shelfGames({ ...defaultPlan(), sortGame: false })).not.toContain('sort');
+    expect(shelfGames({ ...defaultPlan(), sortGame: true })).toEqual(GAME_IDS);
   });
 });

@@ -142,3 +142,54 @@ test('the chest and the album need no reading', async ({ page }) => {
   await expect(page.locator('[data-owned="true"]').first()).toBeVisible();
   await expectNoReading(page, 'album, with new stickers');
 });
+
+test('the stories and games E4–E9 need no reading (the sentence is the parent’s)', async ({ page }) => {
+  test.setTimeout(90_000);
+  await fakeSpeech(page);
+  const ola = await firstRun(page);
+  await page.getByTestId('stories').click();
+  await expect(page.getByTestId('story-shelf')).toBeVisible();
+  await expectNoReading(page, 'story shelf, locked');
+
+  const learned = [
+    'fruit.apple', 'fruit.banana', 'fruit.orange', 'fruit.pear', 'fruit.grapes',
+    'pets-farm.cat', 'pets-farm.dog', 'pets-farm.cow',
+    'colours.red', 'colours.blue', 'colours.yellow',
+    'body.eyes', 'body.nose', 'body.hand', 'body.foot'
+  ];
+  await seedLearned(page, ola, Object.fromEntries(learned.map((id) => [id, 2])));
+  await page.goto(`/#/child/${ola}`);
+  await page.reload();
+  await expect(page.getByTestId('stories')).toHaveAttribute('data-new', 'true');
+  await expectNoReading(page, 'map with a new story');
+  await page.getByTestId('stories').click();
+  await expect(page.locator('[data-story="polly-picnic"]')).toHaveAttribute('data-open', 'true');
+  await expectNoReading(page, 'story shelf, open');
+  await page.locator('[data-story="polly-picnic"]').click();
+  await expect(page.getByTestId('story')).toHaveAttribute('data-page', '1', { timeout: 15_000 });
+  await expectNoReading(page, 'a story page');
+  // The sentence is shown, for the parent reading along.
+  await expect(page.getByTestId('sentence')).toHaveAttribute('data-for-parent', '');
+
+  for (const game of ['bubbles', 'feed', 'spy', 'simon', 'paint']) {
+    await page.goto(`/#/child/${ola}/play/${game}`);
+    await expect(page.getByTestId('game')).toHaveAttribute('data-game', game);
+    await expectNoReading(page, game);
+  }
+  // A pot dipped and the picture painted.
+  const colour = (await page.getByTestId('paint').getAttribute('data-colour')) as string;
+  await page.getByTestId('pots').locator(`[data-word-id="${colour}"]`).click();
+  await page.getByTestId('paint-picture').click();
+  await expect(page.getByTestId('paint-picture')).toHaveAttribute('data-painted', colour);
+  await expectNoReading(page, 'paint, painted');
+
+  // Kosze, once the parent switched it on.
+  await page.goto(`/#/child/${ola}`);
+  await openPanel(page);
+  await page.goto(`/#/parent/child/${ola}`);
+  await page.getByTestId('sort-game').check();
+  await expect(page.getByTestId('sort-game')).toBeChecked();
+  await page.goto(`/#/child/${ola}/play/sort`);
+  await expect(page.getByTestId('game')).toHaveAttribute('data-game', 'sort');
+  await expectNoReading(page, 'sort');
+});

@@ -4,7 +4,8 @@
   lock, tap 3 swings the lid open with a gold glow and 1–3 stickers fly out; each is then said
   in English, and a tap on one says it again. The opening is recorded the moment the lid opens;
   leaving before that keeps the chest waiting. A pulsing ▶ then leads to the album, where the
-  new stickers are ringed. With no chest waiting, the route goes back to the map.
+  new stickers are ringed. When a story waits that nobody has heard yet, Polly then says so
+  (decision 87). With no chest waiting, the route goes back to the map.
 -->
 <script lang="ts">
   import { onMount } from 'svelte';
@@ -15,13 +16,15 @@
   import PollyBuddy, { type Mood } from '../../lib/components/PollyBuddy.svelte';
   import SpeakingPicture from '../../lib/components/SpeakingPicture.svelte';
   import SpeedToggle from '../../lib/components/SpeedToggle.svelte';
-  import { prompt, stickers, topics, word } from '../../lib/content';
+  import { prompt, stickers, stories, topics, word } from '../../lib/content';
   import { loadFamily } from '../../lib/db';
   import { liveChild } from '../../lib/domain/children';
   import { readSettings } from '../../lib/domain/family';
+  import { wordStates } from '../../lib/domain/learning';
   import { recordChest } from '../../lib/domain/progress';
   import { chestState } from '../../lib/domain/rewards';
   import { drawForChild } from '../../lib/domain/stickers';
+  import { storyIsNew } from '../../lib/domain/stories';
   import { sounds } from '../../lib/sound/effects';
   import { speaker } from '../../lib/speech';
   import { speed } from '../../lib/speech/speed.svelte';
@@ -47,12 +50,15 @@
   let done = $state(false);
   let mood = $state<Mood>('idle');
   let moodBeat = $state(0);
+  let newStory = false;
 
   onMount(() => {
     void (async () => {
       const file = await loadFamily();
       if (!liveChild(file, childId)) return replace('/');
       if (chestState(file.progress[childId], readSettings(file).starsPerChest).unopened <= 0) return replace(map);
+      const states = wordStates(file.progress[childId]);
+      newStory = stories.some((st) => storyIsNew(st, states, file.progress[childId]));
       ready = true;
       if (speaker().isUnlocked) void speaker().sayPrompt(prompt('chest.tap'), speed.value);
     })();
@@ -101,6 +107,7 @@
     await speaker().sayPrompt(prompt('chest.open'), speed.value);
     for (const f of found) await speaker().sayWord(f.word, speed.value);
     done = true;
+    if (newStory) await speaker().sayPrompt(prompt('story.new'), speed.value);
   }
 
   function toAlbum() {

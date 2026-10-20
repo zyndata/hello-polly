@@ -12,6 +12,8 @@ import ChestScreen from '../screens/child/ChestScreen.svelte';
 import Game from '../screens/child/Game.svelte';
 import Lesson from '../screens/child/Lesson.svelte';
 import Shelf from '../screens/child/Shelf.svelte';
+import StoryScreen from '../screens/child/Story.svelte';
+import StoryShelf from '../screens/child/StoryShelf.svelte';
 import TreasureMap from '../screens/child/Map.svelte';
 import ParentChild from '../screens/parent/Child.svelte';
 import Family from '../screens/parent/Family.svelte';
@@ -35,6 +37,8 @@ const built: Record<string, ScreenComponent> = {
   '/child/:id/lesson': Lesson,
   '/child/:id/play': Shelf,
   '/child/:id/play/:game': Game,
+  '/child/:id/stories': StoryShelf,
+  '/child/:id/stories/:storyId': StoryScreen,
   '/child/:id/album': Album,
   '/child/:id/chest': ChestScreen,
   '/parent': Panel,
