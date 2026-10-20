@@ -33,6 +33,11 @@ project adheres to [Semantic Versioning](https://semver.org).
 - Update CHANGELOG
 - Update CHANGELOG
 - Update CHANGELOG
+- Update CHANGELOG
+
+### Tests
+
+- Wait for each minute in the no-limits screen-time e2e
 
 ## [0.1.0] - 2026-10-19
 
