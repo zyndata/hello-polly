@@ -74,3 +74,17 @@ describe('progress', () => {
     expect(totalStars(file.progress.c1)).toBe(15);
   });
 });
+
+describe('minutes', () => {
+  it('adds whole minutes to the day on this device, bumping seq; nothing for none', async () => {
+    const { addMinutes } = await import('./progress');
+    const { emptyFamily } = await import('./family');
+    let file = emptyFamily('f');
+    file = addMinutes(file, 'c', 'dev', '2026-10-20', 2);
+    file = addMinutes(file, 'c', 'dev', '2026-10-20', 1.9);
+    file = addMinutes(file, 'c', 'dev', '2026-10-21', 3);
+    expect(file.progress.c?.dev?.minutes).toEqual({ '2026-10-20': 3, '2026-10-21': 3 });
+    expect(file.progress.c?.dev?.seq).toBe(3);
+    expect(addMinutes(file, 'c', 'dev', '2026-10-21', 0.5)).toBe(file);
+  });
+});

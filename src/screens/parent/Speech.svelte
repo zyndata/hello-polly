@@ -11,7 +11,8 @@
   import SpeedToggle from '../../lib/components/SpeedToggle.svelte';
   import VoiceCheck from '../../lib/components/VoiceCheck.svelte';
   import { topics, word } from '../../lib/content';
-  import { getDeviceId, getPreferredVoices, loadFamily, setPreferredVoice, updateFamily, type PreferredVoiceIds } from '../../lib/db';
+  import { getPreferredVoices, loadFamily, setPreferredVoice, type PreferredVoiceIds } from '../../lib/db';
+  import { change } from '../../lib/store';
   import { DEFAULT_SETTINGS, RATE_RANGES, readSettings, setSetting } from '../../lib/domain/family';
   import { EFFECT_NAMES, sounds, type Effect } from '../../lib/sound/effects';
   import { speaker, type EngineVoice } from '../../lib/speech';
@@ -44,7 +45,6 @@
   let settings = $state<FamilySettings>({ ...DEFAULT_SETTINGS });
   let preferred = $state<PreferredVoiceIds>({});
   let voices = $state<readonly EngineVoice[]>(voice.engine.voices());
-  let deviceId = '';
 
   const accentName = $derived(ACCENTS.find((a) => a.value === settings.accent)?.adjective ?? '');
   const englishVoices = $derived(sortVoices(voices.filter((v) => baseLang(v.lang) === 'en')));
@@ -59,17 +59,16 @@
   onMount(() => {
     const stop = voice.engine.onVoicesChanged(() => (voices = voice.engine.voices()));
     void (async () => {
-      const [family, ids, device] = await Promise.all([loadFamily(), getPreferredVoices(), getDeviceId()]);
+      const [family, ids] = await Promise.all([loadFamily(), getPreferredVoices()]);
       settings = readSettings(family);
       preferred = ids;
-      deviceId = device;
       voices = voice.engine.voices();
     })();
     return stop;
   });
 
   async function save<K extends keyof FamilySettings>(key: K, value: FamilySettings[K]) {
-    const file = await updateFamily((f) => setSetting(f, key, value, new Date().toISOString(), deviceId || 'unknown'));
+    const file = await change((f, now, device) => setSetting(f, key, value, now, device));
     settings = readSettings(file);
     voice.configure(settings, preferred);
     if (key === 'defaultSpeed') speed.setDefault(settings.defaultSpeed);

@@ -98,6 +98,21 @@ export function planListenGame(learned: readonly WordId[], ctx: ChoiceContext, s
   });
 }
 
+/**
+ * Rounds of "hear a word, find its picture" over learned words with a fixed number of pictures
+ * (E4 *Bańki*, E5 *Nakarm Polly*; decision 88): every learned word is a target once before
+ * any is asked again, and distractors come from learned words only.
+ */
+export function planPicks(learned: readonly WordId[], ctx: Pick<ChoiceContext, 'words'>, seed: string, rounds = 5, choices = 3): PlayStep[] {
+  if (learned.length === 0) return [];
+  const byId = new Map(ctx.words.map((w) => [w.id, w]));
+  const order = seededShuffle(learned, `${seed}/targets`);
+  return Array.from({ length: rounds }, (_, i) => {
+    const word = order[i % order.length] as WordId;
+    return { kind: 'pick', word, reason: 'review', choices: pickChoices(word, choices, [learned], `${seed}/${i}`, (id) => byId.get(id)) };
+  });
+}
+
 /** How a tap is answered (decision 43). The second miss, and every one after it, glows. */
 export type Reaction = 'correct' | 'retry' | 'hint';
 export const HINT_AFTER_MISSES = 2;

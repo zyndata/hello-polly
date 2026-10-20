@@ -21,6 +21,7 @@
     setKnown,
     setPaused,
     setRandomWithinTopic,
+    setSortGame,
     setTopicEnabled
   } from '../domain/plan';
   import type { WordId, WordPlan } from '../types';
@@ -84,6 +85,16 @@
       onchange={(e) => onchange(setRandomWithinTopic(plan, (e.currentTarget as HTMLInputElement).checked))}
     />
     Słówka z tematu w losowej kolejności
+  </label>
+
+  <label class="choice">
+    <input
+      type="checkbox"
+      checked={plan.sortGame === true}
+      data-testid="sort-game"
+      onchange={(e) => onchange(setSortGame(plan, (e.currentTarget as HTMLInputElement).checked))}
+    />
+    Gra „Kosze”: układanie obrazków w dwóch koszykach według tematu (dla starszych dzieci)
   </label>
 
   <section class="grid gap-3" aria-labelledby="topics-title">

@@ -18,3 +18,10 @@ describe('days', () => {
     expect(daysBetween('2026-10-18', '2026-06-20')).toBe(-120);
   });
 });
+
+describe('weekday', () => {
+  it('is Monday first', async () => {
+    const { weekday } = await import('./time');
+    expect(['2026-10-19', '2026-10-20', '2026-10-25', '2026-11-01', '2024-02-29'].map(weekday)).toEqual([0, 1, 6, 6, 3]);
+  });
+});

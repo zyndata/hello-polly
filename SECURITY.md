@@ -24,7 +24,12 @@ Drive's own permissions.
 
 - The Google OAuth token (from Phase 7) has the `drive.file` scope: access only to files this
   app created or the user picked for it. It is held in memory and `sessionStorage`, never in
-  `localStorage`.
+  `localStorage`, IndexedDB or Drive, and it is asked for only from a parent's tap (connecting,
+  the parent gate, „Wznów”); a device that never connected makes no request to Google at all.
+- The CSP allows Google in exactly three places: `script-src` and `frame-src
+  https://accounts.google.com` (Google Identity Services) and `connect-src
+  https://www.googleapis.com` (the Drive API). `Cross-Origin-Opener-Policy` is
+  `same-origin-allow-popups`, which the sign-in popup needs to return the token.
 - Speech is the device's own voice (Web Speech API). No audio is recorded, uploaded or stored;
   `Permissions-Policy` denies the microphone and the camera outright.
 - Sound effects are synthesized in the browser. No audio file is shipped.
@@ -37,8 +42,10 @@ Security-relevant problems are most likely to look like:
 
 - a **Content-Security-Policy regression**: anything that reintroduces `unsafe-inline` or
   `unsafe-eval`, or widens a directive beyond what [STATE.md](STATE.md) records. Today the
-  policy is `'self'` everywhere, plus `https://static.cloudflareinsights.com` in `script-src`
-  for the Cloudflare Web Analytics beacon the edge injects;
+  policy is `'self'` everywhere, plus: `script-src` the Cloudflare Web Analytics beacon, Google
+  Identity Services and the Google Picker's loader; `img-src` jsDelivr (the pictures);
+  `connect-src` the Drive API; `frame-src` Google's sign-in and Picker frames (the
+  [Caddyfile](Caddyfile) names each host and why);
 - **OAuth handling** that requests a broader scope than `drive.file`, or leaks a token;
 - **untrusted input treated as markup or code**: a family file fetched from Drive or an
   imported backup rendered without escaping;

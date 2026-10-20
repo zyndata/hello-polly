@@ -1,16 +1,23 @@
 import type { Component } from 'svelte';
 import { wrap } from 'svelte-spa-router/wrap';
 import type { WrappedComponent } from 'svelte-spa-router/wrap';
+import ChildGuard from './components/ChildGuard.svelte';
 import Gated from './components/Gated.svelte';
 import Placeholder from './components/Placeholder.svelte';
 import { notFound, screens, type Screen } from './screens';
+import Join from '../screens/Join.svelte';
 import Setup from '../screens/Setup.svelte';
 import Start from '../screens/Start.svelte';
+import Album from '../screens/child/Album.svelte';
+import ChestScreen from '../screens/child/ChestScreen.svelte';
 import Game from '../screens/child/Game.svelte';
 import Lesson from '../screens/child/Lesson.svelte';
 import Shelf from '../screens/child/Shelf.svelte';
+import StoryScreen from '../screens/child/Story.svelte';
+import StoryShelf from '../screens/child/StoryShelf.svelte';
 import TreasureMap from '../screens/child/Map.svelte';
 import ParentChild from '../screens/parent/Child.svelte';
+import Family from '../screens/parent/Family.svelte';
 import Panel from '../screens/parent/Panel.svelte';
 import Speech from '../screens/parent/Speech.svelte';
 
@@ -20,7 +27,8 @@ import Speech from '../screens/parent/Speech.svelte';
  *
  * A screen marked `built` renders its component below; every other route is a placeholder
  * until its phase builds it. Every `/parent` route, built or not, sits behind the parent gate
- * (STATE.md decision 37). The catch-all is last, because the router matches in insertion order.
+ * (STATE.md decision 37), and every `/child/:id` route behind the screen-time guard (decisions
+ * 91–94). The catch-all is last, because the router matches in insertion order.
  */
 /** What the router hands every screen. */
 type ScreenComponent = Component<{ screen: Screen; params?: Record<string, string> | null }>;
@@ -31,18 +39,26 @@ const built: Record<string, ScreenComponent> = {
   '/child/:id/lesson': Lesson,
   '/child/:id/play': Shelf,
   '/child/:id/play/:game': Game,
+  '/child/:id/stories': StoryShelf,
+  '/child/:id/stories/:storyId': StoryScreen,
+  '/child/:id/album': Album,
+  '/child/:id/chest': ChestScreen,
   '/parent': Panel,
   '/parent/child/:id': ParentChild,
+  '/parent/family': Family,
   '/parent/speech': Speech,
+  '/join/:fileId': Join,
   '/setup': Setup
 };
 
 export const isGated = (screen: Screen): boolean => screen.path === '/parent' || screen.path.startsWith('/parent/');
+export const isChildRoute = (screen: Screen): boolean => screen.path.startsWith('/child/');
 
 function route(screen: Screen): WrappedComponent {
   const component = screen.built ? built[screen.path] : (Placeholder as ScreenComponent);
   if (!component) throw new Error(`Screen ${screen.path} is marked built but has no component`);
   if (isGated(screen)) return wrap({ component: Gated as ScreenComponent, props: { screen, inner: component } });
+  if (isChildRoute(screen)) return wrap({ component: ChildGuard as ScreenComponent, props: { screen, inner: component } });
   return wrap({ component, props: { screen } });
 }
 

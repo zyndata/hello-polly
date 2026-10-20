@@ -1,9 +1,11 @@
 <!--
-  The game shelf (PLAN.md "Screens and navigation" `/child/:id/play`; STATE.md decision 48):
-  three big tiles, E1 *Posłuchaj i dotknij* (🔊), E2 *Cyferki* (keycap 1) and E3 *Memory*
-  (card backs), over learned words only. A game that lacks its four learned words shows Polly
-  holding a lock instead, and a tap on it says „Najpierw poznajmy więcej słówek!”. The
-  long-press home leads back to the map.
+  The game shelf (PLAN.md "Screens and navigation" `/child/:id/play`; STATE.md decisions 48,
+  88–89): a big tile per game, over learned words only. E1 *Posłuchaj i dotknij* (🔊), E2
+  *Cyferki* (keycap 1), E3 *Memory* (card backs), E4 *Bańki* (🫧), E5 *Nakarm Polly* (🍽),
+  E6 *Gdzie jest…?* (🔍), E7 *Polly mówi* (✋), E8 *Pokoloruj* (🎨), and E9 *Kosze* (🧺) when
+  the parent switched it on. A game that lacks its learned words shows Polly holding a lock
+  instead, and a tap on it says „Najpierw poznajmy więcej słówek!”. The long-press home leads
+  back to the map.
 -->
 <script lang="ts">
   import { onMount } from 'svelte';
@@ -15,8 +17,8 @@
   import SpeedToggle from '../../lib/components/SpeedToggle.svelte';
   import { prompt, words } from '../../lib/content';
   import { loadFamily } from '../../lib/db';
-  import { liveChild } from '../../lib/domain/children';
-  import { GAME_IDS, digitImage, gameOpen, learnedWords, type GameId } from '../../lib/domain/games';
+  import { childPlan, liveChild } from '../../lib/domain/children';
+  import { digitImage, gameOpen, learnedWords, shelfGames, type GameId } from '../../lib/domain/games';
   import { sounds } from '../../lib/sound/effects';
   import { speaker } from '../../lib/speech';
   import { speed } from '../../lib/speech/speed.svelte';
@@ -25,9 +27,31 @@
 
   let { screen, params }: { screen: Screen; params?: Record<string, string> | null } = $props();
 
-  const LABELS: Record<GameId, string> = { listen: 'Posłuchaj i dotknij', digits: 'Cyferki', memory: 'Memory' };
+  const LABELS: Record<GameId, string> = {
+    listen: 'Posłuchaj i dotknij',
+    digits: 'Cyferki',
+    memory: 'Memory',
+    bubbles: 'Bańki',
+    feed: 'Nakarm Polly',
+    spy: 'Gdzie jest…?',
+    simon: 'Polly mówi',
+    paint: 'Pokoloruj',
+    sort: 'Kosze'
+  };
+  /** The tile's picture, for the games drawn with one. */
+  const TILES: Partial<Record<GameId, string>> = {
+    listen: 'speaker-high-volume',
+    digits: digitImage(1),
+    bubbles: 'bubbles',
+    feed: 'fork-and-knife-with-plate',
+    spy: 'magnifying-glass-tilted-left',
+    simon: 'raised-hand',
+    paint: 'artist-palette',
+    sort: 'basket'
+  };
 
   const childId = $derived(params?.id ?? '');
+  let games = $state<GameId[]>([]);
   let open = $state<Partial<Record<GameId, boolean>>>({});
   let ready = $state(false);
   let nudges = $state<Partial<Record<GameId, number>>>({});
@@ -37,9 +61,10 @@
       const file = await loadFamily();
       if (!liveChild(file, childId)) return replace('/');
       const learned = learnedWords(file, childId, words);
-      open = Object.fromEntries(GAME_IDS.map((g) => [g, gameOpen(g, learned, words)]));
+      games = shelfGames(childPlan(file, childId));
+      open = Object.fromEntries(games.map((g) => [g, gameOpen(g, learned, words)]));
       ready = true;
-      const any = GAME_IDS.some((g) => open[g]);
+      const any = games.some((g) => open[g]);
       if (speaker().isUnlocked) void speaker().sayPrompt(prompt(any ? 'games.choose' : 'games.locked'), speed.value);
     })();
   });
@@ -65,8 +90,8 @@
       <SpeedToggle />
     </header>
 
-    <ul class="flex flex-1 flex-wrap content-center items-center justify-center gap-5 p-4" data-testid="shelf">
-      {#each GAME_IDS as game (game)}
+    <ul class="game-shelf flex flex-1 flex-wrap content-center items-center justify-center gap-4 overflow-y-auto p-4" data-testid="shelf">
+      {#each games as game (game)}
         <li>
           {#key nudges[game] ?? 0}
             <button
@@ -84,10 +109,8 @@
                   <ContentImage id="parrot" class="pointer-events-none h-full w-full object-contain opacity-90" />
                   <ContentImage id="locked" class="tile-lock pointer-events-none object-contain" />
                 </span>
-              {:else if game === 'listen'}
-                <ContentImage id="speaker-high-volume" class="pointer-events-none h-full w-full object-contain" />
-              {:else if game === 'digits'}
-                <ContentImage id={digitImage(1)} class="pointer-events-none h-full w-full object-contain" />
+              {:else if TILES[game]}
+                <ContentImage id={TILES[game] as string} class="pointer-events-none h-full w-full object-contain" />
               {:else}
                 <span class="grid h-full w-full grid-cols-2 items-center gap-2">
                   <CardBack class="tile-card -rotate-6" />

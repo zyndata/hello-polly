@@ -41,6 +41,10 @@ export interface Topic {
   words: WordId[];
 }
 
+/**
+ * A picture in a scene: `x` and `y` place its centre, in percent of the scene's width and
+ * height; `size` is its width in percent of the scene's width (STATE.md decisions 84–85).
+ */
 export interface SceneItem {
   word?: WordId;
   image: ImageId;
@@ -61,6 +65,8 @@ export interface Story {
   /** English. */
   title: string;
   titlePl: string;
+  /** A one-line Polish intro, spoken before the first page (STATE.md decision 84). */
+  introPl?: string;
   topic: TopicId;
   /** 5–8 pages, about 30 seconds. */
   pages: StoryPage[];
@@ -116,6 +122,8 @@ export interface WordPlan {
   /** Neither introduced nor reviewed. */
   paused: WordId[];
   randomWithinTopic: boolean;
+  /** The *Kosze* sorting game is on the shelf (STATE.md decision 89). Absent means off. */
+  sortGame?: boolean;
 }
 
 export type Accent = 'en-GB' | 'en-US';

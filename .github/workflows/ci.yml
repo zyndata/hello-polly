@@ -41,8 +41,8 @@ jobs:
       - name: Content check
         run: npm run check:content
 
-      # The VITE_* values are public by design (they end up in the bundle) and unused until
-      # Phase 7. They are repository variables, never secrets.
+      # The VITE_* values are public by design (they end up in the bundle). They are
+      # repository variables, never secrets. The e2e job sets its own fake client id.
       - name: Build
         env:
           VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}

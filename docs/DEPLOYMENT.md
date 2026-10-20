@@ -98,19 +98,20 @@ curl -I --resolve hellopolly.gorny.dev:443:127.0.0.1 https://hellopolly.gorny.de
 
 ## GitHub repository configuration
 
-**Secrets** (Settings → Secrets and variables → Actions → *Secrets*), the same values as Eat
-My Way's when the same deploy user is used:
+**Secrets** (Settings → Secrets and variables → Actions → *Secrets*). The deploy user, host and
+WAF token are the same as Eat My Way's; the SSH key is Hello Polly's own (STATE.md decision 52):
 
 | Secret | Value |
 |---|---|
-| `SSH_PRIVATE_KEY` | Private key of a deploy user that can write `/var/www/hellopolly` and run `docker` |
+| `SSH_PRIVATE_KEY` | Private half of the `hello-polly-deploy@github-actions` key, whose public half is in the deploy user's `authorized_keys`. The user can write `/var/www/hellopolly` and is in the `docker` group. To rotate: new key pair, replace the line on the server, overwrite this secret |
 | `SSH_KNOWN_HOSTS` | Output of `ssh-keyscan <host>`. It pins the server's host key, and the workflow relies on it (no `StrictHostKeyChecking=no`) |
 | `SSH_USER` | Deploy user name |
 | `SSH_HOST` | The VM's raw IP, not a hostname (every name in the zone is proxied and never reaches :22) |
 | `DEPLOY_CHECK_TOKEN` | Shared secret sent as `X-Deploy-Check` by the health check, matched by the Cloudflare WAF skip rule |
 
 **Variables** (same page → *Variables*). All three are public by design and end up in the
-bundle; none is read before Phase 7:
+bundle. `VITE_GOOGLE_CLIENT_ID` is read from Phase 7 (without it *Rodzina* says the build has no
+Google connection); the other two from Phase 8 (the Picker):
 
 | Variable | Value |
 |---|---|
@@ -151,6 +152,103 @@ docker run -d --name hello-polly --restart unless-stopped \
 
 The rolled-back bundle keeps loading images from its own tag on jsDelivr, so pictures stay
 consistent with it. Fix forward with the next patch version; never move a tag.
+
+## Live check against real Google (Drive sync)
+
+The e2e suite runs the real GIS and Drive clients against a fake Google (STATE.md decision 72),
+so what only real Google can show is checked by hand, once the Google Cloud project exists
+(owner prerequisites in PLAN.md) and after any change to sign-in or sync. Record the date, the
+browsers and the result in STATE.md.
+
+Prerequisites:
+
+- [ ] Google Cloud project: OAuth consent screen (external, scope `drive.file` only, privacy
+      URL), a web OAuth client whose authorized JavaScript origins are
+      `https://hellopolly.gorny.dev`, `http://localhost:5173` and `http://localhost:8081`,
+      and the **Google Drive API** enabled. While the consent screen is in *Testing*, add both
+      parents' accounts as test users.
+- [ ] The client id in `.env.local` (`VITE_GOOGLE_CLIENT_ID=…`, never committed) for local runs,
+      and as the repository variable `VITE_GOOGLE_CLIENT_ID` for CI and releases.
+
+Locally (`npm run docker:up`, http://localhost:8081, DevTools console open), then once more on
+https://hellopolly.gorny.dev after the next tag:
+
+- [ ] Before connecting: a whole session (first run, a lesson, the panel) makes no request to
+      any Google host (Network tab filtered by `google`).
+- [ ] Panel → *Rodzina* → „Połącz z Dyskiem Google”: the Google window asks only for access to
+      files created by this app; after it, *Stan* is „Połączono” and *Konto* names the account.
+- [ ] `hello-polly-family.json` appears in a `HelloPolly` folder in that account's My Drive, and
+      its content is the family (the child's nickname is in it).
+- [ ] Zero CSP violations in the console through the whole flow. Expected exception, as in Eat
+      My Way decision 88: an inline-style report from inside Google's own GIS frame; record it
+      if it appears, do not widen `style-src` for it.
+- [ ] A second browser (or phone) on the same account: first run → „Mam już rodzinę na Dysku
+      Google” lands on the same child's map without adding a child.
+- [ ] Play a few pictures on each; within a few seconds (or on switching back to the tab) both
+      show the same stars and words, and the file on Drive holds both devices' progress.
+- [ ] A reload keeps „Połączono” without a Google window.
+- [ ] After the token's hour (or after revoking the app at https://myaccount.google.com/permissions):
+      the child's screens show nothing but the small dot on the gear; passing the parent gate
+      renews (a Google window may flash) or *Rodzina* offers „Wznów”; the waiting progress
+      then lands on Drive.
+- [ ] „Odłącz” keeps every child on the device, and no further Google request is made.
+
+## Live check against real Google (the second parent)
+
+The e2e suite runs the real Picker client against a fake Picker served at Google's own URLs
+(STATE.md decision 82). What it cannot show is Google's own Picker frame, the invitation e-mail
+and the `drive.file` grant the Picker gives. Run this with **two different Google accounts**
+(A owns the family, B is invited), after the Drive check above, and record the date, the
+browsers and the result in STATE.md.
+
+Prerequisites:
+
+- [ ] In the same Google Cloud project: the **Google Picker API** enabled; a browser API key
+      restricted to the Picker API and to the referrers `https://hellopolly.gorny.dev/*`,
+      `http://localhost:5173/*` and `http://localhost:8081/*`; the project *number* noted.
+- [ ] `VITE_GOOGLE_API_KEY` and `VITE_GOOGLE_APP_ID` in `.env.local` and as repository variables.
+- [ ] While the consent screen is in *Testing*, both A and B are test users.
+
+Locally (`npm run docker:up`, http://localhost:8081, DevTools console open), then once more on
+https://hellopolly.gorny.dev after the next tag:
+
+- [ ] A: *Rodzina* → „Zaproś” with B's address. *Rodzina* lists A as „właściciel pliku” and B as
+      „może zmieniać”; B receives Drive's e-mail, whose note carries the `…/#/join/<id>` link.
+- [ ] B (another browser or phone, B's account): open the link → „Połącz z Google” → the Google
+      window → the Picker shows exactly one file, `hello-polly-family.json` → select it →
+      „Wybierz”. „Gotowe!” lists A's children; the parent panel shows A's accent and speeds.
+      Count the taps after the Google window: at most 3.
+- [ ] The console shows **one** expected CSP report and no other: `style-src-elem` for an inline
+      `<style>` from `apis.google.com` (the Picker's own dialog rules, copied into `app.css`;
+      decision 81). Nothing else is blocked, and the Picker looks right (white dialog, shadow).
+      If the Picker says the developer key is invalid or its referrer is not allowed, suspect
+      `Referrer-Policy: no-referrer` first (measured not to matter for the Picker's document
+      itself, but not yet with a real token) and record what it says.
+- [ ] B plays a few pictures; A's *Rodzina* „Zapisz teraz” (or switching back to the tab, or 3
+      minutes) brings B's progress to A.
+- [ ] B, signed in to a **third** account that was not invited: the Picker lists nothing; closing
+      it shows „Plik rodziny nie został wybrany. Zalogowano jako <that account>…”; „Zmień konto”
+      opens Google's account chooser.
+- [ ] A: „Usuń” → „Na pewno usunąć?” on B. On B's next sync (focus), B's gear gets the small
+      dot, and B's *Rodzina* says „Dostęp do wspólnej rodziny został cofnięty”. A's file and A's
+      children are unchanged; B keeps everything locally.
+
+### Spike: the Picker in an installed PWA (open question 4)
+
+PLAN.md Phase 8 task 5. It needs the web manifest (Phase 11), so that the app installs as a
+standalone app, and both phones. On each of an Android phone (Chrome) and an iPhone (Safari):
+
+1. Install the app from the live site (Android: *Install app*; iOS: *Share → Add to Home
+   Screen*), open it from the home screen, and confirm it runs standalone (no address bar).
+2. In the installed app: first run → „Mam zaproszenie” → paste B's invitation link → „Połącz z
+   Google” → does the Google window return to the app? Does the Picker appear, and does
+   „Wybierz” complete the join?
+3. Separately, tap the link in the e-mail: note whether it opens the installed app or the
+   browser (iOS always opens Safari).
+4. If the Picker fails standalone: join in the browser tab instead, then in the installed app
+   choose „Mam już rodzinę na Dysku Google”, which finds the shared file without the Picker
+   (decision 75). Record which path works on which phone in STATE.md, which closes open
+   question 4.
 
 ## Troubleshooting
 

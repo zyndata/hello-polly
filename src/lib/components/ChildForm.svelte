@@ -24,9 +24,9 @@
     fox: 'Lis',
     lion: 'Lew',
     panda: 'Panda',
-    owl: 'Sowa',
+    hippopotamus: 'Hipopotam',
     frog: 'Żaba',
-    octopus: 'Ośmiornica',
+    'service-dog': 'Piesek',
     penguin: 'Pingwin',
     koala: 'Koala'
   };

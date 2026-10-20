@@ -8,6 +8,8 @@
     pick is recorded as an attempt at once (decision 44) and the next step follows by itself.
   - Finish: the island gets its flag, the stars appear (decision 45), and the lesson and its
     stars are written together. Then the child sails back to the map.
+  - Time up (decision 93): the step being played is finished first; then the lesson stops, the
+    steps done are paid in stars (no flag: the lesson was not finished), and the lock shows.
 
   Progress dots, 🐢/🐇, Polly's reactions, 🔊 on picks, and the long-press home throughout.
 -->
@@ -33,6 +35,8 @@
   import { sounds } from '../../lib/sound/effects';
   import { speaker, spokenForm, type Segment } from '../../lib/speech';
   import { speed } from '../../lib/speech/speed.svelte';
+  import { screenTime } from '../../lib/screentime/clock.svelte';
+  import { holdScreen } from '../../lib/screentime/hold';
   import { change } from '../../lib/store';
   import { unlock } from '../../lib/unlock';
   import type { Screen } from '../../lib/screens';
@@ -41,6 +45,9 @@
 
   /** The finish screen stays at least this long before sailing back. */
   const FINISH_MS = 2500;
+
+  // The lock waits for the step being played (STATE.md decision 93).
+  const hold = holdScreen();
 
   const childId = $derived(params?.id ?? '');
   const lessonId = crypto.randomUUID();
@@ -114,6 +121,10 @@
   }
 
   async function advance() {
+    if (index < steps.length - 1 && screenTime.isAsleep(childId)) {
+      await stopForSleep();
+      return;
+    }
     if (index < steps.length - 1) {
       index += 1;
       tapped = false;
@@ -122,6 +133,16 @@
       return;
     }
     await finish();
+  }
+
+  /** Time is up after step `index`: what was done keeps its stars; the lock shows next. */
+  async function stopForSleep() {
+    const earned = starsFor(index + 1, firstTries);
+    try {
+      await change((file, _now, device) => addStars(file, childId, device, earned));
+    } finally {
+      hold.release();
+    }
   }
 
   async function finish() {

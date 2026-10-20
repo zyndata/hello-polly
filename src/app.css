@@ -69,7 +69,12 @@
   .speed-option,
   .choice-picture,
   .digit-tile,
-  .memory-card {
+  .memory-card,
+  .story-tile,
+  .simon-part,
+  .feed-item,
+  .paint-pot,
+  .sort-basket {
     box-shadow:
       0 4px 6px -1px rgb(0 0 0 / 0.1),
       0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -267,6 +272,63 @@
     border-radius: 0.5rem;
     background: white;
     padding: 0 0.5rem;
+  }
+
+  /* The parent's 4-week activity calendar (STATE.md decision 96): darker blue, more minutes. */
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.25rem;
+    max-width: 28rem;
+  }
+
+  .calendar-head {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-ink-muted);
+  }
+
+  .calendar-day {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    min-height: 2.75rem;
+    border-radius: 0.5rem;
+    background: var(--color-foam);
+    font-size: 0.75rem;
+    line-height: 1.1;
+  }
+
+  .calendar-day.level-1 {
+    background: var(--color-sky);
+  }
+
+  .calendar-day.level-2 {
+    background: var(--color-ocean);
+    color: white;
+  }
+
+  .calendar-day.level-3 {
+    background: var(--color-deep-sea);
+    color: white;
+  }
+
+  .calendar-day.is-today {
+    outline: 2px solid var(--color-coral);
+    outline-offset: 1px;
+  }
+
+  .calendar-day.is-future {
+    background: transparent;
+  }
+
+  .calendar-date {
+    opacity: 0.75;
+  }
+
+  .calendar-minutes {
+    font-weight: 800;
   }
 
   /* A picture that speaks (SpeakingPicture): presses in on tap, bounces while it speaks. */
@@ -659,6 +721,648 @@
     height: auto;
   }
 
+  /* The star meter on the map: the gold fill grows from empty on arrival. */
+  .meter-fill {
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: meter-grow 900ms ease-out;
+  }
+
+  /* A chest waiting on the map bobs and glows; with none waiting it sits there, faded. */
+  .map-chest-bob {
+    animation: bob 2s ease-in-out infinite;
+  }
+
+  .map-chest {
+    filter: drop-shadow(0 0 8px var(--color-gold));
+  }
+
+  .map-chest-shut {
+    opacity: 0.45;
+    filter: saturate(0.4);
+  }
+
+  /* The chest scene (STATE.md decision 60). */
+  .chest-target {
+    position: relative;
+    width: min(80vw, 42dvh, 22rem);
+    height: min(72vw, 38dvh, 20rem);
+  }
+
+  .chest-target.is-cued::after {
+    content: '';
+    position: absolute;
+    inset: 0 8%;
+    border-radius: 9999px;
+    border: 6px solid var(--color-gold);
+    animation: pulse-ring 1.6s ease-out infinite;
+    pointer-events: none;
+  }
+
+  .chest-body.is-rattling {
+    transform-box: fill-box;
+    transform-origin: center bottom;
+    animation: rattle 450ms ease-in-out;
+  }
+
+  .chest-lid {
+    transform-box: fill-box;
+    transform-origin: center bottom;
+  }
+
+  /* Open: the lid stands up behind the box, swung back on its hinge. */
+  .chest-lid.is-open {
+    transform: translateY(-62%) scaleY(0.55) rotate(-4deg);
+    animation: lid-open 600ms cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+
+  .chest-lock.is-popped {
+    transform-box: fill-box;
+    transform-origin: center;
+    opacity: 0;
+    animation: lock-pop 500ms ease-out;
+  }
+
+  .chest-glow {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .chest-glow.is-on {
+    opacity: 1;
+    animation: chest-glow 1.8s ease-in-out infinite;
+  }
+
+  .chest-sticker {
+    animation: sticker-fly 700ms cubic-bezier(0.2, 1.3, 0.5, 1) backwards;
+  }
+
+  .chest-sticker-1 {
+    animation-delay: 150ms;
+  }
+
+  .chest-sticker-2 {
+    animation-delay: 300ms;
+  }
+
+  /*
+   * Stickers: a white die-cut edge (an outline, so it never fights Tailwind's shadow and
+   * background utilities); rare ones have a gold edge with a sheen sweeping across it.
+   */
+  .sticker {
+    position: relative;
+    overflow: hidden;
+    outline: 5px solid white;
+    outline-offset: -1px;
+  }
+
+  .sticker-big {
+    width: min(34vw, 22dvh, 10rem);
+    height: min(34vw, 22dvh, 10rem);
+  }
+
+  .sticker.is-rare {
+    outline-color: var(--color-gold);
+  }
+
+  .sticker.is-rare::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.75) 50%, transparent 65%);
+    background-size: 250% 100%;
+    animation: shimmer 2.4s linear infinite;
+    pointer-events: none;
+  }
+
+  /* A sticker fresh from a chest: a gold ring pulses around it. */
+  .album-slot {
+    position: relative;
+    aspect-ratio: 1;
+  }
+
+  .album-slot:has(.is-new)::before {
+    content: '';
+    position: absolute;
+    inset: -0.4rem;
+    border-radius: calc(var(--radius-card) + 0.4rem);
+    border: 5px solid var(--color-gold);
+    animation: pulse-ring 1.6s ease-out infinite;
+    pointer-events: none;
+  }
+
+  .sticker-empty {
+    border: 3px dashed rgb(13 71 161 / 0.35);
+    background: rgb(255 255 255 / 0.35);
+  }
+
+  .sticker-empty.is-nudged {
+    animation: wiggle 450ms ease-in-out;
+  }
+
+  .silhouette {
+    filter: brightness(0);
+    opacity: 0.16;
+  }
+
+  .album-grid {
+    display: grid;
+    max-width: 48rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(6rem, 24vw), 1fr));
+    gap: 0.75rem;
+  }
+
+  .album-tab {
+    transition: transform 150ms ease-out;
+  }
+
+  .album-tab.is-chosen {
+    transform: scale(1.1);
+    background: var(--color-foam);
+    box-shadow: 0 0 0 5px var(--color-gold);
+  }
+
+  /* With nine games the tiles get smaller, so three fit in a row on a phone. */
+  .game-shelf .game-tile {
+    width: min(28vw, 22dvh, 10rem);
+    height: min(28vw, 22dvh, 10rem);
+    min-width: var(--spacing-tap);
+    min-height: var(--spacing-tap);
+  }
+
+  /*
+   * E4 Bańki: each lane rises at its own pace and loops forever (nothing is ever timed out).
+   * The lane travels; the bubble inside wiggles, glows or pops, so the two never fight.
+   */
+  .bubble-field {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    max-width: 48rem;
+    min-height: 16rem;
+    overflow: hidden;
+  }
+
+  .bubble-lane {
+    position: absolute;
+    top: 100%;
+    animation: bubble-rise 13s linear infinite;
+  }
+
+  .bubble-lane.lane-0 {
+    left: 3%;
+    animation-duration: 12s;
+    animation-delay: -2s;
+  }
+
+  .bubble-lane.lane-1 {
+    left: 27%;
+    animation-duration: 14s;
+    animation-delay: -8s;
+  }
+
+  .bubble-lane.lane-2 {
+    left: 51%;
+    animation-duration: 12.5s;
+    animation-delay: -5s;
+  }
+
+  .bubble-lane.lane-3 {
+    left: 75%;
+    animation-duration: 15s;
+    animation-delay: -11s;
+  }
+
+  .bubble {
+    display: grid;
+    place-items: center;
+    width: min(22vw, 24dvh, 9rem);
+    height: min(22vw, 24dvh, 9rem);
+    min-width: var(--spacing-tap);
+    min-height: var(--spacing-tap);
+    border-radius: 9999px;
+    border: 3px solid rgb(255 255 255 / 0.85);
+    background:
+      radial-gradient(circle at 30% 28%, rgb(255 255 255 / 0.95) 0 9%, transparent 10%),
+      radial-gradient(circle at 50% 50%, rgb(227 242 253 / 0.35) 0 55%, rgb(144 202 249 / 0.6) 100%);
+    box-shadow: inset 0 -6px 14px rgb(38 198 218 / 0.45);
+  }
+
+  .bubble.is-wiggling {
+    animation: wiggle 450ms ease-in-out;
+  }
+
+  .bubble.is-glowing {
+    box-shadow:
+      inset 0 -6px 14px rgb(38 198 218 / 0.45),
+      0 0 0 6px var(--color-coral);
+  }
+
+  .bubble.is-popped {
+    animation: bubble-pop 450ms ease-out forwards;
+  }
+
+  @keyframes bubble-rise {
+    0% {
+      top: 100%;
+    }
+    100% {
+      top: -45%;
+    }
+  }
+
+  @keyframes bubble-pop {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    60% {
+      transform: scale(1.35);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(1.6);
+      opacity: 0;
+    }
+  }
+
+  /* E5 Nakarm Polly: the food above, Polly below with her plate. */
+  .feed-item {
+    width: min(26vw, 22dvh, 9.5rem);
+    height: min(26vw, 22dvh, 9.5rem);
+    min-width: var(--spacing-tap);
+    min-height: var(--spacing-tap);
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .feed-item.is-dragging {
+    position: relative;
+    z-index: 10;
+    cursor: grabbing;
+    box-shadow: 0 0 0 5px var(--color-gold);
+  }
+
+  .feed-item.is-wiggling {
+    animation: wiggle 450ms ease-in-out;
+  }
+
+  .feed-item.is-glowing {
+    box-shadow: 0 0 0 6px var(--color-coral);
+    animation: glow 1.2s ease-in-out infinite;
+  }
+
+  .feed-item.is-eaten {
+    animation: eaten 600ms ease-in forwards;
+  }
+
+  .feed-polly {
+    position: relative;
+    width: min(44vw, 30dvh, 15rem);
+    height: min(44vw, 30dvh, 15rem);
+  }
+
+  .feed-polly-picture.is-chomping {
+    animation: chomp 600ms ease-in-out;
+  }
+
+  .feed-plate {
+    position: absolute;
+    right: -10%;
+    bottom: -4%;
+    width: 42%;
+    height: 42%;
+  }
+
+  @keyframes eaten {
+    0% {
+      transform: none;
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(140%) scale(0.2);
+      opacity: 0;
+    }
+  }
+
+  @keyframes chomp {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    30% {
+      transform: scale(1.08, 0.94);
+    }
+    60% {
+      transform: scale(0.96, 1.05);
+    }
+  }
+
+  /* E7 Polly mówi: Polly and the body part side by side, the big ✅ below. */
+  .simon-polly {
+    width: min(36vw, 28dvh, 13rem);
+    height: min(36vw, 28dvh, 13rem);
+    animation: simon-show 1.6s ease-in-out 2;
+  }
+
+  .simon-part {
+    width: min(36vw, 28dvh, 13rem);
+    height: min(36vw, 28dvh, 13rem);
+    animation: simon-point 1.2s ease-in-out 3;
+  }
+
+  .simon-done {
+    width: min(30vw, 18dvh, 8rem);
+    height: min(30vw, 18dvh, 8rem);
+    min-width: var(--spacing-tap);
+    min-height: var(--spacing-tap);
+    transition: transform 120ms ease-out;
+  }
+
+  .simon-done:active {
+    transform: scale(0.92);
+  }
+
+  @keyframes simon-show {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    30% {
+      transform: rotate(-10deg) translateX(4%);
+    }
+    60% {
+      transform: rotate(6deg);
+    }
+  }
+
+  @keyframes simon-point {
+    0%,
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 var(--color-gold);
+    }
+    50% {
+      transform: scale(1.08);
+      box-shadow: 0 0 0 8px var(--color-gold);
+    }
+  }
+
+  /* E8 Pokoloruj: the picture, then the pots. The colour layer multiplies over the grey. */
+  .paint-canvas {
+    width: min(56vw, 36dvh, 16rem);
+    height: min(56vw, 36dvh, 16rem);
+  }
+
+  .paint-faded {
+    opacity: 0.55;
+  }
+
+  .paint-layer {
+    mix-blend-mode: multiply;
+    animation: pop-in 400ms ease-out;
+  }
+
+  /* White over grey would vanish under multiply: it lightens instead. */
+  .paint-layer.is-light {
+    mix-blend-mode: screen;
+    opacity: 0.85;
+  }
+
+  .paint-pot {
+    width: min(24vw, 18dvh, 7.5rem);
+    height: min(24vw, 18dvh, 7.5rem);
+    min-width: var(--spacing-tap);
+    min-height: var(--spacing-tap);
+    transition: transform 150ms ease-out;
+  }
+
+  .paint-pot.is-selected {
+    transform: scale(1.1) translateY(-6%);
+    box-shadow: 0 0 0 5px var(--color-gold);
+  }
+
+  .paint-pot.is-wiggling {
+    animation: wiggle 450ms ease-in-out;
+  }
+
+  .paint-pot.is-glowing {
+    box-shadow: 0 0 0 6px var(--color-coral);
+    animation: glow 1.2s ease-in-out infinite;
+  }
+
+  /* E9 Kosze: the picture on show above two baskets. */
+  .sort-item {
+    width: min(40vw, 28dvh, 12rem);
+    height: min(40vw, 28dvh, 12rem);
+  }
+
+  .sort-item.is-dropping.to-left {
+    animation: drop-left 550ms ease-in forwards;
+  }
+
+  .sort-item.is-dropping.to-right {
+    animation: drop-right 550ms ease-in forwards;
+  }
+
+  .sort-basket {
+    width: min(40vw, 28dvh, 12rem);
+    height: min(40vw, 28dvh, 12rem);
+  }
+
+  .sort-basket-icon {
+    display: block;
+    width: 45%;
+    height: 45%;
+    margin: 0 auto;
+  }
+
+  .sort-basket.is-wiggling {
+    animation: wiggle 450ms ease-in-out;
+  }
+
+  .sort-basket.is-glowing {
+    box-shadow: 0 0 0 6px var(--color-coral);
+    animation: glow 1.2s ease-in-out infinite;
+  }
+
+  @keyframes drop-left {
+    100% {
+      transform: translate(-45%, 110%) scale(0.3);
+      opacity: 0;
+    }
+  }
+
+  @keyframes drop-right {
+    100% {
+      transform: translate(45%, 110%) scale(0.3);
+      opacity: 0;
+    }
+  }
+
+  /*
+   * A scene: stories and *Gdzie jest…?* (STATE.md decision 85). One SVG of 100 × 75 user
+   * units, so a transform's `px` here is a user unit: the travel below is small on purpose.
+   */
+  .scene {
+    display: block;
+    width: min(100%, calc((100dvh - 13rem) * 4 / 3), 52rem);
+    height: auto;
+    border-radius: var(--radius-card);
+    box-shadow: 0 10px 25px -8px rgb(13 71 161 / 0.55);
+  }
+
+  .scene-idle,
+  .scene-item {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .scene-item {
+    cursor: pointer;
+    outline: none;
+  }
+
+  .scene-idle.anim-bob {
+    animation: scene-bob 2.4s ease-in-out infinite;
+  }
+
+  .scene-idle.anim-hop {
+    animation: scene-hop 1.6s ease-in-out infinite;
+  }
+
+  .scene-idle.anim-spin {
+    animation: scene-spin 3s ease-in-out infinite;
+  }
+
+  .scene-hit {
+    fill: transparent;
+    stroke: transparent;
+    stroke-width: 1.2;
+  }
+
+  .scene-item:focus-visible .scene-hit {
+    stroke: var(--color-deep-sea);
+  }
+
+  .scene-item:active {
+    transform: scale(0.94);
+  }
+
+  /* The word being spoken: its picture bounces, with a gold ring. */
+  .scene-item.is-bouncing {
+    animation: scene-bounce 520ms ease-in-out infinite;
+  }
+
+  .scene-item.is-bouncing .scene-hit,
+  .scene-item.is-found .scene-hit {
+    fill: rgb(255 201 60 / 0.25);
+    stroke: var(--color-gold);
+  }
+
+  .scene-item.is-wiggling {
+    animation: wiggle 450ms ease-in-out;
+  }
+
+  .scene-item.is-glowing .scene-hit {
+    fill: rgb(255 122 89 / 0.15);
+    stroke: var(--color-coral);
+    animation: scene-glow 1.2s ease-in-out infinite;
+  }
+
+  .scene-item.is-found {
+    animation: hop 600ms ease-out;
+  }
+
+  /* The sentence under a story's scene, for the parent reading along; the word being spoken is marked. */
+  .story-text {
+    font-size: clamp(1.25rem, 4.5vw, 2rem);
+    font-weight: 800;
+    color: var(--color-deep-sea);
+  }
+
+  .story-word {
+    border-radius: 0.5rem;
+    padding: 0 0.15em;
+    transition: background-color 120ms ease-out;
+  }
+
+  .story-word.is-spoken {
+    background: var(--color-gold);
+  }
+
+  .story-page {
+    animation: pop-in 400ms ease-out;
+  }
+
+  /* Something new waits: a story never heard, on the shelf and on the map's 📖. */
+  .is-new-story {
+    box-shadow: 0 0 0 5px var(--color-gold);
+    animation: glow-gold 1.6s ease-in-out infinite;
+  }
+
+  @keyframes scene-bob {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-1.5px);
+    }
+  }
+
+  @keyframes scene-hop {
+    0%,
+    70%,
+    100% {
+      transform: translateY(0);
+    }
+    35% {
+      transform: translateY(-3px);
+    }
+  }
+
+  @keyframes scene-spin {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    50% {
+      transform: rotate(12deg);
+    }
+  }
+
+  @keyframes scene-bounce {
+    0%,
+    100% {
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      transform: translateY(-2.5px) scale(1.12);
+    }
+  }
+
+  @keyframes scene-glow {
+    0%,
+    100% {
+      stroke-width: 1;
+    }
+    50% {
+      stroke-width: 2.4;
+    }
+  }
+
+  @keyframes glow-gold {
+    0%,
+    100% {
+      box-shadow: 0 0 0 4px var(--color-gold);
+    }
+    50% {
+      box-shadow: 0 0 0 10px var(--color-gold);
+    }
+  }
+
   @keyframes hold-fill {
     0% {
       opacity: 0.3;
@@ -779,6 +1483,152 @@
     }
   }
 
+  @keyframes meter-grow {
+    0% {
+      transform: scaleX(0);
+    }
+    100% {
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes rattle {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    20% {
+      transform: rotate(-5deg) translateX(-3%);
+    }
+    40% {
+      transform: rotate(5deg) translateX(3%);
+    }
+    60% {
+      transform: rotate(-3deg);
+    }
+    80% {
+      transform: rotate(3deg);
+    }
+  }
+
+  @keyframes lid-open {
+    0% {
+      transform: none;
+    }
+    100% {
+      transform: translateY(-62%) scaleY(0.55) rotate(-4deg);
+    }
+  }
+
+  @keyframes lock-pop {
+    0% {
+      transform: none;
+      opacity: 1;
+    }
+    40% {
+      transform: translateY(-40%) rotate(-20deg) scale(1.15);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-60%, 140%) rotate(-60deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes chest-glow {
+    0%,
+    100% {
+      transform: scale(0.94);
+    }
+    50% {
+      transform: scale(1.06);
+    }
+  }
+
+  @keyframes sticker-fly {
+    0% {
+      transform: translateY(120%) scale(0.2) rotate(-20deg);
+      opacity: 0;
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 150% 0;
+    }
+    100% {
+      background-position: -100% 0;
+    }
+  }
+
+  /*
+   * The lock (STATE.md decision 94): the sea at night, a moon, Polly asleep with her head down
+   * and a slow breath, and the zzz drifting up from her.
+   */
+  .sea.is-night {
+    background-color: var(--color-deep-sea);
+    background-image:
+      url('./assets/waves.svg'),
+      linear-gradient(180deg, #0b1f4d 0%, #0d2f6b 45%, #071a3d 100%);
+  }
+
+  .sleep-polly {
+    display: grid;
+    place-items: center;
+    min-width: var(--spacing-tap);
+    min-height: var(--spacing-tap);
+    border-radius: 9999px;
+  }
+
+  .sleep-polly-body {
+    transform: rotate(-12deg);
+    filter: saturate(0.75) brightness(0.9);
+    animation: sleep-breath 4s ease-in-out infinite;
+  }
+
+  .sleep-polly-body.is-nudged {
+    animation:
+      wiggle 500ms ease-in-out,
+      sleep-breath 4s ease-in-out 500ms infinite;
+  }
+
+  .sleep-zzz {
+    position: absolute;
+    top: -8%;
+    right: -18%;
+    width: 38%;
+    height: 38%;
+    animation: sleep-zzz 3s ease-in-out infinite;
+  }
+
+  @keyframes sleep-breath {
+    0%,
+    100% {
+      transform: rotate(-12deg) scale(1);
+    }
+    50% {
+      transform: rotate(-12deg) scale(1.04);
+    }
+  }
+
+  @keyframes sleep-zzz {
+    0% {
+      transform: translate(0, 10%);
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate(10%, -15%);
+      opacity: 0.4;
+    }
+  }
+
   /* Keep the meaning (glow, scale), drop the travel. */
   @media (prefers-reduced-motion: reduce) {
     .speaking-picture.is-speaking {
@@ -806,14 +1656,76 @@
     .finish-polly,
     .finish-island,
     .island-wrap.is-nudged,
-    .gate-number.is-missed {
+    .gate-number.is-missed,
+    .meter-fill,
+    .map-chest-bob,
+    .chest-body.is-rattling,
+    .chest-lid.is-open,
+    .chest-lock.is-popped,
+    .chest-glow.is-on,
+    .chest-sticker,
+    .sticker.is-rare::after,
+    .sticker-empty.is-nudged,
+    .bubble.is-wiggling,
+    .bubble.is-popped,
+    .feed-item.is-wiggling,
+    .feed-item.is-glowing,
+    .feed-polly-picture.is-chomping,
+    .simon-polly,
+    .simon-part,
+    .paint-layer,
+    .paint-pot.is-wiggling,
+    .paint-pot.is-glowing,
+    .sort-basket.is-wiggling,
+    .sort-basket.is-glowing,
+    .scene-idle,
+    .scene-item.is-bouncing,
+    .scene-item.is-wiggling,
+    .scene-item.is-found,
+    .scene-item.is-glowing .scene-hit,
+    .story-page,
+    .is-new-story,
+    .sleep-polly-body,
+    .sleep-polly-body.is-nudged,
+    .sleep-zzz {
       animation: none;
+    }
+
+    /* The chest still says where to tap, and the album which stickers are new: rings that are
+       simply there. The open lid, the gone lock and the glow are end states, kept. */
+    .chest-target.is-cued::after,
+    .album-slot:has(.is-new)::before {
+      animation: none;
+      opacity: 0.8;
     }
 
     .lesson-picture.is-cued::after,
     .next-button::after {
       animation: none;
       opacity: 0.8;
+    }
+
+    /* Bubbles stay where they are, in a row; Polly's ✋ keeps its gold ring, still. */
+    .bubble-lane {
+      animation: none;
+      top: 30%;
+    }
+
+    .bubble-lane.lane-1,
+    .bubble-lane.lane-3 {
+      top: 55%;
+    }
+
+    .simon-part {
+      box-shadow: 0 0 0 6px var(--color-gold);
+    }
+
+    .bubble.is-popped,
+    .feed-item.is-eaten,
+    .sort-item.is-dropping.to-left,
+    .sort-item.is-dropping.to-right {
+      animation: none;
+      visibility: hidden;
     }
 
     /* The glow stays, still; a matched pair simply disappears. */
@@ -834,4 +1746,49 @@
       transform: none;
     }
   }
+}
+
+/*
+ * The Google Picker (Phase 8, STATE.md decision 81). Its loader injects these rules as an inline
+ * <style> element, which `style-src 'self'` blocks (one report from apis.google.com, expected).
+ * They are copied here verbatim from the loader, so the dialog is laid out the same without
+ * widening the policy. Its position and size come from CSSOM writes, which the CSP allows.
+ */
+.picker-dialog-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  overflow: hidden;
+}
+
+.picker-dialog-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #fff;
+  z-index: 1000;
+}
+
+.picker-dialog {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #fff;
+  border: 1px solid #acacac;
+  width: auto;
+  padding: 0;
+  z-index: 1001;
+  overflow: auto;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.picker-dialog-content {
+  height: 100%;
+  font-size: 0;
+  padding: 0;
+}
+
+.picker-dialog-buttons,
+.picker-dialog-title {
+  display: none;
 }

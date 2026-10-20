@@ -23,9 +23,19 @@
 		#     /cdn-cgi/rum on this same origin, so connect-src needs nothing for it.
 		#   img-src https://cdn.jsdelivr.net (Phase 2, STATE.md decision 13): the content
 		#     pictures, served from this public repository at the release tag.
-		# Every later widening (Google in Phases 7 and 8) is recorded in STATE.md and verified
-		# under `npm run docker:up`.
-		Content-Security-Policy "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; img-src 'self' https://cdn.jsdelivr.net; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; frame-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'"
+		#   https://accounts.google.com in script-src and frame-src, https://www.googleapis.com
+		#     in connect-src (Phase 7, STATE.md decision 73): Google Identity Services, loaded
+		#     only when a parent connects Drive, and the Drive API (uploads included).
+		#   https://apis.google.com in script-src, https://docs.google.com in frame-src
+		#     (Phase 8, STATE.md decision 81): the Google Picker's loader and its frame, loaded
+		#     only when an invited parent joins. Measured against the real Picker: nothing else
+		#     is needed. Its loader also injects an inline <style>, which style-src blocks on
+		#     purpose; the same rules live in app.css.
+		# Every widening is recorded in STATE.md and verified under `npm run docker:up`.
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com https://accounts.google.com https://apis.google.com; style-src 'self'; img-src 'self' https://cdn.jsdelivr.net; font-src 'self'; connect-src 'self' https://www.googleapis.com; worker-src 'self'; manifest-src 'self'; frame-src https://accounts.google.com https://docs.google.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'"
+		# GIS hands the token back through the sign-in popup's opener, which `same-origin`
+		# would sever (STATE.md decision 73).
+		Cross-Origin-Opener-Policy "same-origin-allow-popups"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "no-referrer"
 		# Nothing records the child: the microphone and the camera are denied outright.

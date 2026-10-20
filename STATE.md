@@ -12,11 +12,11 @@ Any deviation from [PLAN.md](PLAN.md) must be recorded here before proceeding.
 | 3     | Speech                                              | done        | 2026-10-19 |
 | 4     | Children, word plan, parent gate, look-and-listen   | done        | 2026-10-19 |
 | 5     | Lessons & first exercises                           | done        | 2026-10-19 |
-| 6     | Rewards                                             | pending     |           |
-| 7     | Drive sync (one account, many devices)              | pending     |           |
-| 8     | Inviting the second parent                          | pending     |           |
-| 9     | Stories & more games                                | pending     |           |
-| 10    | Screen time & the progress dashboard                | pending     |           |
+| 6     | Rewards                                             | done        | 2026-10-19 |
+| 7     | Drive sync (one account, many devices)              | done        | 2026-10-19 |
+| 8     | Inviting the second parent                          | done        | 2026-10-20 |
+| 9     | Stories & more games                                | done        | 2026-10-20 |
+| 10    | Screen time & the progress dashboard                | done        | 2026-10-20 |
 | 11    | Full A1 content, PWA polish, v1.0.0                 | pending     |           |
 
 Statuses: `pending` → `in-progress` → `done` (or `blocked` with a note).
@@ -32,14 +32,14 @@ Statuses: `pending` → `in-progress` → `done` (or `blocked` with a note).
       (injecting an inline script and an inline style) produced `script-src-elem` and
       `style-src-attr` violations, so the listener does catch them. `/assets/*` answers
       `immutable`, the document `no-cache`.
-- [ ] **CI green on `dev`. A `v0.1.0` tag deploys and `https://<domain>` serves the shell.**
+- [x] **CI green on `dev`. A `v0.1.0` tag deploys and `https://<domain>` serves the shell.**
       CI: **green** on `dev` (run 39159075235 on `dc65ced`: check, unit, build, and e2e
-      34/34 in Chromium + WebKit). Half met: the `v0.1.0`
-      deploy is **open**: releasing is a separate act (`/release`), and it needs the owner
-      prerequisites first: the `SSH_*` secrets and `DEPLOY_CHECK_TOKEN`, DNS for
-      `hellopolly.gorny.dev`, the nginx site and certificate, and the Cloudflare rules
-      (docs/DEPLOYMENT.md). Closed by: owner sets those up → `/release` → v0.1.0 → the
-      workflow's health check returns 200.
+      34/34 in Chromium + WebKit). Deploy: **met 2026-10-19** once the owner prerequisites
+      were in place (decision 51). `v0.1.0` (tagged on `f0789ec`, released from `fb32444`
+      whose CI run 39290289871 was green) ran `deploy.yml` 39303275715 green, including the
+      health check through Cloudflare. https://hellopolly.gorny.dev serves the shell with the
+      Caddyfile CSP; `/`, `/sw.js` and `/manifest.webmanifest` are `no-cache` and
+      `cf-cache-status: DYNAMIC`, `/assets/*` is `immutable` and `HIT`.
 - [ ] **Works from a clean checkout on Windows and Linux.** Linux: verified (fresh clone →
       `npm ci` → check → test → build → e2e 34/34 in both engines). Windows: **open**; this
       environment has no Windows machine. Nothing in the build path is platform-specific (no
@@ -72,7 +72,7 @@ unset (docs/DEVELOPMENT.md). Not a repository problem.
       word.** `scripts/content-rules.test.ts` runs both CLIs exactly as the npm script does
       against temporary fixture checkouts (plus a stray file and a stale attribution), and
       the pure rules against fixtures (also the prompt catalog, duplicates, ids vs file names).
-- [ ] **Images load from jsDelivr in a production build (verified after the next tag) and
+- [x] **Images load from jsDelivr in a production build (verified after the next tag) and
       from the origin in dev.** Origin: **verified**. `e2e/images.spec.ts` loads every
       picture the content uses from the origin in Chromium and WebKit under `vite preview`
       and under Caddy with the production CSP (`test:e2e:csp` 38 passed, 2 opt-in skipped,
@@ -83,6 +83,11 @@ unset (docs/DEVELOPMENT.md). Not a repository problem.
       `vX.Y.Z` → on the live site, the first screen with a picture requests
       `cdn.jsdelivr.net/gh/zyndata/hello-polly@vX.Y.Z/content/img/…` with no CSP report.
       The CSP half was checked before that (see the CI note below).
+      **Met 2026-10-19 with `v0.1.0`:** the live bundle builds its picture URLs with ref
+      `v0.1.0`, and on https://hellopolly.gorny.dev all 64 pictures in `content/img/` load
+      from `cdn.jsdelivr.net/gh/zyndata/hello-polly@v0.1.0/content/img/` in Chromium and
+      WebKit with no `img-src` violation. (The one violation on the page is Cloudflare's own
+      injected script, decision 53, not a picture.)
 
 Tests: 111 unit tests (11 files), e2e 38 + 2 opt-in in Chromium and WebKit. Content: 4 topics,
 45 words, 17 prompts, 48 pictures, 470.8 kB, the largest 24.7 kB (cow).
@@ -268,6 +273,298 @@ Content: 64 pictures, 684.3 kB, the largest 24.7 kB; 23 prompts.
 CI: **green** on `dev` (run 39289396805 on `d3896e3`: check, unit 240, `check:content`,
 build, e2e 98 passed + 2 opt-in skipped in Chromium + WebKit).
 
+### Phase 6 acceptance (2026-10-19)
+
+- [x] **Unopened chests survive reloads and are identical after merging two devices'
+      progress.** Unit (`stickers.test.ts`): over 300 generated pairs of family files,
+      `chestState` and the album are the same for `merge(a, b)` and `merge(b, a)`, and merging
+      again changes nothing; a phone opening a chest and a tablet earning stars converge to
+      the same `{ unopened: 1, meter: 2 }` and the same album in both merge orders;
+      `recordChest` is idempotent per event id and bumps `seq` once. e2e (`rewards.spec.ts`,
+      Chromium + WebKit): 34 stars and one chest opened on "another device" → the map shows
+      one chest waiting and 4 on the meter; still there after a reload; opened in three taps
+      → recorded on this device under one event id with exactly the stickers shown; back on
+      the map no chest waits, the meter keeps its 4, and the chest's address leads to the
+      map. Leaving after two taps (long-press home) records nothing and the chest still waits.
+- [x] **The draw is deterministic given its seed (unit) and never repeats within an
+      incomplete set.** Unit: the same seed gives the same stickers (50 seeds, and through
+      `drawForChild` on a real family file); 1–3 stickers, never one twice in a chest; over
+      400 random albums and word states nothing owned is ever drawn while anything is left to
+      collect (so nothing repeats in an incomplete set); a full album repeats across chests,
+      never within one. Also: learned > met > preview over 2000 draws, nothing neither met
+      nor next while those last, only the first 5 upcoming words count as a preview, and a
+      rare sticker has half the weight (drawn first 25–42 % of the time against an ordinary
+      one, not 50 %). e2e: a sticker owned from the other device's chest is not drawn.
+- [x] **The chest animation respects `prefers-reduced-motion`.** e2e, both engines, twice:
+      with `reducedMotion: 'no-preference'` the map chest bobs and the rattle, lock pop, lid
+      swing, glow pulse and sticker fly-out each run their animation (the control); with
+      `'reduce'` every one of them computes `animation-name: none`, while the meaning stays:
+      the lid is open (a transform), the lock is gone (opacity 0), the glow is on (opacity 1)
+      and the stickers are there (opacity 1). The shimmer of rare stickers, the meter's
+      growth, an empty slot's wiggle and the album's „new” ring follow the same rule
+      (`app.css`).
+
+Also: the album is open from the first day (four topic tabs, 11 empty colour slots,
+„Zbieraj gwiazdki…”, an empty slot wiggles and says „Tej naklejki jeszcze nie masz.”, a tab
+switches the page); after a chest the album opens on the first page in map order with a new
+sticker, rings the new ones, and a tap on a sticker says its word. `e2e/no-reading.spec.ts`
+walks the empty album, the map with a chest, the shut and the open chest, and the album with
+new stickers: no visible text, every button a picture. The README gains the chest and album
+screenshots (`npm run screenshots` now walks a chest).
+
+Seen in the screenshots, not fixed: on the colours page every empty slot shows the same flag
+silhouette, since the 11 colour pictures share one shape (decision 55). An empty colour slot
+therefore does not hint which colour it holds; the other pages do.
+
+Sticker art (task 5, decision 56): Color SVG, the word's own picture; **0 kB added** to the
+content. The only new picture is the 📒 button (`ledger`). Content: 65 pictures, 668.5 kB,
+the largest 24.7 kB; 30 prompts; 45 stickers, 4 rare.
+
+Tests: 258 unit tests (28 files); e2e 106 passed + 2 opt-in skipped in Chromium and WebKit,
+both under `vite preview` and with `test:e2e:csp` against the container (zero CSP violations;
+the CSP is unchanged in this phase). `rewards.spec.ts` also ran 3 × 3 repeats in both engines
+(90 runs) with no failure. Bundle: 255.6 kB JS (86.1 kB gzip), 34.7 kB CSS.
+
+CI: **green** on `dev` (run 39311290913 on `5a34b58`: check, unit 258, `check:content`,
+build, e2e 106 passed + 2 opt-in skipped in Chromium + WebKit).
+
+### Phase 7 acceptance (2026-10-19)
+
+- [x] **Two devices playing at the same time with the same child converge to identical
+      derived state, and nothing is lost (fake-drive e2e, including an interleaved upload
+      race).** e2e (`sync.spec.ts`, two browser contexts over one fake Drive): a phone connects
+      from *Rodzina*, a tablet joins from the first run („Mam już rodzinę na Dysku Google”, the
+      same child, no duplicate); both meet a word at once; after the debounce and a focus both
+      IndexedDB copies and the file are byte-identical (canonical JSON) and each holds both
+      devices' words. The race: the phone's upload is parked after its write guard passed, the
+      tablet's whole cycle lands, the phone's stale upload then drops the tablet's subtree *from
+      the file*; on the tablet's next cycle it is back, and all three copies are identical.
+      Unit (`engine.test.ts` over `src/test/fake-drive.ts`): the same two races (caught by the
+      guard and re-merged; past the guard and re-added), and **40 seeded runs of 30 random
+      steps on three devices** (stars, chests, settings, syncs, each sync possibly interleaved
+      with another device's cycle before or past the guard): every run ends with three
+      identical files equal to Drive's, every device's stars and every chest present.
+- [x] **An expired token never shows anything on a child screen.** e2e: the token is revoked
+      while the child plays; the map stays, no dialog, no alert, no text, no Google window
+      (GIS prompts unchanged); later play makes **no** Google request at all; the only change is
+      the gear's empty coral dot (decision 67). Passing the parent gate renews silently and the
+      waiting word lands on Drive. Also: a token that ran out is not renewed on reload (no GIS
+      load, no request), and a device that never connected makes no Google request through a
+      whole session, the gate included.
+- [x] **Zero CSP violations through the OAuth flow under `npm run docker:up`.** The whole suite
+      against the container built with a client id (decision 72): 62 passed, 1 opt-in skipped,
+      zero violations, the sync specs included (the GIS stub is served from
+      `https://accounts.google.com/gsi/client`, so the shipped policy is what allowed it).
+      What this cannot show is real Google's own frames and popup: that is the live check.
+- [ ] **Live check against real Google, recorded in DEPLOYMENT.md as a checklist.** The
+      checklist is written (docs/DEPLOYMENT.md "Live check against real Google"); **not run**:
+      the owner's Google Cloud project and OAuth client do not exist yet (the owner's answer
+      this phase). Open until the owner creates them, sets `VITE_GOOGLE_CLIENT_ID` (`.env.local`
+      and the repository variable) and walks the checklist; the result goes here.
+
+Also: `drive.test.ts` covers the REST client (find by name oldest-first, multipart create,
+guarded media update, 404/trashed/`appNotAuthorizedToFile` → gone, 401 → re-auth, quota 403
+is not an auth failure, two retries on 429/5xx, `about.get`); the engine never overwrites a
+newer-schema file or a non-family file, re-creates a file that is gone, settles two fresh
+devices that both created the file on the older one (the younger trashed), and compacts and
+prunes only its own subtrees. Speech settings now go through `change()` like every other
+write, so they trigger a sync too.
+
+Tests: 282 unit tests (30 files); e2e in Chromium 62 passed + 1 opt-in skipped, under
+`vite preview` and under `test:e2e:csp`; `sync.spec.ts` also ran 3 × in Chromium with no
+failure. **WebKit was not run locally**: this machine's Playwright WebKit cannot load any
+page at all (`WebKit encountered an internal error`, even for `https://example.com` and the
+untouched `routes.spec.ts`), an environment fault since Phase 6; CI runs WebKit. Bundle:
+275.4 kB JS (92.1 kB gzip, +6 kB), 35.0 kB CSS.
+
+CI: **green** on `dev` (run 39317063495 on `d2e9200`: check, unit 282, `check:content`,
+build, e2e 124 passed + 2 opt-in skipped in Chromium + WebKit, no flaky test). So the sync
+specs did pass in WebKit, in CI.
+
+### Phase 8 acceptance (2026-10-20)
+
+- [x] **Parent B, on a different Google account, joins from the link in ≤ 3 taps after sign-in
+      and sees A's children and settings.** e2e (`sharing.spec.ts`, two contexts on two accounts
+      over one fake Drive): A sets the American accent, connects, invites B from *Rodzina*; the
+      fake Drive records the invitation, whose note carries `<origin>/#/join/<fileId>`. B opens
+      that link → „Połącz z Google” → in the Picker frame the file and „Wybierz”: **2 taps**
+      after the sign-in. „Gotowe!” lists Ola; B's IndexedDB equals the file on Drive; B's
+      *Mowa i głosy* has the American accent; *Rodzina* names B's account and marks B „to ty”,
+      with no „Usuń”. The Picker was built for that one file id, with the build's key and app
+      id, for this origin. A phone with a child of its own needs a third tap, „Dołącz”, and A
+      then has both children. Unit (`engine.test.ts`): before picking, the shared file is out
+      of reach for B (drive.file); after, B's copy has A's children, settings and `familyId`.
+- [x] **Progress made on B's phone appears on A's phone after a focus or 3 minutes.** e2e: B's
+      child meets a word; B's debounce uploads it; A's focus brings B's device subtree into
+      A's IndexedDB, and after B's focus both copies are identical. The 3-minute timer is the
+      Phase 7 trigger, unchanged. Unit: B's stars reach A on A's next cycle, derived state equal.
+- [x] **Removing B stops B's sync with a clear message; A's data is untouched.** e2e: A's „Usuń”
+      → „Na pewno usunąć?” takes B off the file (Drive's permissions: A alone). B's child plays
+      on: the map stays, no alert, only the gear's dot; B's *Rodzina* says „Dostęp cofnięty” and
+      „Dostęp do wspólnej rodziny został cofnięty…”. The file is byte-identical to before the
+      removal, nothing was re-created, A's own copy is unchanged after a focus, and B keeps
+      Ola and her progress. After a reload and the gate, B's device asks Drive nothing at all.
+      Unit: the revoked error for a removed member and for a file its owner trashed (PLAN.md's
+      edge case); a mutation that dropped the rule turned both red, and one that kept the
+      status at `error` turned the e2e red.
+- [x] **B signed in with the wrong account gets a message naming that account.** e2e: signed in
+      as `obcy@example.com`, the Picker lists nothing; closed, the screen says „Plik rodziny nie
+      został wybrany. Zalogowano jako obcy@example.com…”, nothing changed (one file on Drive,
+      no family on the phone); „Zmień konto” (the account chooser) → B's account → the file →
+      „Gotowe!”. A closed Picker on the right account changes nothing either, and „Spróbuj
+      jeszcze raz” opens it again.
+
+Open, with what closes it:
+
+- **The spike (task 5, open question 4): not run** (decision 75). It needs the web manifest
+  (Phase 11) and the two phones; the procedure is in docs/DEPLOYMENT.md ("Spike: the Picker in
+  an installed PWA"). The fallback it would choose is built already.
+- **Live check against real Google, second parent: not run.** Checklist in docs/DEPLOYMENT.md
+  ("Live check against real Google (the second parent)"). It needs two Google accounts, both
+  test users while the consent screen is in *Testing*. The Cloud project and the three
+  `VITE_GOOGLE_*` repository variables now exist (the owner set them since Phase 7), so this
+  and the Phase 7 live check can both run: locally under `docker:up` now, live after the next
+  `/release`. What it must show: the one expected `style-src-elem` report (decision 81), the
+  key accepted with `Referrer-Policy: no-referrer`, and the real invitation e-mail.
+
+Also: *Rodzina* before connecting explains that the family must be on Drive first and offers no
+invitation; the invite link is shown with „Kopiuj link”; the first run's „Mam zaproszenie” takes
+a pasted link (or bare id) to the join screen (`invite.test.ts`); no screen loads the Picker
+until a parent signs in on the join screen. Unit (`drive.test.ts`): the search prefers a shared
+file, the invitation's query and body, the member list (owner first, users only), removal,
+the picker gets the token in hand, „Zmień konto” asks for `select_account`.
+
+Tests: 300 unit tests (31 files); e2e in Chromium 70 passed + 1 opt-in skipped, in WebKit 69
+passed + 2 skipped (the opt-in and the real-speech check, no speech engine in Windows WebKit),
+both under `vite preview`; and `test:e2e:csp` against the container in both engines: 139
+passed, 3 skipped, zero violations. WebKit runs on this machine again (it could not load any
+page in Phases 6–7). Under 8 parallel workers two older specs on real timing (the real-speech
+start screen, a full lesson) missed their 5 s waits once each; both pass alone and the whole
+suite passes with 4 workers. Not from this phase: they touch nothing it changed.
+
+CI: **green** on `dev` (run 39426928459 on `de9c7bd`: check, unit 300, `check:content`, build,
+e2e 140 passed + 2 opt-in skipped in Chromium + WebKit, no flaky test).
+
+### Phase 9 acceptance (2026-10-20)
+
+- [ ] **Each story plays in 25–40 s at normal speed on a real phone (measured, recorded).**
+      **Open**: it needs a phone and its voices; this environment has neither. What is checked
+      here: the page hold is set so that every story's *estimated* time (decision 28's
+      75 ms per character ÷ rate, plus intro, holds and turns) lies in 25–40 s at the normal
+      rate, unit-tested (`stories.test.ts`): picnic 32.1 s, flags 31.9 s, counts 29.5 s,
+      animals 30.8 s, body 30.0 s (at 🐢 0.6: 33.8–37.7 s). Closed by: on the child's phone
+      (a `docker:up` build on the LAN, or the live site after the next `/release`), the owner
+      plays each of the five stories at 🐇 from the first tap on its tile to the shelf
+      coming back, with a stopwatch, and records the times and the voice here. If a story
+      falls outside, the fix is `PAGE_HOLD_MS` (one constant) or the story's text.
+- [x] **No story uses a word outside the vocabulary plus the allow-list (validator in CI).**
+      `check:content` (in CI since Phase 2) runs on the five stories: every token is a word's
+      or a topic's English name or one of the function words. It now also checks the PLAN.md
+      shape (5–8 pages, 3–7 words per sentence), that every scene item fits the scene at a
+      tappable size, and that every pictured word is named in its sentence (decision 84);
+      `content-rules.test.ts` breaks each rule once.
+- [x] **Each game is completable in both engines (e2e) and only shows learned words.**
+      `e2e/play.spec.ts` plays every new game to its finish screen and back to the shelf,
+      asserting at every round that each word on screen is one the child learned: *Bańki*
+      (also with reduced motion: the bubbles stand still), *Nakarm Polly* (a drag beside
+      Polly changes nothing, a wrong food dragged onto her is a miss, the right one dragged
+      or tapped is eaten), *Gdzie jest…?* (the same scene for all five questions), *Polly
+      mówi* (learned body parts only, no attempt recorded), *Pokoloruj* (no pot: „Najpierw
+      dotknij farbki!”; a wrong pot never paints; the second miss glows) and *Kosze* (absent
+      until the parent ticks it in the word plan, then six pictures into two baskets). Each
+      checks its stars and the attempts it should or should not record. Unit
+      (`games-play.test.ts`, `games.test.ts`): 60 seeds per game for learned-only boards,
+      distinct targets, pictures that neither look nor sound alike, the scene's layout
+      inside and apart, *orange* never painted *orange*, and the opening rules. **Chromium
+      passed here; WebKit could not run on this machine** (the `WebKit encountered an
+      internal error` fault of Phases 6–7 is back: even the untouched `routes.spec.ts` cannot
+      load a page). CI ran them in WebKit, green (below).
+
+Also: stories (`e2e/stories.spec.ts`): all locked with nothing learned, and a locked story's
+address leads back to the shelf; 3 of 5 words keep the picnic locked, 4 open it; the map's 📖
+and the tile glow while it is new; the story plays its intro and all six pages in order to
+„Koniec bajki! Brawo!”, is recorded once on this device (`storiesHeard`) with no stars, and is
+then no longer new. With slow speech: the spoken word is marked in the sentence and the apple
+bounces (only it) while "apple" is spoken; 🔊 and a tap on a picture both read the page again;
+leaving by the long press records nothing. After a chest, Polly says „Polly ma dla ciebie nową
+bajkę!”. `e2e/no-reading.spec.ts` now walks the story shelf (locked and open), the map with a
+new story, a story page, all six new games and a painted picture: no visible text but the
+story's sentence, which is the parent's. README: status, the new games and stories, and three
+new screenshots (a story page, *Pokoloruj*, *Gdzie jest…?*).
+
+Tests: 324 unit tests (33 files); e2e in Chromium 81 passed + 1 opt-in skipped under `vite
+preview`, and `test:e2e:csp` against the container (built with the e2e's never-sent Google
+ids, so the sync specs ran too): 81 passed, 1 skipped, zero CSP violations; the CSP is
+unchanged. Bundle: 333.4 kB JS (108.3 kB gzip, +16 kB), 42.7 kB CSS. Content: 79 pictures,
+806.6 kB, the largest 25.0 kB (`basket`); 53 words, 41 prompts, 5 stories, 53 stickers (5 rare).
+
+CI: **green** on `dev` (run 39459512304 on `c0f6fc2`: check, unit 324, `check:content`,
+build, e2e 162 passed + 2 opt-in skipped in Chromium + WebKit, no flaky test). So every new
+game and the stories passed in WebKit too, in CI.
+
+### Phase 10 acceptance (2026-10-20)
+
+- [x] **With a 1-minute session limit, the lock appears after the current exercise, never
+      mid-step.** e2e (`screentime.spec.ts`, the page's clock driven by Playwright's
+      `page.clock`): the minute runs out while a look-and-listen picture waits for its tap; the
+      step stays and works, the ▶ appears, and only its tap brings the lock (night sea, Polly
+      asleep, „Koniec na dziś! Polly idzie spać.”). The lesson stops there: 1 star for the step
+      done, no island flag, the word met, 1 minute on this device's record. The minute runs out
+      during a pick: two misses keep the same pick (with the glow), the right tap brings the lock
+      and records `{ c: 1, w: 2, first: 0 }`. A game (*Posłuchaj i dotknij*) whose minute runs
+      out in round 2 plays all five rounds to its finish screen and 6 stars; the shelf it returns
+      to is the lock. Every child address (map, lesson, shelf, stories, album) then shows the
+      lock, and a lesson opened by its address never starts. A mutation that drops the lesson's
+      hold turns both lesson tests red. Also e2e: the gate lifts the lock (fresh session; the
+      1-minute limit applies again), the next day lifts it by itself, the map has no home button
+      when locked, no limits means no lock through 12 minutes of play (past the default 10-minute session). Unit
+      (`screentime.test.ts`): whole minutes written and the rest kept, no counting across a
+      suspended gap or while asleep, a new day and a 30-minute break, sticky sleep, the gate's
+      waiver only for the daily limit.
+- [x] **Two devices' minutes add up after sync (fake-drive).** e2e (`dashboard.spec.ts`, two
+      browser contexts over the e2e fake Drive): the phone plays 2 minutes, the tablet 1, each
+      on its own clock; after focus both IndexedDB copies and the file on Drive are identical,
+      each device's subtree holds its own minutes, and both dashboards say „Dziś: 3 min” with 3
+      in today's calendar cell. Unit (`engine.test.ts` over `src/test/fake-drive.ts`): 7 + 6
+      minutes on one day and 2 on another from two devices merge to 13 and 2 on both, and the
+      daily limit of 15 is reached exactly when this device's unwritten 2 minutes are added.
+      e2e (`screentime.spec.ts`): 15 minutes from another device lock the child at once on this
+      one; the gate waives the daily limit for the rest of the day.
+- [x] **Export → import into a fresh profile reproduces derived state exactly.** e2e
+      (`backup.spec.ts`): a child with a played lesson, learned words, an opened chest, stars and
+      minutes is exported from the panel (`hello-polly-rodzina-<day>.json`, no device id, token,
+      Drive id or voices in it); a fresh browser context imports it from the first run („Mam
+      kopię zapasową”): its IndexedDB file equals the original (canonical JSON), and the whole
+      dashboard, the word plan, the map's islands, star meter and waiting chests read the same on
+      both. Into a device with a child of its own the import merges (both children, the device's
+      `familyId` kept, the backup's progress intact); a non-backup and a newer-schema file are
+      refused with a Polish message and change nothing. Unit (`backup.test.ts`): 200 generated
+      family files export → import into an empty profile to the identical file and identical
+      derived state (stars, chests, album, lessons, word states, every dashboard figure); 100
+      imports into a device with children lose nothing and are idempotent.
+
+Also: the parent's child screen gains „Czas zabawy” (the two limits, saved as the child's
+`limits` register; e2e) and „Postępy” (e2e checks learned per topic, the missed word first in
+„Do poćwiczenia”, today's minutes from two devices in the calendar, stickers, stories heard;
+unit `dashboard.test.ts`). `e2e/no-reading.spec.ts` covers the lock. README: status, and two
+new screenshots (the lock, the dashboard); `npm run screenshots` now walks both.
+
+Tests: 345 unit tests (36 files); e2e in Chromium 92 passed + 1 opt-in skipped under `vite
+preview`, and `test:e2e:csp` against the container (built with the e2e's never-sent Google ids):
+92 passed, 1 skipped, zero CSP violations; the CSP is unchanged (the backup download is a `blob:`
+link, which no directive governs). **WebKit could not run on this machine** (the `WebKit
+encountered an internal error` fault of Phases 6, 7 and 9; even the untouched `routes.spec.ts`
+fails to load a page); CI runs it. Bundle: 354.4 kB JS (113.9 kB gzip, +5.6 kB), 44.6 kB CSS.
+Content: 80 pictures, 819.2 kB (+`zzz`, 12.6 kB); 42 prompts.
+
+CI: the first run (39468402601 on `2bd8761`) was green with one flaky test, the new „no limits”
+one in WebKit: it jumped the clock three times back to back, and when two jumps fell into one
+tick the 220 s looked like a suspended device and counted nothing (decision 91, working as
+designed). The test now waits for each minute to be written before the next jump.
+Then **green** on `dev` (run 39470078605 on `7166fdb`: check, unit 345, `check:content`, build,
+e2e 184 passed + 2 opt-in skipped in Chromium + WebKit, no flaky test). So every Phase 10 spec
+passed in WebKit too, in CI.
+
 ## Quality gates
 
 Recorded with the device and voice named (PLAN.md "Speech and pictures are replaceable").
@@ -276,7 +573,7 @@ Recorded with the device and voice named (PLAN.md "Speech and pictures are repla
 |----------|------------------------------|---------|----------------|
 | Pictures | end of Phase 2               | open: owner's verdict pending | Contact sheet of the 45 pictures rendered in Chromium (Linux) at 96 px, sent to the owner on 2026-10-18. Own pre-check: all decode; possible confusions are white heart (reads lavender), orange vs mango vs lemon (three round fruit), and the stylised bird. |
 | Speech   | end of Phase 3               | open: owner's verdict pending | Needs real voices on an Android phone and an iPhone (see Phase 3 acceptance). Tool: `/#/parent/speech`, every word at 🐢. Criteria: every word of the first four topics told apart at slow speed by a first-time listener; `say` overrides ≤ ~10 % of words (≤ 4 of 45). |
-| Pictures | Phase 5, with the child      | open: needs the owner and the child | Criterion: the child names or points to ≥ 90 % of the first four topics' pictures when asked in Polish. Tool: the lesson's picks, or `/#/parent/speech`'s word board, asked „Gdzie jest…?” by the parent. Watch: white heart, orange vs mango vs lemon, the bird, and the 🐇 toggle being the *rabbit* word (decision 26). |
+| Pictures | Phase 5, with the child      | open: needs the owner and the child | Criterion: the child names or points to ≥ 90 % of the first four topics' pictures when asked in Polish. Tool: the lesson's picks, or `/#/parent/speech`'s word board, asked „Gdzie jest…?” by the parent. Watch: white flag, orange vs mango vs lemon, the bird, and the 🐇 toggle being the *rabbit* word (decision 26). |
 | Speech   | Phase 5, with the child      | open: needs the owner and the child | Same criteria as Phase 3, judged with the child on the phone the child uses; record the device and the voice names `/#/parent/speech` reports. |
 
 ## Decisions
@@ -631,6 +928,421 @@ need the owner and the child; they stay open in "Quality gates" until the owner 
     replaced, and the Phase 3 speed test that reloaded before the setting was written.
     Lessons are now 8–12 steps, so the tests that play them get 90–120 s.
 
+### 2026-10-19 — Owner prerequisites & first release (v0.1.0)
+
+Not a phase: the manual setup PLAN.md lists under "Owner prerequisites", then `/release`.
+
+51. **Owner prerequisites done as docs/DEPLOYMENT.md describes.** DNS A record (proxied);
+    the existing WAF rule *Deploy health check* extended to `hellopolly.gorny.dev` (same
+    token as Eat My Way and Szok); the two host-scoped cache rules; `/var/www/hellopolly`
+    owned by the deploy user; the nginx site and a DNS-01 certificate (renewal dry run
+    green). The five `SSH_*` / `DEPLOY_CHECK_TOKEN` secrets are set. The `VITE_GOOGLE_*`
+    variables are not, as nothing reads them before Phase 7.
+52. **Deviation: a deploy key of its own.** DEPLOYMENT.md assumed Eat My Way's key would be
+    reused, but GitHub secrets cannot be read back and the developer's own key is not on the
+    server. Hello Polly therefore has its own ed25519 key (`hello-polly-deploy@github-actions`)
+    in `authorized_keys` of the deploy user. Its private half exists only as the
+    `SSH_PRIVATE_KEY` secret, so revoking it touches no other project. The rulesets
+    *Protect release tags* (`refs/tags/v*`: deletion, update, force-push blocked) and
+    *Protect main* (deletion, force-push blocked), both without bypass actors, were created
+    from the documentation, because Eat My Way's could not be read (private repository on
+    the free plan).
+53. **Known, not ours: one CSP violation from Cloudflare.** The edge injects an inline
+    `window.__CF$cv$params` script (Bot Fight Mode / JavaScript detections) into every HTML
+    response in the zone, Eat My Way included. `script-src` blocks it, as it should: its
+    hash changes per request, and `unsafe-inline` is ruled out. The app is unaffected. The
+    fix is in Cloudflare, by turning JavaScript detections off for the zone, not in the CSP.
+    Until then, "zero CSP violations" on the live site means zero besides this one. The
+    local `test:e2e:csp` gate has no edge and stays at zero.
+
+### 2026-10-19 — Avatar set and colour pictures (owner requests)
+
+54. **Owl and octopus out, hippopotamus and dog in** (changes decision 33). The avatar set is
+    now fox, lion, panda, hippopotamus, frog, service-dog, penguin, koala. The owner asked for
+    a German shepherd: Fluent has none, and its *Service dog* (pointed ears, dark muzzle) is
+    the closest, vest and leash included; the plain `dog` word picture was the alternative.
+    `service-dog` needs `floatPrecision: 2` to fit the 25 kB budget. `owl.svg` and
+    `octopus.svg` are deleted outright: the owner is the only user of this test version and
+    no profile uses them, so no migration and no `CONTENT_VERSION` bump.
+55. **Colours are flags, not hearts** (changes decision 10). Fluent has no flag in all 11
+    colours, so the 11 `<colour>-flag` pictures are Fluent's *Triangular flag* recoloured: a
+    new optional `recolor` map (upstream `#RRGGBB` → new) per entry in `content/images.json`,
+    applied by `scripts/lib/recolor.mjs` before SVGO, in attributes and in `feColorMatrix`
+    inner shadows; a mapped colour missing from the picture fails the build. Only the four
+    fabric colours change (two gradient stops, the highlight, the inner shadow); the wooden
+    pole stays. ATTRIBUTION.md marks these files *recoloured* (MIT allows modification).
+    The 11 hearts are deleted. The pictures quality gate's "white heart" watch item now
+    reads "white flag". No new package, no CSP change.
+
+### 2026-10-19 — Phase 6: Rewards
+
+Open question 3 names this phase; PLAN.md's task 5 says "pick one and record the size", so it
+is settled here (56).
+
+56. **Open question 3 settled: Color SVG, and a sticker is a word's own picture.** One sticker
+    per vocabulary word (45 now), `id` = the word id, `image` = the word's picture, `set` = the
+    word's topic. Size added to the content: **0 kB** (no new file; the pictures are already
+    in `content/img/`, within the 25 kB budget, on jsDelivr). 3D PNGs were rejected: about
+    40–150 kB each upstream, a second format for `ImageSource` and `check:content`, and a
+    sticker that looks unlike the word it says, when the album is meant to be a review
+    device (PLAN.md "Rewards"). The cost: a sticker is not a *new* picture. Distinct sticker
+    art (a sea set, gold variants) can be added later as plain content, since `Sticker.image`
+    is already separate from `Sticker.word`.
+57. **Rare gold stickers are content**: one per set (`numbers.ten`, `colours.purple`,
+    `fruit.pineapple`, `pets-farm.horse`), 4 of 45 ≈ 1 in 11, as `rare: true`. They shimmer in
+    the album and in the chest (a gold ring with a moving sheen; still under reduced motion).
+    In the draw a rare sticker has half the weight of an ordinary one, so it tends to come
+    later, but it always comes.
+58. **The draw** (`domain/stickers.ts`, pure, seeded by the chest's event id): (a) the count is
+    1, 2 or 3 (40 / 40 / 20 %); (b) candidates are the stickers the child does not own, and
+    only once the whole album is owned does it draw from everything (then a sticker can repeat
+    across chests, never within one); this is stricter than "no duplicates until a set
+    completes" and implies it; (c) weights: word learned 6, word met (introduced or
+    practising) 2, word among the next 5 the child will be taught (`nextWords`) 1 (the
+    "preview"), anything else 0, used only when every weight is 0; rare × ½; (d) weighted
+    sampling without replacement with mulberry32. The same seed, album and word states give the
+    same stickers on every device.
+59. **Opening a chest** is recorded as `chestsOpened[eventId] = { at, stickers }` (a new
+    `recordChest` in `domain/progress.ts`, idempotent per id) at the moment the lid opens. Left
+    before that, nothing is recorded and the chest still waits. The data model does not
+    change. Two offline devices may each open "the last" chest; the opened count then exceeds
+    the earned one, `unopened` stays at 0 (already clamped) and the child simply got one more
+    chest. Accepted: no loss mechanic may take a sticker back.
+60. **Chest scene** (`/child/:id/chest`): a hand-drawn inline SVG chest. Tap 1 rattles it
+    (`chest-creak`), tap 2 pops the lock (`pop`), tap 3 swings the lid open with a gold glow
+    (`sparkle`, `correct`) and the stickers fly out, each then spoken in turn; a tap on a
+    sticker says its word again. A pulsing ▶ then leads to the album, on the page of the first
+    new sticker, with the new ones ringed. With no chest waiting the route goes back to the
+    map. Reduced motion keeps the meaning (the glow, the lid open, the stickers in place) and
+    drops the travel (rattle, swing, fly-out, shimmer sweep).
+61. **Map**: a star meter in the header, between the avatar (or home) and the gear: a gold
+    star, then an SVG bar whose fill is an SVG `width` attribute (no inline style), stars
+    toward the next chest out of `starsPerChest`, growing from empty on arrival. A chest sits
+    at the bar's end: faded and inert while none waits, a bobbing, gold-glowing button when one
+    or more do (the bob is on an inner element, so the button itself stays still). The bottom
+    bar gains 📒 for the album. Arriving with a chest waiting, Polly says „Polly znalazła
+    skrzynię skarbów! Dotknij jej!” instead of „Dotknij statku…”. New UI picture: `ledger`
+    (📒, Fluent, same pinned commit, 20.7 kB upstream) in `UI_IMAGE_IDS`.
+62. **Album** (`/child/:id/album`): one page per set, in map order, chosen by a row of big
+    topic-icon tabs (no arrows, no page numbers). Each page is a grid of slots in the topic's
+    teaching order: an owned sticker (white die-cut edge, gold for rare) speaks its word on a
+    tap; an empty slot is a dashed outline with the picture's faint silhouette, and a tap on it
+    wiggles and says „Tej naklejki jeszcze nie masz.” The album is open from the first day (an
+    empty album is a goal, not a dead end): with no sticker yet Polly says „Zbieraj gwiazdki, a
+    znajdziesz skrzynię z naklejkami!” Long-press home back to the map.
+63. **New prompts**: `map.chest`, `chest.tap`, `chest.again`, `chest.open`, `album.look`,
+    `album.empty`, `album.missing`. No new sound effect: `chest-creak`, `pop` and `sparkle`
+    exist since Phase 3 (decision 29).
+
+### 2026-10-19 — Phase 7: Drive sync (one account, many devices)
+
+Open question 5 names this phase (64). The owner's Google Cloud project is not set up yet, so
+everything here is built and tested against a fake Google; the live check is a checklist in
+docs/DEPLOYMENT.md, open until the owner runs it.
+
+64. **Open question 5 settled: one family per Google account** (the owner's choice, PLAN.md's
+    assumption). Connecting looks for the app-created `hello-polly-family.json` (the oldest,
+    if a race ever left two) and creates it only when there is none. A device that already
+    has children merges them into that family: within one account every device is the same
+    parent's, so the union is right. Choosing between two families („Dołącz” / „Zachowaj
+    osobno”) is Phase 8's, for the second parent.
+65. **`StorageBackend` is shaped for one file, not a folder.** Eat My Way's interface lists and
+    names many files in `appDataFolder`; here there is one visible file found by name, then
+    addressed by id: `authenticate`, `isAuthenticated`, `signOut`, `find`, `create`,
+    `version`, `read`, `update(id, content, expected)`. `share`/`unshare`/`pick` arrive with
+    Phase 8. The change check uses Drive's monotonic `version` (PLAN.md's `fields=id,
+    modifiedTime,version`); the write guard re-reads it just before the upload, as Eat My Way
+    does, since Drive has no conditional update. A lost race costs nothing (PLAN.md "Sync
+    model"): the merge is a join, and the device whose delta was overwritten re-adds it on its
+    next cycle.
+66. **No Google request outside a parent's tap, ever.** Eat My Way decision 173 arms a silent
+    renewal on the *next* tap anywhere; here that tap is usually the child's, and GIS's token
+    flow opens a (briefly visible) window even when silent. So: the token is mirrored into
+    `sessionStorage` (decision 173, never `localStorage`, never IndexedDB), background sync runs
+    only while that token is valid and otherwise stops without loading GIS, and a renewal is
+    attempted only (a) when the parent passes the gate (that tap is a parent's gesture, so a
+    connected device renews silently on the way into the panel) and (b) from the buttons on
+    *Rodzina*. The cost: a one-hour token means a child's device syncs for about an hour after
+    a parent last visited the panel; its progress waits locally and lands on the next visit.
+    The account hint for a silent renewal is the account label already kept in `meta`, held in
+    memory: nothing at all goes to `localStorage`.
+67. **The gear's dot means "progress is waiting and sync cannot run".** PLAN.md's dot on the
+    gear is shown only when this device has changes Drive lacks *and* sync is stopped (expired
+    token, revoked grant, or an error), so it is not on permanently between parent visits. It
+    is a small coral dot with no text and no sound; nothing else on a child screen changes.
+68. **The first-run Drive step is a button on „Zaczynamy?”: „Mam już rodzinę na Dysku
+    Google”**, instead of PLAN.md's step 6 after the child. A second device of the same
+    account must load the family *before* a child is created, or the parent would add the same
+    child twice. A brand-new family is connected later from *Rodzina*, which PLAN.md allows.
+69. **The sync pass also prunes a deleted child's progress** (decision 34 left it to this
+    phase): this device replaces its own subtree for a tombstoned child with an empty one and
+    bumps `seq`, so the merge takes it like any other change. A missing key cannot express it:
+    the merge is a union, and the other copy would come back. Compaction (120 days) runs in
+    the same pass, on this device's subtrees only.
+70. **What the cycle does with a file it cannot trust.** A file whose `schema` is newer than
+    this app's is never overwritten („Zaktualizuj aplikację”); a file that is not a family
+    file stops sync with a message and is left as it is. A file that is gone (404 or trashed)
+    is created again from the local copy: within one account the device is the source of
+    truth. Phase 8 refines this for the second parent („Dostęp … cofnięty”).
+71. **Screens are not live.** A sync writes the merged file to IndexedDB through the same
+    transaction as every local change, so nothing is ever overwritten; child screens read it
+    when they open, so the map shows another device's stars on the next screen, not mid-tap.
+    *Rodzina* re-reads after each sync. Nothing on a child screen moves because of sync.
+72. **e2e fake at the network boundary, unit fake in `src/test/`.** As in Eat My Way, the e2e
+    runs serve a GIS stub from `https://accounts.google.com/gsi/client` and answer
+    `www.googleapis.com` from a Playwright route, so the shipped CSP is exercised unchanged;
+    the e2e build gets a fixed, never-sent `VITE_GOOGLE_CLIENT_ID`. `test:e2e:csp` needs the
+    container built with any client id (`.env.local`); without one the sync specs skip with a
+    message. `src/test/fake-drive.ts` is the in-memory backend for the engine's unit tests.
+
+73. **CSP and COOP widened for Google Identity Services**, exactly as the task names:
+    `script-src` + `https://accounts.google.com` (the GIS script), `frame-src 'none'` →
+    `https://accounts.google.com` (its frames), `connect-src` + `https://www.googleapis.com`
+    (Drive, uploads included), and a new `Cross-Origin-Opener-Policy:
+    same-origin-allow-popups` (GIS returns the token through the popup's `opener`, which
+    `same-origin` severs; Eat My Way decision 86). PLAN.md's `connect-src
+    https://accounts.google.com` is not granted until something is measured to need it
+    (live check). The Picker's `apis.google.com` and `docs.google.com` are Phase 8's.
+
+### 2026-10-20 — Family file in a folder (owner request)
+
+74. **Deviation: the family file lives in a `HelloPolly` folder**, not the root of My Drive
+    (PLAN.md "Research summary" said only "the parent's visible Drive"). `create` first finds
+    the oldest app-created, non-trashed `HelloPolly` folder (under `drive.file` the app sees
+    only its own) or creates it, then creates the file with that parent. `find` still looks
+    for the file by name anywhere the app can see, so a file the parent moves, or (Phase 8) a
+    file shared by the other parent and picked, is still found. No migration: the owner is the
+    only user so far, and a file already in the root is simply still found there. Two fresh
+    devices racing may each create a folder; the duplicate file is settled as before (decision
+    64) and an empty extra folder is harmless. No new scope, no CSP change.
+
+### 2026-10-20 — Phase 8: Inviting the second parent
+
+Open question 4 names this phase (the Picker in an installed PWA, the spike of task 5).
+
+75. **The spike cannot run in this phase; the fallback is built so that it does not have to
+    wait.** The app has no web manifest yet (vite-plugin-pwa is Phase 11), so neither phone
+    can install it as a standalone app, and the spike needs the two real phones in any case.
+    What is built regardless of its outcome: (a) the Picker is an iframe in the page, never a
+    popup; (b) on iOS an e-mailed link always opens in Safari, never in an installed web app,
+    and the `drive.file` grant the Picker gives belongs to the parent's *account* and the
+    OAuth client, not to the browser, so after joining in Safari the installed app finds the
+    shared file with „Mam już rodzinę na Dysku Google” (decision 78) without any Picker; (c)
+    the first run's „Mam zaproszenie” takes a pasted link and runs the join in place. Open
+    question 4 stays open until the spike runs (procedure in docs/DEPLOYMENT.md).
+76. **Owner's answer: no „Zachowaj osobno”.** A device holds one family (decision 64), so the
+    join offers only „Dołącz do wspólnej rodziny” (this device's children are merged into the
+    shared family) or „Anuluj” (nothing changes). PLAN.md's second button is dropped.
+77. **The join flow.** `/join/:fileId` is a parent screen, not gated (like `/setup`; a child
+    does not open e-mail). „Połącz z Google” signs in, and **does not connect the device**
+    until the file is picked: a closed Picker leaves everything as it was, not even a new
+    file of the parent's own. After the sign-in the app first asks Drive for the file; when
+    it is already reachable (picked before, or the owner opening their own link) the Picker
+    is skipped. Otherwise the Picker opens by itself (an iframe needs no gesture), so the taps
+    after sign-in are: the file, „Wybierz”, and „Dołącz” only when this device has children
+    the family lacks. Joining adopts the shared family's `familyId`, merges, and uploads.
+    When the device was syncing a family file of its own, that file goes to the Drive trash
+    after the merge (Drive keeps it 30 days), so the parent's other devices follow: their
+    file is gone, they look again, and the search prefers the shared file (78).
+78. **Shared or own.** The file's `ownedByMe` is read with its version and kept locally
+    (`meta.driveFileShared`). `find` prefers a file shared with the account over one it
+    owns, then the oldest. A shared file that is gone (404, `appNotAuthorizedToFile`,
+    trashed) means **access was taken away**: sync stops (status `revoked`, kept in
+    `meta.driveRevoked`, so a reload makes no request), the parent panel says „Dostęp do
+    wspólnej rodziny został cofnięty”, the local copy stays, and nothing is re-created. An
+    own file that is gone behaves as before (decision 70: look again, then re-create). A
+    shared file trashed by its owner is told the same way, as PLAN.md asks.
+79. **Members come from Drive, live; `FamilyFile.members` is not written.** The merge keeps
+    members as a union, which can never forget a removed parent, and PLAN.md calls Drive the
+    authority anyway. *Rodzina* lists `permissions.list` (users only), marks the owner and
+    „ty”, and offers „Usuń” only to the owner, for the others (`permissions.delete`). The
+    invite is `permissions.create` (`writer`, Drive's notification e-mail with a Polish
+    message and the link `<origin>/#/join/<fileId>`, built from the current origin so it
+    also works on localhost); the link is also shown with „Kopiuj link”. A writer may
+    invite too (Drive's default `writersCanShare`).
+80. **The wrong account.** The link carries only the file id (PLAN.md), so the app cannot
+    know which address was invited. It names the signed-in account whenever the file does
+    not come back: the Picker closed or empty, or the picked file still unreachable. The
+    message says „Zalogowano jako <e-mail>…” and offers „Zmień konto” (GIS
+    `prompt: 'select_account'`) and „Spróbuj jeszcze raz”.
+81. **CSP widened for the Picker, measured against the real one** (task 4). Under the container's
+    policy, the real `https://apis.google.com/js/api.js` → `gapi.load('picker')` → a Picker
+    built with this project's key and app id (a probe token, so Google's frame answers 403) needed
+    exactly: `script-src` + `https://apis.google.com` (the loader and its two module scripts) and
+    `frame-src` + `https://docs.google.com` (the Picker's frame). **Nothing in `connect-src`**
+    (PLAN.md's `https://accounts.google.com` there is still not granted) and no `img-src` (the
+    Picker's pictures load inside its own frame). The one report: the loader injects an inline
+    `<style>` with the dialog's layout rules, which `style-src 'self'` blocks. A hash would be
+    brittle (the loader's build changed between two runs an hour apart), so the five rules are
+    copied verbatim into `app.css` and the report is expected, like Eat My Way decision 88;
+    with them the dialog renders as Google intends (checked in a screenshot). The dialog's
+    position and size are CSSOM writes, which the CSP allows. `Referrer-Policy: no-referrer`
+    is kept: the Picker's document answered the same with and without a `Referer`, whatever
+    its value; whether the key's referrer restriction holds once a real token is in hand is
+    on the live checklist.
+82. **e2e: several accounts, and the Picker at its real URLs.** `e2e/fake-google.ts` now tells
+    accounts apart by their token, and models `drive.file`: an account reaches a file only
+    while it has a permission *and* the app is authorised for it (it created it, or picked it).
+    Permissions (`list`, `create` with the invitation e-mail recorded, `delete` by the owner
+    only) and `ownedByMe` are answered like Drive. The Picker's loader is served at
+    `https://apis.google.com/js/api.js` and its frame at `https://docs.google.com/picker`, so
+    `script-src` and `frame-src` are exercised as shipped; picking in that frame authorises the
+    app for the account, as the real Picker does. The GIS stub's `select_account` switches to a
+    test-chosen token. The unit fake (`src/test/fake-drive.ts`) models the same rules. Drive
+    helpers shared by the sync and sharing specs moved to `e2e/drive.ts`. The e2e build gets a
+    fixed, never-sent Picker key and app id, like the client id.
+
+### 2026-10-20 — Phase 9: Stories & more games
+
+No open question names Phase 9. One scope question went to the owner (83).
+
+83. **Owner's answer: a small Body parts topic now, pulled forward from Phase 11.** E7 *Polly
+    mówi* is "body parts and actions", and the content had neither. `body` (PLAN.md topic 8,
+    level 1, not among the default topics): *eyes, ear, nose, mouth, hand, arm, leg, foot*,
+    Fluent "Color" pictures from the same pinned commit (the yellow default skin tone), one
+    sticker per word as decision 56 (`body.foot` rare), and its story. Actions stay with Phase
+    11 and open question 7 (they need animation).
+84. **A story's words are its pictures.** The words that count for the 80 % unlock rule are the
+    distinct `word`s of the story's scene items: the things the child can tap and hear. A
+    vocabulary word used only as an adjective in the text („A *red* apple”) is not counted, so a
+    fruit story does not wait for colours. *Learned* is the derived state, as for games.
+    `check:content` gains the rules PLAN.md states for stories: 5–8 pages, 3–7 words per
+    sentence, at least one scene item per page, every scene item inside the scene (`x`, `y` in
+    0–100, `size` 24–40, so a picture is ≥ 72 px wide even on a 320 px wide scene), every story has at least one
+    scene word, and every scene word is named in its page's sentence (so "objects mentioned in
+    the sentence bounce" always has an object). `Story` gains an optional Polish one-liner
+    `introPl` („Posłuchaj bajki o owocach!”), PLAN.md's optional intro.
+85. **The scene is one SVG drawn with attributes only.** A `viewBox` of 100 × 75, a hand-drawn
+    background, each item an `<image>` placed by `x`/`y`/`width`/`height` attributes inside a
+    `role="button"` group. No inline style, no CSSOM. The same rule as the star meter
+    (decision 61).
+86. **The story player.** The Polish intro, then page by page: the sentence is spoken at the
+    chosen speed (decision 28's `speakSentences`), the word being spoken is highlighted, and a
+    scene item bounces while its word is spoken. After the sentence the page holds for a moment,
+    then turns by itself. Tapping an object says its word; during the sentence that cuts it, and
+    the sentence is read again from the start. At the end the story is recorded as heard on this
+    device (`storiesHeard[id] += 1`, `seq` bumped). **Stories give no stars**: they are a reward
+    already, and a 30-second story that pays stars would out-earn a lesson. Duration: the page
+    hold is set so that every story's *estimated* time at the normal rate (decision 28's
+    estimate) is 25–40 s, unit-tested; the real-phone measurement is the acceptance criterion
+    and needs the owner's phone.
+87. **Story shelf and announcements.** `/child/:id/stories` shows one tile per story (its first
+    scene picture). A locked story shows Polly with the lock and says
+    „Tę bajkę otworzymy, gdy poznasz więcej słówek!”. An unlocked story nobody has heard yet on
+    any device is *new*: its tile (the story's first pictured word on an open book) and the map's 📖 glow, and after a chest's stickers Polly
+    says „Polly ma dla ciebie nową bajkę!” (PLAN.md: "Polly announces a new story after a
+    chest"). The map's bottom bar gains 📖 (`open-book`).
+88. **Games E4–E9.** Every game uses learned words only, ends on the finish screen and gives 1
+    star per solved item plus the streak bonus where it has first tries (decision 45).
+    Attempts are recorded where the child answers a heard English word (E4, E5, E6 and E8's
+    colour), not in E7 (ungraded) or E9 (sorting, like *Memory*). The shared pick logic of E1
+    (react, wiggle, glow after the second miss, praise) moves into one controller that E1, E4,
+    E5 and E6 use.
+    - **E4 *Bańki*:** 5 rounds; 3–4 bubbles rise in lanes and loop forever (never timed out);
+      „Przebij bańkę: {word}!”. Reduced motion: the bubbles stay put.
+    - **E5 *Nakarm Polly*:** 5 rounds; 3–4 pictures around a big Polly; „Daj Polly: {word}!”.
+      Dragging a picture onto Polly *or* tapping it gives it to her. The drag moves the picture
+      with a CSSOM `translate` write (allowed by `style-src 'self'`, like decision 81; no
+      markup style).
+    - **E6 *Gdzie jest…?*:** one scene (decision 85) with 5–8 learned items; five of them are
+      asked for in turn („Gdzie jest {word}?”). Opens with ≥ 5 learned words. Eight fixed
+      places in three rows with a little seeded jitter, items 22 % of the scene wide; the
+      scene draws each tap area 2 units wider than its picture, so it stays ≥ 72 px on a phone.
+    - **E7 *Polly mówi*:** 5 commands over learned body parts: „Polly mówi: dotknij!” and the
+      word; Polly points with the body part beside her; the child does it and taps ✅
+      („Zrobione!”). Ungraded. Opens with ≥ 4 learned body parts.
+    - **E8 *Pokoloruj*:** 5 rounds; a grey picture of a learned noun (not a colour or a number)
+      and 3 paint pots of learned colours; the noun, then „Pomaluj na {word}!” with the colour.
+      Tap a pot, then the picture: the right pot paints it (an SVG mask of the picture filled
+      with the colour, multiplied over its grey shading, so *any* colour works on any picture);
+      a wrong pot wiggles, and the right one glows after the second miss. Opens with ≥ 3
+      learned colours and ≥ 1 other learned noun. The pots' colours are a table in the domain
+      layer, unit-tested to cover every colour word.
+    - **E9 *Kosze*:** two baskets, each a topic with ≥ 3 learned words (seeded choice), and six
+      pictures one at a time: „Do którego koszyka?”. Right basket: the picture drops in; wrong:
+      the basket wiggles, the right one glows after the second miss.
+89. **E9's parent toggle is `WordPlan.sortGame?: boolean`** (absent = off), a checkbox in the
+    child's word plan („Gra „Kosze”: układanie obrazków w dwóch koszykach według tematu (dla
+    starszych dzieci)”). Optional, so no stored plan changes and no
+    migration: every plan write already spreads the whole plan, so the field survives other
+    edits. Without it the shelf does not show E9 at all.
+90. **Smaller things decided on the way.** (a) The story's sentence is shown under the scene
+    for the parent reading along (PLAN.md), marked `data-for-parent` like the picker's names,
+    so the no-reading check skips it. (b) In *Nakarm Polly* and *Polly mówi* Polly is already
+    the game's centre, so the game frame leaves out the small Polly in its corner. (c) New UI
+    pictures from the same pinned Fluent commit, in `UI_IMAGE_IDS`: `open-book` (📖),
+    `check-mark-button` (✅), and the tiles `bubbles`, `fork-and-knife-with-plate`,
+    `magnifying-glass-tilted-left` and `basket` (the basket needs `floatPrecision: 1` for the
+    budget); *Pokoloruj*'s tile reuses `artist-palette`, *Polly mówi*'s the `raised-hand`
+    word picture. The paint pot is hand-drawn SVG. (d) New prompts: `stories.choose`,
+    `stories.locked`, `story.end`, `story.new`, `bubbles.find`, `feed.find`, `simon.start`,
+    `simon.say` („Polly mówi: pokaż {word}!”: *pokaż* fits every body part, *dotknij* does
+    not fit a hand), `paint.colour`, `paint.pot`, `sort.which`. (e) With nine games the
+    shelf's tiles are smaller (still ≥ 72 px) and the shelf scrolls if it must. (f) The album
+    gains a fifth page (body) by itself, since pages are the sticker sets. (g) **No CSP change**:
+    the scene's `<image>`s load from `'self'` (or jsDelivr, already allowed), the paint layer
+    is CSS `mix-blend-mode` on an SVG mask, and the drag is a CSSOM write; the whole suite ran
+    under the container's policy with zero violations.
+
+### 2026-10-20 — Phase 10: Screen time & the progress dashboard
+
+No open question names Phase 10. PLAN.md leaves open what a session is, what "the current
+exercise" is outside a lesson, and how an import meets data already on the device; settled here.
+
+91. **Minutes are counted by one ticker** (`src/lib/screentime/`), every 5 s, while a screen of
+    a particular child is on show and the page is visible: the map, lessons, games, stories,
+    album and chest. Not counted: the start screen and picker (no child yet), parent screens, and
+    the sleep screen. A gap of more than 2 min between two ticks (a suspended phone) counts for
+    nothing. Whole minutes are written to this device's `DeviceProgress.minutes[day]` (one
+    write, so one `seq` bump and one sync debounce, per minute of play); the part below a minute
+    waits in the local session clock (`meta.screenTime`, never synced: PLAN.md's "the current
+    session's timer"), so short sessions still add up within the day. The day is the local day.
+92. **A session** is the play time since it began. A new one begins on a new local day, after
+    a break of ≥ 30 min away from that child's screens, or when the gate wakes Polly. The daily
+    total is `minutesOn(today)` over every device in the family file (so another device's
+    minutes count as soon as sync brings them) plus this device's minutes not written yet.
+93. **"The current exercise" is the step, the game, the story or the chest.** In a lesson the
+    lock waits for the step being played (look-and-listen or a pick) to be solved; the lesson
+    then stops there: the attempts are already recorded (decision 44), the steps done are paid
+    in stars with their streak bonus (nothing earned is dropped: no loss mechanics), and the
+    island gets no flag, since the lesson was not finished. The frame of a game sees no round
+    boundary, so a game (5 rounds or one board, 1–2 min), a story (≈ 30 s) and an opening chest
+    play to their end; the screen they return to is the lock. The map, the shelves, the album
+    and the picker have no step and lock at once. A screen opened while Polly sleeps shows the
+    lock straight away.
+94. **The lock is per child, on this device, and sticky** until the parent gate is passed or
+    the next local day: a raised limit or a synced change does not wake Polly by itself, and
+    other devices lock on their own clock (PLAN.md: best-effort). Passing the gate wakes every
+    sleeping child on this device and starts a fresh session; for a child put to sleep by the
+    *daily* limit it also waives the daily limit for the rest of that day (otherwise the next
+    tick would put Polly back to sleep at once). The session limit still applies after waking.
+    The lock screen is a night sea with Polly asleep (a new UI picture, Fluent `zzz`, same pinned
+    commit) and the gear only: no home button, so it is not a way into a sibling's profile.
+    Polly says „Koniec na dziś! Polly idzie spać.” (`sleep.night`), again on a tap on Polly.
+95. **Limits are edited on `/parent/child/:id`** („Czas zabawy”) from two short lists: daily
+    *brak limitu*, 10, 15, 20, 30, 45, 60 min; session *brak limitu*, 5, 10, 15, 20, 30 min.
+    Written as the child's `limits` `Lww` register, like the plan. The e2e's 1-minute session is
+    written straight into IndexedDB; no parent needs a 1-minute choice.
+96. **The progress dashboard** is on the same screen („Postępy”), all derived
+    (`domain/dashboard.ts`, unit-tested): learned words per topic (derived *learned*, of the
+    topic's words, for enabled topics and any topic with a word met); words that need practice
+    (most first-try misses, Σ `c − first` over every day and device, at most 8, ties by the most
+    recent miss); a 4-week calendar (28 days to today in Monday-first weeks, each day its
+    minutes over every device, shaded in four steps, a day with answers but under a minute
+    marked active); stickers collected (owned of all, per set); stories heard (per story, over
+    every device). Minutes today and this week are listed above the calendar.
+97. **Export and import of the family as JSON.** Export downloads the local `FamilyFile`
+    exactly as stored (`hello-polly-rodzina-YYYY-MM-DD.json`, a `Blob` and an `<a download>`):
+    nothing local-only goes in it (no device id, no token, no Drive file id, no voices). Import
+    reads a chosen file with the sync's `parseFamilyFile` (same checks: JSON, a family file, not
+    a newer schema), shows the children it holds, and on „Wczytaj” merges it into the local
+    file with `mergeFamily`, the same join as sync, so an import never loses anything already on
+    the device. The `familyId` stays the device's when it already has children; a device with
+    none adopts the backup's, so an import into a fresh profile is the exported file byte for
+    byte and every derived state is identical. A connected device uploads the merge on its next
+    cycle like any local change. It is offered in the parent panel („Kopia zapasowa”) and in the
+    first run („Mam kopię zapasową”), because a fresh profile has no child to open the panel from.
+
 ## Open questions
 
 Copied from PLAN.md. Each is settled in the phase named and the answer recorded here.
@@ -639,10 +1351,15 @@ Copied from PLAN.md. Each is settled in the phase named and the answer recorded 
    translated, no subtitle; `hellopolly.gorny.dev`; `zyndata/hello-polly`.
 2. **Default accent** (Phase 3). **Settled** (decision 19): British, `en-GB`; American
    selectable.
-3. **Sticker art**: 3D PNG (richer, larger) or Color SVG (Phase 6).
+3. **Sticker art**: 3D PNG (richer, larger) or Color SVG (Phase 6). **Settled** (decision 56):
+   Color SVG, and a word's sticker is its own picture, so stickers add 0 kB.
 4. **Picker in an installed iOS PWA**: unknown until measured; fallback defined (Phase 8 spike).
-5. **Should one family file per Google account allow several families?** Assumed no: one
-   family per account (Phase 7).
+   **Still open after Phase 8** (decision 75): the app cannot be installed standalone before
+   the web manifest (Phase 11), and the spike needs both phones. The fallback is built (join
+   in the browser, then „Mam już rodzinę na Dysku Google” in the installed app); the procedure
+   is in docs/DEPLOYMENT.md. To run with Phase 11, or as soon as a manifest exists.
+5. **Should one family file per Google account allow several families?** **Settled**
+   (decision 64): no, one family per account, the owner's choice.
 6. **Speech engine and picture set**: kept or replaced by the quality gates in "Speech and
    pictures are replaceable" (Phases 2, 3 and 5). **Still open after Phase 5**: all four gate
    verdicts need the owner (two phones; the child). Nothing measured here argues for a swap.

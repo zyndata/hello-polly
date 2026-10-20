@@ -21,13 +21,13 @@ describe('children', () => {
     const plan = { ...defaultPlan(), queue: ['fruit.mango'] };
     const file = addChild(emptyFamily('f'), 'c1', { name: 'Ola', avatar: 'fox' }, T1, 'dev-a', plan);
     expect(childPlan(file, 'c1').queue).toEqual(['fruit.mango']);
-    expect(() => addChild(file, 'c1', { name: 'Staś', avatar: 'owl' }, T2, 'dev-a')).toThrow();
+    expect(() => addChild(file, 'c1', { name: 'Staś', avatar: 'hippopotamus' }, T2, 'dev-a')).toThrow();
   });
 
   it('lists live children by name in Polish order, without the deleted ones', () => {
     let file = emptyFamily('f');
     file = addChild(file, 'c1', { name: 'Zosia', avatar: 'fox' }, T1, 'd');
-    file = addChild(file, 'c2', { name: 'Łucja', avatar: 'owl' }, T1, 'd');
+    file = addChild(file, 'c2', { name: 'Łucja', avatar: 'hippopotamus' }, T1, 'd');
     file = addChild(file, 'c3', { name: 'Ala', avatar: 'frog' }, T1, 'd');
     expect(liveChildren(file).map((c) => c.profile.name)).toEqual(['Ala', 'Łucja', 'Zosia']);
     file = deleteChild(file, 'c2', T2, 'd');
@@ -77,5 +77,20 @@ describe('children', () => {
     expect(cleanBirthYear(1990, 2026)).toBeUndefined();
     expect(cleanBirthYear(2021.5, 2026)).toBeUndefined();
     expect(cleanBirthYear(undefined, 2026)).toBeUndefined();
+  });
+});
+
+describe('limits', () => {
+  it('a new child has the defaults; a change is an Lww write that beats the older one', async () => {
+    const { addChild, childLimits, setLimits } = await import('./children');
+    const { emptyFamily } = await import('./family');
+    const { mergeFamily } = await import('./merge');
+    const base = addChild(emptyFamily('f'), 'c', { name: 'Ola', avatar: 'fox' }, '2026-10-20T10:00:00.000Z', 'a');
+    expect(childLimits(base, 'c')).toEqual({ dailyMinutes: 15, sessionMinutes: 10 });
+    expect(childLimits(base, 'nobody')).toEqual({ dailyMinutes: 15, sessionMinutes: 10 });
+    const phone = setLimits(base, 'c', { dailyMinutes: null, sessionMinutes: 5 }, '2026-10-20T11:00:00.000Z', 'a');
+    const tablet = setLimits(base, 'c', { dailyMinutes: 30, sessionMinutes: 20 }, '2026-10-20T10:30:00.000Z', 'b');
+    expect(childLimits(mergeFamily(phone, tablet), 'c')).toEqual({ dailyMinutes: null, sessionMinutes: 5 });
+    expect(childLimits(mergeFamily(tablet, phone), 'c')).toEqual({ dailyMinutes: null, sessionMinutes: 5 });
   });
 });

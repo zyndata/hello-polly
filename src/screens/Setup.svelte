@@ -1,6 +1,7 @@
 <!--
-  /setup, the first run (PLAN.md "First run", without the Drive step): the voice check, „Mam
-  zaproszenie” or „Zaczynamy”, the first child, the starting topics (and, if the parent wants,
+  /setup, the first run (PLAN.md "First run"): the voice check, „Mam zaproszenie”, „Mam już
+  rodzinę na Dysku Google” (STATE.md decision 68: another device of the same account loads the
+  family instead of adding the child twice), „Mam kopię zapasową” (decision 97) or „Zaczynamy”, the first child, the starting topics (and, if the parent wants,
   specific words in the queue), and one sentence about the parent gate. The last tap creates
   the child and hands the phone over to the child's map. Once a child exists, this screen
   sends the visitor to `/` (STATE.md decision 37: it is not behind the gate).
@@ -8,6 +9,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { push, replace } from 'svelte-spa-router';
+  import BackupImport from '../lib/components/BackupImport.svelte';
   import ChildForm from '../lib/components/ChildForm.svelte';
   import ContentImage from '../lib/components/ContentImage.svelte';
   import ParentLayout from '../lib/components/ParentLayout.svelte';
@@ -19,12 +21,15 @@
   import { sounds } from '../lib/sound/effects';
   import { unlock } from '../lib/unlock';
   import { change } from '../lib/store';
+  import { isDriveConfigured } from '../lib/sync/google-auth';
+  import { joinFileId } from '../lib/sync/invite';
+  import { connect, syncState } from '../lib/sync/state.svelte';
   import type { Screen } from '../lib/screens';
   import type { Accent, ChildProfile, WordPlan } from '../lib/types';
 
   let { screen }: { screen: Screen; params?: Record<string, string> | null } = $props();
 
-  type Step = 'voice' | 'start' | 'invite' | 'child' | 'words' | 'gate';
+  type Step = 'voice' | 'start' | 'invite' | 'backup' | 'child' | 'words' | 'gate';
   const NUMBERED: Step[] = ['voice', 'start', 'child', 'words', 'gate'];
 
   let step = $state<Step>('voice');
@@ -34,8 +39,12 @@
   let profile = $state<Omit<ChildProfile, 'deleted'> | undefined>();
   let plan = $state<WordPlan>(defaultPlan());
   let saving = $state(false);
+  let loadingDrive = $state(false);
+  let driveNote = $state<string | undefined>();
+  let inviteLink = $state('');
+  let inviteInvalid = $state(false);
 
-  const number = $derived(NUMBERED.indexOf(step === 'invite' ? 'start' : step) + 1);
+  const number = $derived(NUMBERED.indexOf(step === 'invite' || step === 'backup' ? 'start' : step) + 1);
 
   onMount(() => {
     void (async () => {
@@ -46,6 +55,38 @@
       ready = true;
     })();
   });
+
+  async function fromDrive() {
+    if (loadingDrive) return;
+    loadingDrive = true;
+    driveNote = undefined;
+    unlock();
+    try {
+      await connect();
+      if (syncState.status === 'error') {
+        driveNote = syncState.message;
+        return;
+      }
+      if (liveChildren(await loadFamily()).length > 0) {
+        await replace('/');
+        return;
+      }
+      driveNote = 'Połączono, ale na tym koncie nie ma jeszcze dzieci. Dodaj pierwsze dziecko: zapisze się na Dysku.';
+      step = 'child';
+    } catch {
+      driveNote = 'Nie połączono. Okno Google zostało zamknięte albo nie udało się z nim połączyć.';
+    } finally {
+      loadingDrive = false;
+    }
+  }
+
+  /** „Mam zaproszenie”: the pasted link (or bare file id) opens the join screen here. */
+  async function openInvite(event: SubmitEvent) {
+    event.preventDefault();
+    const id = joinFileId(inviteLink);
+    inviteInvalid = id === undefined;
+    if (id !== undefined) await push(`/join/${encodeURIComponent(id)}`);
+  }
 
   async function finish() {
     if (!profile || saving) return;
@@ -84,7 +125,15 @@
         <div class="flex flex-wrap gap-2">
           <button type="button" class="button" onclick={() => (step = 'child')}>Zaczynamy</button>
           <button type="button" class="button-quiet" onclick={() => (step = 'invite')}>Mam zaproszenie</button>
+          <button type="button" class="button-quiet" onclick={() => (step = 'backup')} data-testid="setup-backup">Mam kopię zapasową</button>
         </div>
+        {#if isDriveConfigured()}
+          <p>Jeśli Hello Polly działa już na innym twoim urządzeniu i zapisuje rodzinę na Dysku Google, wczytaj ją stąd.</p>
+          <button type="button" class="button-quiet justify-self-start" disabled={loadingDrive} onclick={fromDrive} data-testid="setup-drive">
+            Mam już rodzinę na Dysku Google
+          </button>
+        {/if}
+        {#if driveNote}<p class="notice" data-testid="setup-drive-note">{driveNote}</p>{/if}
       </section>
     {:else if step === 'invite'}
       <section class="card" aria-labelledby="invite-title">
@@ -93,12 +142,37 @@
           Zaproszenie to link w e-mailu od Dysku Google. Otwórz go na tym urządzeniu: Hello Polly połączy się wtedy ze
           wspólną rodziną i nie trzeba nic tu wpisywać.
         </p>
-        <p class="text-sm text-ink-muted">Wspólna rodzina na Dysku Google pojawi się w jednej z kolejnych wersji.</p>
+        <p>Jeśli link otwiera się w innej przeglądarce niż ta, skopiuj go i wklej tutaj.</p>
+        <form class="grid gap-2" onsubmit={openInvite} data-testid="invite-paste">
+          <label class="grid gap-1">
+            <span class="font-bold">Link z zaproszenia</span>
+            <input class="select" type="text" name="invite" inputmode="url" autocomplete="off" bind:value={inviteLink} />
+          </label>
+          {#if inviteInvalid}
+            <p class="notice text-sm">To nie wygląda na link z zaproszenia do Hello Polly. Skopiuj cały link z e-maila.</p>
+          {/if}
+          <div class="flex flex-wrap gap-2">
+            <button type="submit" class="button">Dalej</button>
+            <button type="button" class="button-quiet" onclick={() => (step = 'start')}>Wróć</button>
+          </div>
+        </form>
+      </section>
+    {:else if step === 'backup'}
+      <section class="card" aria-labelledby="backup-title">
+        <h2 id="backup-title" class="card-title">Mam kopię zapasową</h2>
+        <p>Wybierz plik pobrany w panelu rodzica („Kopia zapasowa”). Dzieci, postępy i ustawienia wrócą z niego.</p>
+        <BackupImport
+          onimported={(file) => {
+            if (liveChildren(file).length > 0) void replace('/');
+            else step = 'child';
+          }}
+        />
         <button type="button" class="button-quiet justify-self-start" onclick={() => (step = 'start')}>Wróć</button>
       </section>
     {:else if step === 'child'}
       <section class="card" aria-labelledby="child-title">
         <h2 id="child-title" class="card-title">Kto będzie się uczyć?</h2>
+        {#if driveNote}<p class="notice" data-testid="setup-drive-note">{driveNote}</p>{/if}
         <ChildForm
           initial={profile}
           submitLabel="Dalej"
