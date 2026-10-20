@@ -127,6 +127,7 @@ test('connecting asks for drive.file and creates the family file with the child'
   const onDrive = drive.only<FamilyFile>();
   expect(onDrive.children[child]?.v.name).toBe('Ola');
   expect(canonicalJson(onDrive)).toBe(canonicalJson(await readFamily(page)));
+  expect(drive.liveFolders()).toEqual([['HelloPolly']]);
   expect(await cspViolations(page)).toEqual([]);
 });
 

@@ -177,8 +177,8 @@ https://hellopolly.gorny.dev after the next tag:
       any Google host (Network tab filtered by `google`).
 - [ ] Panel → *Rodzina* → „Połącz z Dyskiem Google”: the Google window asks only for access to
       files created by this app; after it, *Stan* is „Połączono” and *Konto* names the account.
-- [ ] `hello-polly-family.json` appears in the root of that account's My Drive, and its content
-      is the family (the child's nickname is in it).
+- [ ] `hello-polly-family.json` appears in a `HelloPolly` folder in that account's My Drive, and
+      its content is the family (the child's nickname is in it).
 - [ ] Zero CSP violations in the console through the whole flow. Expected exception, as in Eat
       My Way decision 88: an inline-style report from inside Google's own GIS frame; record it
       if it appears, do not widen `style-src` for it.

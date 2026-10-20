@@ -49,14 +49,28 @@ describe('Drive backend (drive.file)', () => {
     expect(call?.auth).toBe('Bearer tok');
   });
 
-  it('creates the file with a multipart upload and no parent (the root of My Drive)', async () => {
-    const { backend, calls } = scripted(ok(meta));
+  it('creates the file with a multipart upload inside an existing HelloPolly folder', async () => {
+    const { backend, calls } = scripted(ok({ files: [{ id: 'dir1' }] }), ok(meta));
     await backend.create('hello-polly-family.json', '{"a":1}');
-    const [call] = calls;
-    expect(call?.method).toBe('POST');
-    expect(call?.url.pathname).toBe('/upload/drive/v3/files');
-    expect(call?.body).toContain('{"name":"hello-polly-family.json","mimeType":"application/json"}');
-    expect(call?.body).toContain('{"a":1}');
+    const [lookup, upload] = calls;
+    expect(lookup?.url.searchParams.get('q')).toBe(
+      "name = 'HelloPolly' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+    );
+    expect(lookup?.url.searchParams.get('orderBy')).toBe('createdTime');
+    expect(upload?.method).toBe('POST');
+    expect(upload?.url.pathname).toBe('/upload/drive/v3/files');
+    expect(upload?.body).toContain('{"name":"hello-polly-family.json","mimeType":"application/json","parents":["dir1"]}');
+    expect(upload?.body).toContain('{"a":1}');
+  });
+
+  it('creates the HelloPolly folder first when there is none', async () => {
+    const { backend, calls } = scripted(ok({ files: [] }), ok({ id: 'dir2' }), ok(meta));
+    await backend.create('hello-polly-family.json', '{}');
+    const folder = calls[1];
+    expect(folder?.method).toBe('POST');
+    expect(folder?.url.pathname).toBe('/drive/v3/files');
+    expect(JSON.parse(folder?.body ?? '')).toEqual({ name: 'HelloPolly', mimeType: 'application/vnd.google-apps.folder' });
+    expect(calls[2]?.body).toContain('"parents":["dir2"]');
   });
 
   it('updates only when the version is still the one merged against', async () => {

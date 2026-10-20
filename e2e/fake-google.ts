@@ -38,10 +38,20 @@ export const DEFAULT_SESSION: GoogleSession = {
 interface StoredFile {
   id: string;
   name: string;
+  mimeType: string;
+  parents: string[];
   content: string;
   version: number;
   created: number;
   trashed: boolean;
+}
+
+const FOLDER_MIME = 'application/vnd.google-apps.folder';
+
+interface FileMetadata {
+  name?: string;
+  mimeType?: string;
+  parents?: string[];
 }
 
 export interface DriveRequest {
@@ -81,9 +91,18 @@ export class FakeDrive {
     };
   }
 
+  private liveFiles(): StoredFile[] {
+    return [...this.files.values()].filter((f) => !f.trashed && f.mimeType !== FOLDER_MIME);
+  }
+
   /** The live family files' contents, parsed. */
   live(): unknown[] {
-    return [...this.files.values()].filter((f) => !f.trashed).map((f) => JSON.parse(f.content) as unknown);
+    return this.liveFiles().map((f) => JSON.parse(f.content) as unknown);
+  }
+
+  /** The folder names each live family file sits in (`[]` for the root of My Drive). */
+  liveFolders(): string[][] {
+    return this.liveFiles().map((f) => f.parents.map((id) => this.files.get(id)?.name ?? '?'));
   }
 
   /** The one live family file, parsed. */
@@ -111,7 +130,7 @@ export class FakeDrive {
     await context.route('https://www.googleapis.com/**', (route) => this.handle(route));
   }
 
-  private static multipart(body: string): { metadata: { name?: string }; content: string } {
+  private static multipart(body: string): { metadata: FileMetadata; content: string } {
     const boundary = body.slice(2, body.indexOf('\r\n'));
     const parts = body
       .split(`--${boundary}`)
@@ -119,7 +138,23 @@ export class FakeDrive {
       .filter((part) => part.length > 0 && !part.startsWith('--'))
       .map((part) => part.slice(part.indexOf('\r\n\r\n') + 4).replace(/\r\n$/, ''));
     const [metadata = '{}', content = ''] = parts;
-    return { metadata: JSON.parse(metadata) as { name?: string }, content };
+    return { metadata: JSON.parse(metadata) as FileMetadata, content };
+  }
+
+  private add(metadata: FileMetadata, content: string): StoredFile {
+    const at = this.tick();
+    const file: StoredFile = {
+      id: `file-${this.files.size + 1}`,
+      name: metadata.name ?? '?',
+      mimeType: metadata.mimeType ?? 'application/octet-stream',
+      parents: metadata.parents ?? [],
+      content,
+      version: at,
+      created: at,
+      trashed: false
+    };
+    this.files.set(file.id, file);
+    return file;
   }
 
   private async handle(route: Route): Promise<void> {
@@ -139,20 +174,24 @@ export class FakeDrive {
     if (path === '/drive/v3/about') return json({ user: this.account });
 
     if (path === '/drive/v3/files' && method === 'GET') {
-      const name = url.searchParams.get('q')?.match(/name = '((?:[^'\\]|\\.)*)'/)?.[1];
+      const q = url.searchParams.get('q') ?? '';
+      const name = q.match(/name = '((?:[^'\\]|\\.)*)'/)?.[1];
+      const mimeType = q.match(/mimeType = '([^']*)'/)?.[1];
       const files = [...this.files.values()]
-        .filter((f) => !f.trashed && (name === undefined || f.name === name))
+        .filter((f) => !f.trashed && (name === undefined || f.name === name) && (mimeType === undefined || f.mimeType === mimeType))
         .sort((a, b) => a.created - b.created)
         .map((f) => this.meta(f));
       return json({ files });
     }
 
+    // Metadata-only create: the app uses it for its folder.
+    if (path === '/drive/v3/files' && method === 'POST') {
+      return json(this.meta(this.add(JSON.parse(request.postData() ?? '{}') as FileMetadata, '')));
+    }
+
     if (path === '/upload/drive/v3/files' && method === 'POST') {
       const { metadata, content } = FakeDrive.multipart(request.postData() ?? '');
-      const at = this.tick();
-      const file: StoredFile = { id: `file-${this.files.size + 1}`, name: metadata.name ?? '?', content, version: at, created: at, trashed: false };
-      this.files.set(file.id, file);
-      return json(this.meta(file));
+      return json(this.meta(this.add(metadata, content)));
     }
 
     const upload = path.match(/^\/upload\/drive\/v3\/files\/([^/]+)$/);

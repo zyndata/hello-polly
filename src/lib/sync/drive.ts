@@ -13,6 +13,8 @@ import { currentToken, forgetAccessToken, hasAccessToken, requestToken, revokeAc
  * Google Drive, scope `drive.file`: the app sees only the files it created (or, from Phase 8,
  * that the parent picked for it). The family file sits in the parent's visible Drive, so it
  * can be shared with the second parent; `appDataFolder` cannot (PLAN.md "Research summary").
+ * It is created in an app-created `HelloPolly` folder (decision 74); `find` looks for it
+ * anywhere the app can see, so a file that was moved or shared is still found.
  */
 
 const DRIVE_FILES = 'https://www.googleapis.com/drive/v3/files';
@@ -20,6 +22,9 @@ const DRIVE_UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files';
 const DRIVE_ABOUT = 'https://www.googleapis.com/drive/v3/about';
 
 const VERSION_FIELDS = 'id,version,modifiedTime';
+
+export const FOLDER_NAME = 'HelloPolly';
+const FOLDER_MIME = 'application/vnd.google-apps.folder';
 
 interface DriveFileResource {
   id?: string;
@@ -98,6 +103,28 @@ export function createDriveBackend(options: DriveBackendOptions = {}): StorageBa
 
   const query = (params: Record<string, string>): string => new URLSearchParams(params).toString();
 
+  /** The oldest app-created `HelloPolly` folder, created when there is none. */
+  async function folderId(): Promise<string> {
+    const found = await json<{ files?: DriveFileResource[] }>(
+      `${DRIVE_FILES}?${query({
+        spaces: 'drive',
+        q: `name = '${FOLDER_NAME}' and mimeType = '${FOLDER_MIME}' and trashed = false`,
+        orderBy: 'createdTime',
+        fields: 'files(id)',
+        pageSize: '1'
+      })}`
+    );
+    const existing = found.files?.[0]?.id;
+    if (existing !== undefined) return existing;
+    const created = await json<DriveFileResource>(`${DRIVE_FILES}?${query({ fields: 'id' })}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify({ name: FOLDER_NAME, mimeType: FOLDER_MIME })
+    });
+    if (created.id === undefined) throw new Error('Drive created the folder but returned no id');
+    return created.id;
+  }
+
   async function version(fileId: string): Promise<RemoteVersion> {
     const response = await request(
       `${DRIVE_FILES}/${encodeURIComponent(fileId)}?${query({ fields: `${VERSION_FIELDS},trashed` })}`
@@ -147,12 +174,13 @@ export function createDriveBackend(options: DriveBackendOptions = {}): StorageBa
     },
 
     async create(name: string, content: string): Promise<RemoteVersion> {
+      const parent = await folderId();
       const boundary = `hp-${crypto.randomUUID()}`;
       const body = [
         `--${boundary}`,
         'Content-Type: application/json; charset=UTF-8',
         '',
-        JSON.stringify({ name, mimeType: 'application/json' }),
+        JSON.stringify({ name, mimeType: 'application/json', parents: [parent] }),
         `--${boundary}`,
         'Content-Type: application/json; charset=UTF-8',
         '',

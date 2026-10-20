@@ -920,6 +920,18 @@ docs/DEPLOYMENT.md, open until the owner runs it.
     https://accounts.google.com` is not granted until something is measured to need it
     (live check). The Picker's `apis.google.com` and `docs.google.com` are Phase 8's.
 
+### 2026-10-20 — Family file in a folder (owner request)
+
+74. **Deviation: the family file lives in a `HelloPolly` folder**, not the root of My Drive
+    (PLAN.md "Research summary" said only "the parent's visible Drive"). `create` first finds
+    the oldest app-created, non-trashed `HelloPolly` folder (under `drive.file` the app sees
+    only its own) or creates it, then creates the file with that parent. `find` still looks
+    for the file by name anywhere the app can see, so a file the parent moves, or (Phase 8) a
+    file shared by the other parent and picked, is still found. No migration: the owner is the
+    only user so far, and a file already in the root is simply still found there. Two fresh
+    devices racing may each create a folder; the duplicate file is settled as before (decision
+    64) and an empty extra folder is harmless. No new scope, no CSP change.
+
 ## Open questions
 
 Copied from PLAN.md. Each is settled in the phase named and the answer recorded here.
