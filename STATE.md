@@ -1343,6 +1343,19 @@ exercise" is outside a lesson, and how an import meets data already on the devic
     cycle like any local change. It is offered in the parent panel („Kopia zapasowa”) and in the
     first run („Mam kopię zapasową”), because a fresh profile has no child to open the panel from.
 
+### 2026-10-25 — 525 from Cloudflare after the VM's Debian 13 upgrade (outside the phase sequence)
+
+98. **The site answered Cloudflare's 525 from the VM's upgrade to Debian 13 (2026-10-24, most
+    likely ~11:05 UTC) until 2026-10-25 08:13 UTC; the cause was the server, not this app.**
+    The old `/etc/nginx/nginx.conf` had `ssl_prefer_server_ciphers on`, certbot's
+    `options-ssl-nginx.conf` (included by this vhost and Eat My Way's only) has `off`, and
+    OpenSSL 3.5's HelloRetryRequest for its post-quantum group made the two disagree on the
+    cipher mid-handshake (`bad cipher`). Fixed with one line in `nginx.conf` (`off`); the vhost
+    and the certbot file are untouched. The full account, the reproduction command and how to
+    see failed handshakes in the nginx log are in **Eat My Way STATE.md decision 484**. Since the
+    same day `access.log` lines end with `"$host"`, so this site's traffic can be counted on its
+    own. Verified: 5/5 `200` through Cloudflare, `certbot renew --dry-run` green for this name.
+
 ## Open questions
 
 Copied from PLAN.md. Each is settled in the phase named and the answer recorded here.
