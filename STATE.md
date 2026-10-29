@@ -1371,6 +1371,21 @@ exercise" is outside a lesson, and how an import meets data already on the devic
     plain text (Drive does not linkify `emailMessage`); „Kopiuj link” in *Rodzina* and „Mam
     zaproszenie” already cover it.
 
+### 2026-10-29 — cars for the colours, and sharing the invitation (outside the phase sequence)
+
+100. **The colours are cars, not flags.** At the owner's request the eleven colour pictures are
+     Fluent's *Automobile* recoloured (`red-car` … `grey-car` in `content/images.json`), in
+     place of the triangular flag. Each car takes the shades its flag had, and the body's other
+     five tones (the inner shadow, the door seams, the shadow under the window) are derived from
+     the dark shade mixed with black. The image ids changed with them; words, stickers and the
+     story refer to the new ids. Nothing in a family file names an image, so no migration. The
+     story keeps its id `polly-flags` (it is recorded in progress) and is now „Samochody Polly”
+     / *Polly's Cars*. README screenshots regenerated.
+101. **„Udostępnij” beside „Kopiuj link”** in *Rodzina*: the system share sheet (Web Share API,
+     no package) with a short Polish note and the join link, where a link is clickable, unlike
+     in Drive's e-mail (decision 99). Shown only where `navigator.share` exists; a closed sheet
+     is not a failure. Covered by an e2e test with a stubbed `navigator.share`.
+
 ## Open questions
 
 Copied from PLAN.md. Each is settled in the phase named and the answer recorded here.
