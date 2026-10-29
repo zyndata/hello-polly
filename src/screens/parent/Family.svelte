@@ -129,6 +129,23 @@
     }, 'Nie udało się usunąć tej osoby z rodziny.');
   }
 
+  // The system share sheet (SMS, WhatsApp, …), where a link is clickable, unlike in Drive's
+  // e-mail. Shown only where the browser has one; cancelling it is not a failure.
+  const hasShareSheet = typeof navigator.share === 'function';
+
+  async function onShare() {
+    if (fileId === undefined) return;
+    try {
+      await navigator.share({
+        title: 'Hello Polly',
+        text: 'Zapraszam cię do naszej wspólnej rodziny w Hello Polly. Otwórz ten link na telefonie lub tablecie, na którym chcesz używać Hello Polly:',
+        url: joinLink(fileId)
+      });
+    } catch {
+      // Closed by the parent, or no target picked: nothing to say.
+    }
+  }
+
   async function onCopy() {
     if (fileId === undefined) return;
     try {
@@ -265,10 +282,15 @@
         {/if}
         {#if fileId}
           <p class="text-sm text-ink-muted">
-            Link z zaproszenia możesz też wysłać sam, na przykład SMS-em. Bez zaproszenia na Dysku nikomu nic nie da.
+            Link z zaproszenia możesz też wysłać sam, na przykład SMS-em albo komunikatorem — tam będzie klikalny. Bez zaproszenia na Dysku nikomu nic nie da.
           </p>
           <p class="break-all text-sm" data-testid="invite-link">{joinLink(fileId)}</p>
-          <button type="button" class="button-quiet justify-self-start" onclick={onCopy}>{copied ? 'Skopiowano' : 'Kopiuj link'}</button>
+          <div class="flex flex-wrap gap-2">
+            {#if hasShareSheet}
+              <button type="button" class="button justify-self-start" onclick={onShare} data-testid="invite-share">Udostępnij</button>
+            {/if}
+            <button type="button" class="button-quiet justify-self-start" onclick={onCopy}>{copied ? 'Skopiowano' : 'Kopiuj link'}</button>
+          </div>
         {/if}
       {/if}
     {/if}

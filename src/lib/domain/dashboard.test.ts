@@ -109,7 +109,7 @@ describe('stickers collected and stories heard', () => {
   const STICKERS: Sticker[] = [
     { id: 'fruit.apple', image: 'red-apple', set: 'fruit' },
     { id: 'fruit.pear', image: 'pear', set: 'fruit' },
-    { id: 'colours.red', image: 'red-flag', set: 'colours' }
+    { id: 'colours.red', image: 'red-car', set: 'colours' }
   ];
   const p = {
     a: progress({ chestsOpened: { c1: { at: '2026-10-01T10:00:00.000Z', stickers: ['fruit.apple'] } }, storiesHeard: { picnic: 2 } }),

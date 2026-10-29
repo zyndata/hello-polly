@@ -37,7 +37,9 @@
 		# would sever (STATE.md decision 73).
 		Cross-Origin-Opener-Policy "same-origin-allow-popups"
 		X-Content-Type-Options "nosniff"
-		Referrer-Policy "no-referrer"
+		# The Picker's key is restricted to this site's referrers, so Google must see the origin
+		# (never the path; the #/route is never sent anyway). STATE.md decision 99.
+		Referrer-Policy "strict-origin"
 		# Nothing records the child: the microphone and the camera are denied outright.
 		Permissions-Policy "accelerometer=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), interest-cohort=(), magnetometer=(), microphone=(), payment=(), usb=()"
 		# Version and stack are nobody's business.

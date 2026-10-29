@@ -425,7 +425,7 @@ Open, with what closes it:
   `VITE_GOOGLE_*` repository variables now exist (the owner set them since Phase 7), so this
   and the Phase 7 live check can both run: locally under `docker:up` now, live after the next
   `/release`. What it must show: the one expected `style-src-elem` report (decision 81), the
-  key accepted with `Referrer-Policy: no-referrer`, and the real invitation e-mail.
+  key accepted (it was not with `no-referrer`: decision 99), and the real invitation e-mail.
 
 Also: *Rodzina* before connecting explains that the family must be on Drive first and offers no
 invitation; the invite link is shown with „Kopiuj link”; the first run's „Mam zaproszenie” takes
@@ -1342,6 +1342,49 @@ exercise" is outside a lesson, and how an import meets data already on the devic
     byte and every derived state is identical. A connected device uploads the merge on its next
     cycle like any local change. It is offered in the parent panel („Kopia zapasowa”) and in the
     first run („Mam kopię zapasową”), because a fresh profile has no child to open the panel from.
+
+### 2026-10-25 — 525 from Cloudflare after the VM's Debian 13 upgrade (outside the phase sequence)
+
+98. **The site answered Cloudflare's 525 from the VM's upgrade to Debian 13 (2026-10-24, most
+    likely ~11:05 UTC) until 2026-10-25 08:13 UTC; the cause was the server, not this app.**
+    The old `/etc/nginx/nginx.conf` had `ssl_prefer_server_ciphers on`, certbot's
+    `options-ssl-nginx.conf` (included by this vhost and Eat My Way's only) has `off`, and
+    OpenSSL 3.5's HelloRetryRequest for its post-quantum group made the two disagree on the
+    cipher mid-handshake (`bad cipher`). Fixed with one line in `nginx.conf` (`off`); the vhost
+    and the certbot file are untouched. The full account, the reproduction command and how to
+    see failed handshakes in the nginx log are in **Eat My Way STATE.md decision 484**. Since the
+    same day `access.log` lines end with `"$host"`, so this site's traffic can be counted on its
+    own. Verified: 5/5 `200` through Cloudflare, `certbot renew --dry-run` green for this name.
+
+### 2026-10-29 — the Picker's key refused on the live site (outside the phase sequence)
+
+99. **`Referrer-Policy: strict-origin` instead of `no-referrer`, and the Picker key allows the
+    Drive API too.** The first real invitation on https://hellopolly.gorny.dev ended in the
+    Picker's „Klucz programistyczny API jest nieprawidłowy”. The key is restricted to the
+    site's referrers, and with `no-referrer` Google gets none (the key answers „Requests from
+    referer <empty> are blocked”); decision 81 had left exactly this to the live check.
+    `strict-origin` sends only `https://hellopolly.gorny.dev/` cross-origin (no path; the
+    `#/route` with the file id never leaves the browser), to Google, jsDelivr and Cloudflare's
+    beacon. In the same session the owner added the **Google Drive API** to the key's allowed
+    APIs, since the Picker's frame lists files through Drive with the developer key; the
+    DEPLOYMENT.md prerequisites now say both. Drive's invitation e-mail shows the join link as
+    plain text (Drive does not linkify `emailMessage`); „Kopiuj link” in *Rodzina* and „Mam
+    zaproszenie” already cover it.
+
+### 2026-10-29 — cars for the colours, and sharing the invitation (outside the phase sequence)
+
+100. **The colours are cars, not flags.** At the owner's request the eleven colour pictures are
+     Fluent's *Automobile* recoloured (`red-car` … `grey-car` in `content/images.json`), in
+     place of the triangular flag. Each car takes the shades its flag had, and the body's other
+     five tones (the inner shadow, the door seams, the shadow under the window) are derived from
+     the dark shade mixed with black. The image ids changed with them; words, stickers and the
+     story refer to the new ids. Nothing in a family file names an image, so no migration. The
+     story keeps its id `polly-flags` (it is recorded in progress) and is now „Samochody Polly”
+     / *Polly's Cars*. README screenshots regenerated.
+101. **„Udostępnij” beside „Kopiuj link”** in *Rodzina*: the system share sheet (Web Share API,
+     no package) with a short Polish note and the join link, where a link is clickable, unlike
+     in Drive's e-mail (decision 99). Shown only where `navigator.share` exists; a closed sheet
+     is not a failure. Covered by an e2e test with a stubbed `navigator.share`.
 
 ## Open questions
 
