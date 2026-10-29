@@ -6,6 +6,16 @@ This file is generated from Conventional Commit messages by
 The format follows [Keep a Changelog](https://keepachangelog.com) and the
 project adheres to [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+
+### Bug Fixes
+
+- **sync:** Send the origin as referrer so Google accepts the Picker key
+
+### Documentation
+
+- Record the Debian 13 TLS outage in STATE.md
+
 ## [0.2.0] - 2026-10-20
 
 ### Documentation
