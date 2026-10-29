@@ -16,6 +16,15 @@ project adheres to [Semantic Versioning](https://semver.org).
 
 - Record the Debian 13 TLS outage in STATE.md
 
+### Features
+
+- **sync:** Share the invitation link through the system share sheet
+- **content:** Colours are shown as cars instead of flags
+
+### Miscellaneous
+
+- Update CHANGELOG
+
 ## [0.2.0] - 2026-10-20
 
 ### Documentation
