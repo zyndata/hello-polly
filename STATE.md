@@ -425,7 +425,7 @@ Open, with what closes it:
   `VITE_GOOGLE_*` repository variables now exist (the owner set them since Phase 7), so this
   and the Phase 7 live check can both run: locally under `docker:up` now, live after the next
   `/release`. What it must show: the one expected `style-src-elem` report (decision 81), the
-  key accepted with `Referrer-Policy: no-referrer`, and the real invitation e-mail.
+  key accepted (it was not with `no-referrer`: decision 99), and the real invitation e-mail.
 
 Also: *Rodzina* before connecting explains that the family must be on Drive first and offers no
 invitation; the invite link is shown with „Kopiuj link”; the first run's „Mam zaproszenie” takes
@@ -1355,6 +1355,21 @@ exercise" is outside a lesson, and how an import meets data already on the devic
     see failed handshakes in the nginx log are in **Eat My Way STATE.md decision 484**. Since the
     same day `access.log` lines end with `"$host"`, so this site's traffic can be counted on its
     own. Verified: 5/5 `200` through Cloudflare, `certbot renew --dry-run` green for this name.
+
+### 2026-10-29 — the Picker's key refused on the live site (outside the phase sequence)
+
+99. **`Referrer-Policy: strict-origin` instead of `no-referrer`, and the Picker key allows the
+    Drive API too.** The first real invitation on https://hellopolly.gorny.dev ended in the
+    Picker's „Klucz programistyczny API jest nieprawidłowy”. The key is restricted to the
+    site's referrers, and with `no-referrer` Google gets none (the key answers „Requests from
+    referer <empty> are blocked”); decision 81 had left exactly this to the live check.
+    `strict-origin` sends only `https://hellopolly.gorny.dev/` cross-origin (no path; the
+    `#/route` with the file id never leaves the browser), to Google, jsDelivr and Cloudflare's
+    beacon. In the same session the owner added the **Google Drive API** to the key's allowed
+    APIs, since the Picker's frame lists files through Drive with the developer key; the
+    DEPLOYMENT.md prerequisites now say both. Drive's invitation e-mail shows the join link as
+    plain text (Drive does not linkify `emailMessage`); „Kopiuj link” in *Rodzina* and „Mam
+    zaproszenie” already cover it.
 
 ## Open questions
 

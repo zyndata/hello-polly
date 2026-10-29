@@ -116,7 +116,7 @@ Google connection); the other two from Phase 8 (the Picker):
 | Variable | Value |
 |---|---|
 | `VITE_GOOGLE_CLIENT_ID` | Google OAuth web client id (scope `drive.file`). Never add a client *secret*. |
-| `VITE_GOOGLE_API_KEY` | Browser API key for the Picker, restricted to the Picker API and the app's referrers |
+| `VITE_GOOGLE_API_KEY` | Browser API key for the Picker, restricted to the Picker and Drive APIs and the app's referrers |
 | `VITE_GOOGLE_APP_ID` | The Google Cloud project number |
 
 **Rulesets**, as in Eat My Way: `Protect release tags` on `refs/tags/v*` (deletion and
@@ -204,7 +204,8 @@ browsers and the result in STATE.md.
 Prerequisites:
 
 - [ ] In the same Google Cloud project: the **Google Picker API** enabled; a browser API key
-      restricted to the Picker API and to the referrers `https://hellopolly.gorny.dev/*`,
+      restricted to the **Google Picker API and the Google Drive API** (the Picker's frame lists
+      files through Drive with the same key) and to the referrers `https://hellopolly.gorny.dev/*`,
       `http://localhost:5173/*` and `http://localhost:8081/*`; the project *number* noted.
 - [ ] `VITE_GOOGLE_API_KEY` and `VITE_GOOGLE_APP_ID` in `.env.local` and as repository variables.
 - [ ] While the consent screen is in *Testing*, both A and B are test users.
@@ -221,9 +222,10 @@ https://hellopolly.gorny.dev after the next tag:
 - [ ] The console shows **one** expected CSP report and no other: `style-src-elem` for an inline
       `<style>` from `apis.google.com` (the Picker's own dialog rules, copied into `app.css`;
       decision 81). Nothing else is blocked, and the Picker looks right (white dialog, shadow).
-      If the Picker says the developer key is invalid or its referrer is not allowed, suspect
-      `Referrer-Policy: no-referrer` first (measured not to matter for the Picker's document
-      itself, but not yet with a real token) and record what it says.
+      If the Picker says the developer key is invalid („Klucz programistyczny API jest
+      nieprawidłowy”), Google saw no allowed referrer or the key lacks an API: the site must send
+      `Referrer-Policy: strict-origin` (never `no-referrer`, decision 99) and the key must allow
+      both the Picker API and the Drive API.
 - [ ] B plays a few pictures; A's *Rodzina* „Zapisz teraz” (or switching back to the tab, or 3
       minutes) brings B's progress to A.
 - [ ] B, signed in to a **third** account that was not invited: the Picker lists nothing; closing
