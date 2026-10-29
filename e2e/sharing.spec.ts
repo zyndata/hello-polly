@@ -297,3 +297,19 @@ test('*Rodzina* before connecting offers no invitation; opening it never loads t
   await expect(page.getByTestId('invite-link')).toHaveText(new RegExp(`#/join/${drive.onlyId()}$`));
   expect(drive.pickerLoads).toBe(0);
 });
+
+test('„Udostępnij” hands the invitation link to the system share sheet', async ({ page }) => {
+  await page.addInitScript(() => {
+    const shared: ShareData[] = [];
+    (window as unknown as { __shared: ShareData[] }).__shared = shared;
+    Object.defineProperty(navigator, 'share', { configurable: true, value: async (data: ShareData) => void shared.push(data) });
+  });
+  await firstRun(page);
+  await openFamily(page);
+  await connectFromFamily(page);
+  await page.getByTestId('invite-share').click();
+  const shared = await page.evaluate(() => (window as unknown as { __shared: ShareData[] }).__shared);
+  expect(shared).toHaveLength(1);
+  expect(shared[0]?.url).toMatch(new RegExp(`#/join/${drive.onlyId()}$`));
+  expect(shared[0]?.text).toContain('Hello Polly');
+});
