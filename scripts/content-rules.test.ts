@@ -139,6 +139,26 @@ describe('validateContent', () => {
     ]);
   });
 
+  it('accepts prompt variants of the same shape, and fails on any other', () => {
+    const content = valid();
+    const at = (id: string) => content.prompts.find((p) => p.id === id) as { id: string; pl: string; variants?: unknown };
+    at('pick.find').variants = ['Znajdź {word}!', 'Pokaż mi {word}!'];
+    at('map.go').variants = ['Wszyscy na pokład!'];
+    expect(errorsOf(content)).toEqual([]);
+
+    at('pick.find').variants = ['Znajdź!', 'Pokaż mi {word}!', 'Znajdź!'];
+    at('map.go').variants = [];
+    at('lesson.start').variants = ['', 'Tekst.'];
+    expect(errorsOf(content)).toEqual([
+      'prompt "lesson.start": every variant must be text',
+      'prompt "lesson.start": variant "Tekst." repeats a line of the catalog',
+      'prompt "pick.find": variant "Znajdź!" has other placeholders than pl',
+      'prompt "pick.find": variant "Znajdź!" has other placeholders than pl',
+      'prompt "pick.find": variant "Znajdź!" repeats a line of the catalog',
+      'prompt "map.go": variants must be a non-empty list'
+    ]);
+  });
+
   it('fails on duplicate ids, a word without pl, and topic/word disagreements', () => {
     const content = valid();
     content.words.push({ ...content.words[0], pl: '' });

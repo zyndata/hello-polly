@@ -29,12 +29,26 @@ export const praise: readonly string[] = praiseJson;
 
 const wordById = new Map(words.map((w) => [w.id, w]));
 const topicById = new Map(topics.map((t) => [t.id, t]));
-const promptById = new Map((promptsJson as Prompt[]).map((p) => [p.id, p.pl]));
+const promptById = new Map((promptsJson as Prompt[]).map((p) => [p.id, [p.pl, ...(p.variants ?? [])]]));
+/** The line each prompt said last, so that a prompt with variants never says the same twice in a row. */
+const lastLine = new Map<string, string>();
 
 export const word = (id: WordId): Word | undefined => wordById.get(id);
 export const topic = (id: TopicId): Topic | undefined => topicById.get(id);
 
-/** The Polish text of a prompt. `check:content` guarantees every `PromptId` is present. */
-export function prompt(id: PromptId): string {
-  return promptById.get(id) ?? '';
+/**
+ * The Polish text of a prompt. `check:content` guarantees every `PromptId` is present. A prompt
+ * with variants (STATE.md decision 102) says one of its lines at random, never the one it said
+ * last time, so Polly's small talk does not repeat itself.
+ */
+export function prompt(id: PromptId, random: () => number = Math.random): string {
+  const lines = promptById.get(id) ?? [];
+  if (lines.length < 2) return lines[0] ?? '';
+  const fresh = lines.filter((line) => line !== lastLine.get(id));
+  const line = fresh[Math.floor(random() * fresh.length)] ?? fresh[0] ?? '';
+  lastLine.set(id, line);
+  return line;
 }
+
+/** Every line a prompt can say: its `pl` first, then its variants. */
+export const promptLines = (id: PromptId): readonly string[] => promptById.get(id) ?? [];

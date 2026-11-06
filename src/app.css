@@ -81,6 +81,25 @@
   }
 
   /*
+   * Exercise and game pictures never sit in a scrolling list, so a finger that slides a little
+   * on one is still a tap, never a pan the browser takes over (STATE.md decision 103).
+   */
+  .choice-picture,
+  .speaking-picture,
+  .scene,
+  .bubble,
+  .digit-tile,
+  .memory-card,
+  .simon-part,
+  .simon-done,
+  .paint-canvas,
+  .paint-pot,
+  .sort-item,
+  .sort-basket {
+    touch-action: none;
+  }
+
+  /*
    * The full-bleed sea of every child screen. Sky at the top, deep sea at the bottom, faint
    * waves drawn over it. The safe areas are padded, never covered, so nothing a child must tap
    * ends up under a notch or the home indicator.

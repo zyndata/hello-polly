@@ -1386,6 +1386,33 @@ exercise" is outside a lesson, and how an import meets data already on the devic
      in Drive's e-mail (decision 99). Shown only where `navigator.share` exists; a closed sheet
      is not a failure. Covered by an e2e test with a stubbed `navigator.share`.
 
+### 2026-11-06 — more small talk, and held taps (outside the phase sequence)
+
+102. **A prompt may have `variants`** (owner request: „Dotknij statku i płyniemy” and the like
+     should not be the same sentence every time). `content/prompts.json` keeps `pl` as the
+     prompt's main line and adds an optional `variants` list. `prompt(id)` picks one line at
+     random and never repeats the line it said last for that id. `check:content` requires every
+     variant to have the same placeholders in the same order as `pl` (so it splits into the same
+     segments), and no line may appear twice in the catalog. The e2e speech helper maps each
+     variant back to its `pl`, so the specs still assert the main line. Variants are small talk
+     and praise: the map, lessons, chest, album, stories, „Gdzie jest {word}?”, retry and praise.
+     Instructions a child has to follow stay single: speed, the hold-to-exit hint, the parent
+     gate, and the rules of digits, Simon, paint and sort. No gendered verb forms (the app does not
+     know the child's gender). No new package; PLAN.md's prompt shape `{ id, pl }` is extended,
+     not changed.
+103. **A finger held on a picture is still a tap** (owner report: the child presses too long and
+     nothing happens). Chrome on Android turns a held touch into a long press and sends no
+     `click`, and a finger that slides a little becomes a pan, which also ends without one.
+     `steadyTaps` (`src/lib/steady-taps.ts`, on `ChildLayout`'s root) watches presses on child
+     tap targets (`button`, `[role="button"]`). When the finger lifts over the target it went down
+     on and no browser click follows within 250 ms, it sends the click itself. A late browser
+     click on the same target within a second is dropped, so a press never counts twice. It also
+     blocks the long-press menu on child screens. Exercise and game pictures, which never sit in a
+     scrolling list, get `touch-action: none`, so a small slide is not taken as a pan. The map,
+     shelves and album keep scrolling. Covered by `e2e/touch.spec.ts`, which replays the pointer
+     events of a held touch without a click (no desktop engine reproduces the long-press
+     gesture; Chromium's DevTools touch input always clicks). It fails without the fix.
+
 ## Open questions
 
 Copied from PLAN.md. Each is settled in the phase named and the answer recorded here.
