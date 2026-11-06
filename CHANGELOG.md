@@ -6,6 +6,16 @@ This file is generated from Conventional Commit messages by
 The format follows [Keep a Changelog](https://keepachangelog.com) and the
 project adheres to [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+
+### Bug Fixes
+
+- **child:** A finger held on a picture still counts as a tap
+
+### Features
+
+- **content:** Polly says her small talk in several ways
+
 ## [0.3.0] - 2026-10-29
 
 ### Bug Fixes
