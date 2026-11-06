@@ -84,6 +84,8 @@ export interface Prompt {
   id: string;
   /** Polish. `{word}` marks where the English word is spoken. */
   pl: string;
+  /** Other ways to say the same line, with the same placeholders; one is picked at random. */
+  variants?: string[];
 }
 
 // ---------------------------------------------------------------------------------------------

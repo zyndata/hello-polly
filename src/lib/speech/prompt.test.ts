@@ -33,6 +33,8 @@ describe('promptSegments', () => {
   });
 
   it('every catalog prompt yields something to say', () => {
-    for (const p of prompts) expect(promptSegments(p.pl, banana).length, p.id).toBeGreaterThan(0);
+    for (const p of prompts) {
+      for (const line of [p.pl, ...('variants' in p ? p.variants : [])]) expect(promptSegments(line, banana).length, p.id).toBeGreaterThan(0);
+    }
   });
 });

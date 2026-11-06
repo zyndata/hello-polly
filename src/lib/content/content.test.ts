@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { REQUIRED_PROMPT_IDS } from '../../../scripts/lib/content-rules.mjs';
-import { prompt, topic, topics, word, words } from '.';
+import { prompt, promptLines, topic, topics, word, words } from '.';
 
 describe('bundled content', () => {
   it('has the first four topics and body parts (STATE.md decision 83), in map order', () => {
@@ -19,5 +19,19 @@ describe('bundled content', () => {
 
   it('every required prompt has Polish text', () => {
     for (const id of REQUIRED_PROMPT_IDS) expect(prompt(id), id).not.toBe('');
+  });
+
+  it('a prompt with variants says each of them, never the same line twice in a row', () => {
+    const lines = promptLines('map.go');
+    expect(lines[0]).toBe('Dotknij statku i płyniemy!');
+    expect(lines.length).toBeGreaterThan(1);
+    const said = Array.from({ length: 200 }, () => prompt('map.go'));
+    expect(new Set(said)).toEqual(new Set(lines));
+    for (const [i, line] of said.entries()) if (i > 0) expect(line).not.toBe(said[i - 1]);
+  });
+
+  it('a prompt without variants always says its one line', () => {
+    expect(promptLines('home.hold')).toHaveLength(1);
+    expect(prompt('home.hold', () => 0.99)).toBe('Przytrzymaj dłużej, żeby wyjść.');
   });
 });

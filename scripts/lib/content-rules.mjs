@@ -249,6 +249,10 @@ export function validateContent(content, imageBytes) {
   for (const id of required) {
     if (!prompts.has(id)) errors.push(`prompt "${id}": missing from the catalog`);
   }
+  /** @param {string} text */
+  const placeholdersOf = (text) => [...text.matchAll(/\{([^}]*)\}/g)].map(([, name]) => name ?? '');
+  /** Every line of the catalog, so that a variant never repeats one (e2e maps it back). */
+  const lines = new Set([...prompts.values()].map((p) => p.pl));
   for (const prompt of prompts.values()) {
     const where = `prompt "${prompt.id}"`;
     if (!required.includes(prompt.id)) errors.push(`${where}: not a known prompt id`);
@@ -256,8 +260,25 @@ export function validateContent(content, imageBytes) {
       errors.push(`${where}: no pl`);
       continue;
     }
-    for (const [, name] of prompt.pl.matchAll(/\{([^}]*)\}/g)) {
+    const shape = placeholdersOf(prompt.pl);
+    for (const name of shape) {
       if (!placeholders.includes(name)) errors.push(`${where}: unknown placeholder {${name}}`);
+    }
+    // Other ways to say the same line (STATE.md decision 102): the same placeholders, in the
+    // same order, so every line splits into the same segments.
+    if (!('variants' in prompt)) continue;
+    if (!Array.isArray(prompt.variants) || prompt.variants.length === 0) {
+      errors.push(`${where}: variants must be a non-empty list`);
+      continue;
+    }
+    for (const variant of prompt.variants) {
+      if (!isText(variant)) {
+        errors.push(`${where}: every variant must be text`);
+        continue;
+      }
+      if (placeholdersOf(variant).join() !== shape.join()) errors.push(`${where}: variant "${variant}" has other placeholders than pl`);
+      if (lines.has(variant)) errors.push(`${where}: variant "${variant}" repeats a line of the catalog`);
+      lines.add(variant);
     }
   }
   if (!Array.isArray(content.praise) || content.praise.length === 0) errors.push('praise: empty');
