@@ -6,6 +6,24 @@ This file is generated from Conventional Commit messages by
 The format follows [Keep a Changelog](https://keepachangelog.com) and the
 project adheres to [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+
+### Bug Fixes
+
+- **lesson:** Words met before come back in every lesson, so they get learned
+
+### Documentation
+
+- Record the owner's eight requests (decisions 104–109) and refresh the README
+
+### Features
+
+- **content:** The colours are shown as flags again
+- **content:** Polly says „Bardzo dobrze!” instead of "Good job!" and "Super!"
+- **content:** Everyday actions, twelve verbs such as cook, drink and buy
+- **parent:** Plan the next lessons ahead, choosing each lesson's words
+- **child:** „Powtórka” reviews words already met, trouble words first
+
 ## [0.4.0] - 2026-11-06
 
 ### Bug Fixes
