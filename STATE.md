@@ -1413,6 +1413,107 @@ exercise" is outside a lesson, and how an import meets data already on the devic
      events of a held touch without a click (no desktop engine reproduces the long-press
      gesture; Chromium's DevTools touch input always clicks). It fails without the fix.
 
+### 2026-11-14 — owner's list after eight islands (outside the phase sequence)
+
+The owner sent eight requests after the child had finished eight islands with no game and no
+story open. Decisions 104–109 answer them; nothing in them needs a migration (every new field
+is optional and absent means the old behaviour).
+
+104. **Why nothing opened, and the fix: every lesson now practises words met before.**
+     Decision 17's `composeLesson` topped a lesson up with *practising* words only when it was
+     shorter than 8 steps, and three new words already make 9 (3 look-and-listen + 6 picks).
+     So after its first lesson a word was never asked again until it was *learned*, which
+     needs a first-try answer on a second day: no word was ever learned, so no game (4
+     learned words) and no story (80 %) could open. Now the automatic lesson fills its 12
+     steps: the new words as before, then one pick each for words met before, in this order:
+     due reviews (most overdue first), words still being practised (those not answered today
+     first, then the fewest first tries), then learned words not due yet (lowest box first).
+     A practised word offers 2 pictures, 3 once it has two first tries; a learned one by its
+     box. With 9 or more words still being practised, a lesson brings one new word fewer, so
+     the backlog shrinks. This is also the owner's "a little more variety, not too much": a
+     lesson with three new words now has six different words (three new, three met), with
+     two new words eight. The child's 24 words already have two first tries each from their
+     first day, so one clean answer on another day makes each learned; games should open
+     within a day or two of lessons or reviews. PLAN.md "A lesson" (new words mixed with
+     reviews) is unchanged in spirit; decision 17's top-up rule is replaced.
+105. **The parent plans lessons ahead** („wybrać każdą lekcję i słówka w tej lekcji”, „kilka
+     lekcji do przodu”). `WordPlan.lessons?: { id, words }[]`, in order, inside the plan's
+     `Lww` register like the queue. *Plan lekcji* on `/parent/child/:id`: „Zaplanuj lekcję”
+     opens a picker of every topic's words (each with its state), up to **4 words** per lesson
+     (four new words fill 12 steps), then the list of planned islands, each with ↑/↓,
+     „Zmień słówka” and ✕. The next island plays the first planned lesson not finished on any
+     device: its new words introduced and picked twice out of two pictures, its words met
+     before picked twice each (a review if due), topped up to 8 steps with due and practised
+     words. Finishing it writes `LessonRecord.planned = id` on the child's device (the child
+     never writes the plan, as with the queue, decision 34), and the parent's next save drops
+     finished lessons. With none left, lessons come from the queue and topics as before. A
+     planned word that is paused or marked known is still used: the parent chose it.
+106. **„Powtórka”: a review of words met before, trouble words first.** A 🔁 button (Fluent
+     *Repeat button*) in the map's bottom bar, shown once the child has met 3 words. It opens
+     `/child/:id/lesson?review` (a query, not a new route, so PLAN.md's screen list stands):
+     up to 6 words, the trouble words first and the rest drawn at random, each asked once in a
+     shuffled round, then the trouble words once more, never the same word twice in a row.
+     Polly opens with `review.start` and ends with `review.finish` (new prompts). Answers are
+     recorded and stars paid like a lesson, but it is not an island: no flag, no
+     `LessonRecord`, never a planned lesson. **A trouble word** is derived, not stored: day by
+     day, each first-try miss adds 2 and each first-try answer takes 1 away, never below 0;
+     the word is in trouble while that is above 0. So one miss needs two clean answers later,
+     a word right only half the time (chance, with two pictures) stays in trouble, and a word
+     the child has since mastered, in a lesson or a review, leaves the list by itself. The
+     parent's „Do poćwiczenia” (decision 96) now uses the same rule, so it too empties as
+     words are mastered; it still shows the total misses.
+107. **Verbs: a new topic *Czynności* (actions), 12 words, level 3**: cook, eat, drink, buy,
+     sleep, run, walk, swim, sing, clap, draw, wash. English base form; the Polish is the
+     owner's form („gotuje”, „pije”, „kupuje”…), `plAcc` the genitive of the noun
+     („gotowania”). Each is a still Fluent picture of the action (🍳, 😋, 🥤, 🛒, 😴, 🏃,
+     🚶, 🏊, 🎤, 👏, 🖍️, 🧼; *cook* became the chef 🧑‍🍳 in decision 111), so open
+     question 7 (animation for verbs) stays open for Phase 11. *Cook*, *Singer* and *Woman dancing* were over the 25 kB budget even at
+     `floatPrecision` 1, so cook is the pan, sing the microphone, and *dance* gave way to
+     *clap*; the walking and running people need `floatPrecision` 2. The topic is off by
+     default (not in `DEFAULT_TOPICS`): the parent switches it on or plans its words. A sticker
+     set *actions* (clap is the rare one). Actions are not food for *Nakarm Polly* nor things to
+     paint in *Pokoloruj*; every other game may use them. 12 pictures, 1 more for 🔁.
+108. **The colours are flags again**, at the owner's request (reverting decision 100): the
+     recoloured triangular flags of decision 55 come back byte for byte, with their ids,
+     stickers and the story's pictures; the story is *Polly's Flags* / „Flagi Polly” again.
+109. **„Bardzo dobrze!” in place of *Good job!* and *Super!*.** `content/praise.json` entries
+     are `{ "en": … }` or `{ "pl": … }`; the rotation is Great!, Bardzo dobrze!, Yes!, Well
+     done!, Bardzo dobrze!. The Polish line goes through the Polish voice and is skipped while
+     Polish prompts are off. PLAN.md's "a short English praise" now has a Polish one among
+     them.
+
+### 2026-11-14 — three more topics (outside the phase sequence)
+
+110. **Toys, food and drinks, clothes**: the owner asked for three more topics, the most
+     common first; they are the next three of PLAN.md's vocabulary list (6, 7 and 9; 8, the
+     body, exists). Level 1, map order 6, 7 and 9, so *Czynności* (decision 107) moves to order
+     18, its place in the plan. *Zabawki* (10): ball, teddy bear, robot, kite, balloon, car,
+     train, drum, puzzle, yo-yo. *Jedzenie i picie* (12): bread, cheese, egg, milk, juice,
+     water, cake, ice cream, pizza, sandwich, chocolate, soup. *Ubrania* (11): T-shirt, jeans,
+     dress, shoes, socks, cap, coat, scarf, gloves, shorts, glasses (Fluent has no plain boot
+     under the expected name, so *boots* waits). 33 Fluent pictures; *Soccer ball* and
+     *Chocolate bar* need `floatPrecision` 2. The car is Fluent's plain red *Automobile*, a toy
+     here, not a colour. Each topic has a sticker page (one rare sticker each: kite, ice cream,
+     scarf) and, as PLAN.md asks of every level-1 topic, a six-page story: *Polly's Toys*,
+     *Polly's Lunch*, *Polly's Clothes*, each estimated within 25–40 s. The topics are off by
+     default, like the actions; a parent switches them on or plans their words. Food is what
+     *Nakarm Polly* was made for; nothing in the games needed a change.
+
+### 2026-11-14 — a larger picture budget, and *dance* (outside the phase sequence)
+
+111. **The per-picture budget is 56 kB, not 25 kB** (PLAN.md "Pictures" said ≤ 25 kB per SVG),
+     at the owner's request: richer Fluent pictures of people and actions are often 35–50 kB
+     after SVGO, and the owner would rather keep a valuable word than drop it for its file
+     size. `SVG_BUDGET_BYTES` is 56 × 1024; `check:content` and `npm run content` enforce it as
+     before. **25 kB stays the target** (the owner: pictures as small as possible, the old limit
+     wherever it can be kept): `SVG_TARGET_BYTES`, and both commands list every picture above it
+     (`ℹ above the 25.0 kB target: …`). A picture goes above only when nothing smaller shows the
+     word, at the lowest `floatPrecision` that still looks the same side by side (0 breaks the
+     people). So *dance* joins the actions (decision 107) as Fluent's *Woman dancing* at
+     `floatPrecision` 1 (37.3 kB, 48 kB at the default), and *cook* is now Fluent's *Cook*, the
+     chef (41.3 kB at 1), in place of the pan: one English word for the verb and the person, so
+     not a second word. The other pictures stay; the set is 127 pictures, 1.4 MB.
+
 ## Open questions
 
 Copied from PLAN.md. Each is settled in the phase named and the answer recorded here.
@@ -1434,4 +1535,5 @@ Copied from PLAN.md. Each is settled in the phase named and the answer recorded 
    pictures are replaceable" (Phases 2, 3 and 5). **Still open after Phase 5**: all four gate
    verdicts need the owner (two phones; the child). Nothing measured here argues for a swap.
 7. **Level-2 and level-3 content** (verbs, adjectives) needs animation, not a still picture.
-   The scope of animation per word is decided when Phase 11 starts.
+   The scope of animation per word is decided when Phase 11 starts. Since decision 107 twelve
+   verbs exist as still pictures; animating them is part of this question.

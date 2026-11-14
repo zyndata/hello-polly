@@ -6,6 +6,39 @@ This file is generated from Conventional Commit messages by
 The format follows [Keep a Changelog](https://keepachangelog.com) and the
 project adheres to [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+
+### Bug Fixes
+
+- **lesson:** Words met before come back in every lesson, so they get learned
+
+### Documentation
+
+- Record the owner's eight requests (decisions 104–109) and refresh the README
+- Record the three new topics (decision 110)
+
+### Features
+
+- **content:** The colours are shown as flags again
+- **content:** Polly says „Bardzo dobrze!” instead of "Good job!" and "Super!"
+- **content:** Everyday actions, twelve verbs such as cook, drink and buy
+- **parent:** Plan the next lessons ahead, choosing each lesson's words
+- **child:** „Powtórka” reviews words already met, trouble words first
+- **content:** Three new topics: toys, food and drinks, and clothes
+- **content:** Pictures may be up to 56 kB, and "dance" joins the actions
+- **content:** The cook is a chef, and pictures stay as small as they can
+
+### Miscellaneous
+
+- Update CHANGELOG
+- Update CHANGELOG
+- Update CHANGELOG
+- Update CHANGELOG
+
+### Tests
+
+- Expect the 56 kB budget in the oversized-picture check
+
 ## [0.4.0] - 2026-11-06
 
 ### Bug Fixes

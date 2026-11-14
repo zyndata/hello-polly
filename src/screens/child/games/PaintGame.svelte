@@ -104,7 +104,7 @@
     const minimum = new Promise((r) => setTimeout(r, AFTER_PAINT_MS));
     await speaker().saySegments([{ lang: 'en', text: spokenForm(colour) }, { lang: 'en', text: spokenForm(thing) }], speed.value);
     if (!alive) return;
-    await Promise.all([speaker().speak(nextPraise(), { lang: 'en', speed: 'normal' }), minimum]);
+    await Promise.all([speaker().saySegments([nextPraise()], 'normal'), minimum]);
     if (!alive) return;
     if (index < rounds.length - 1) {
       index += 1;

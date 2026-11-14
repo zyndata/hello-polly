@@ -66,12 +66,19 @@ describe('the game shelf', () => {
     expect(gameOpen('simon', [...learned, 'body.foot'], words)).toBe(true);
   });
 
-  it('opens Pokoloruj with three learned colours and one thing to paint (not a colour or a number)', () => {
+  it('opens Pokoloruj with three learned colours and one thing to paint (not a colour, a number or an action)', () => {
     const colours = ['colours.red', 'colours.blue', 'colours.yellow'];
-    expect(paintPools([...colours, 'numbers.one', 'fruit.apple'], words)).toEqual({ colours, things: ['fruit.apple'] });
+    expect(paintPools([...colours, 'numbers.one', 'actions.run', 'fruit.apple'], words)).toEqual({ colours, things: ['fruit.apple'] });
+    expect(gameOpen('paint', [...colours, 'actions.run'], words)).toBe(false);
     expect(gameOpen('paint', [...colours, 'numbers.one', 'numbers.two'], words)).toBe(false);
     expect(gameOpen('paint', [...colours.slice(0, 2), 'fruit.apple', 'fruit.pear'], words)).toBe(false);
     expect(gameOpen('paint', [...colours, 'fruit.apple'], words)).toBe(true);
+  });
+
+  it('feeds Polly anything learned but actions (decision 107)', () => {
+    const learned = ['fruit.apple', 'actions.eat', 'pets-farm.cat', 'actions.run'];
+    expect(gamePool('feed', learned, words)).toEqual(['fruit.apple', 'pets-farm.cat']);
+    expect(gamePool('bubbles', learned, words)).toEqual(learned);
   });
 
   it('opens Kosze with two topics of three learned words each', () => {

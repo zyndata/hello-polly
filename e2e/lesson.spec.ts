@@ -54,8 +54,9 @@ test('a full lesson runs end to end and updates attempts, stars and states', asy
     expect(pick.choices).toHaveLength(2);
     expect(pick.choices).toContain(pick.target);
   }
-  // A right answer is praised in English.
-  expect((await texts(page)).some((t) => praise.includes(t))).toBe(true);
+  // A right answer is praised: in English, or „Bardzo dobrze!” (decision 109).
+  const lines = praise.map((p) => ('en' in p ? p.en : p.pl));
+  expect((await texts(page)).some((t) => lines.includes(t))).toBe(true);
 
   // 9 steps, plus one bonus star for the five first tries in a row after the misses.
   await expect(page.getByTestId('stars')).toHaveAttribute('data-stars', '10');

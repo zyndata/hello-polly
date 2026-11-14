@@ -59,7 +59,7 @@
     busy = true;
     sounds().play('correct');
     onmood('happy');
-    await speaker().speak(nextPraise(), { lang: 'en', speed: 'normal' });
+    await speaker().saySegments([nextPraise()], 'normal');
     if (!alive) return;
     busy = false;
     if (index < commands.length - 1) {

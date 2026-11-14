@@ -1,7 +1,7 @@
 [
-  "Great!",
-  "Yes!",
-  "Well done!",
-  "Good job!",
-  "Super!"
+  {"en":"Great!"},
+  {"pl":"Bardzo dobrze!"},
+  {"en":"Yes!"},
+  {"en":"Well done!"},
+  {"pl":"Bardzo dobrze!"}
 ]

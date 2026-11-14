@@ -2,7 +2,7 @@
  * One "hear a word, tap its picture" round, whatever the pictures look like (STATE.md decisions
  * 43, 88): E1's grid, E4's bubbles, E5's food for Polly, E6's scene. Polly asks with a Polish
  * prompt and the English word; every tap says the tapped picture's word. A right tap chimes and
- * praises in English, then `onsolved` follows by itself. A wrong tap wiggles and Polly asks
+ * praises (`nextPraise`), then `onsolved` follows by itself. A wrong tap wiggles and Polly asks
  * again; from the second miss on, the right picture glows. Nothing is taken away or marked wrong.
  */
 
@@ -18,9 +18,18 @@ import type { Word, WordId } from '../types';
 /** The praise has this long at least before the next step. */
 export const AFTER_CORRECT_MS = 500;
 
-/** Rotates through the praise list, so a run of right answers is not one word over and over. */
+/**
+ * Rotates through the praise list, so a run of right answers is not one word over and over. A
+ * Polish line is skipped while Polish prompts are off (decision 109).
+ */
 let praised = 0;
-export const nextPraise = (): string => praise[praised++ % praise.length] ?? 'Great!';
+export function nextPraise(speaksPolish = speaker().speaksPolish): Segment {
+  for (let i = 0; i < praise.length; i++) {
+    const p = praise[praised++ % praise.length];
+    if (p && (p.lang === 'en' || speaksPolish)) return { lang: p.lang, text: p.text };
+  }
+  return { lang: 'en', text: 'Great!' };
+}
 
 export interface PickRoundOptions {
   target: WordId;
@@ -88,7 +97,7 @@ export class PickRound {
       const minimum = new Promise((r) => setTimeout(r, AFTER_CORRECT_MS));
       await speaker().sayWord(w, speed.value);
       if (!this.alive) return;
-      await Promise.all([speaker().speak(nextPraise(), { lang: 'en', speed: 'normal' }), minimum]);
+      await Promise.all([speaker().saySegments([nextPraise()], 'normal'), minimum]);
       if (this.alive) this.options.onsolved(this.misses);
       return;
     }

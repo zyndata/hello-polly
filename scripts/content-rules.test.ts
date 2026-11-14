@@ -18,7 +18,7 @@ function valid(): ContentSet {
       { id: 'fruit.banana', en: 'banana', pl: 'banan', plAcc: 'banana', topic: 'fruit', image: 'banana', level: 1 }
     ],
     prompts: REQUIRED_PROMPT_IDS.map((id) => ({ id, pl: id === 'pick.find' ? 'Gdzie jest {word}?' : 'Tekst.' })),
-    praise: ['Great!'],
+    praise: [{ en: 'Great!' }, { pl: 'Bardzo dobrze!' }],
     stories: [
       {
         id: 'picnic',
@@ -266,7 +266,7 @@ describe('npm run check:content (the CLIs, against fixture checkouts)', () => {
   it('fails on an oversized SVG', () => {
     const { status, output } = checkContent(fixture((_c, files) => files.set('banana.svg', svg(SVG_BUDGET_BYTES + 500))));
     expect(status).toBe(1);
-    expect(output).toContain('banana.svg is 25.5 kB, over the 25.0 kB budget');
+    expect(output).toContain('banana.svg is 56.5 kB, over the 56.0 kB budget');
   });
 
   it('fails on an unknown story word', () => {

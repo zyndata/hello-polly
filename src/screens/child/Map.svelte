@@ -5,8 +5,8 @@
   when the next lesson would be empty (nothing new, due or to practise), Polly says so instead
   (STATE.md decisions 39, 46). At the top a star meter fills toward the next chest, and a
   waiting chest glows at its end (decision 61). The 🎲 at the bottom opens the game shelf, the
-  📖 the stories (glowing while one waits that nobody has heard yet, decision 87) and the 📒
-  the sticker album. The gear opens the
+  📖 the stories (glowing while one waits that nobody has heard yet, decision 87), the 🔁
+  *Powtórka* (once a few words were met, decision 106) and the 📒 the sticker album. The gear opens the
   parent gate; the long-press home leads back to the picker when there are two or more
   children (decision 36). Nothing here needs reading.
 -->
@@ -20,13 +20,14 @@
   import { syncState } from '../../lib/sync/state.svelte';
   import Island from '../../lib/components/Island.svelte';
   import StarMeter from '../../lib/components/StarMeter.svelte';
-  import { prompt, stories, topics } from '../../lib/content';
+  import { prompt, stories, topics, word } from '../../lib/content';
   import { loadFamily } from '../../lib/db';
   import { liveChild, liveChildren } from '../../lib/domain/children';
   import { readSettings } from '../../lib/domain/family';
   import { wordStates } from '../../lib/domain/learning';
   import { lessonFor } from '../../lib/domain/lesson';
   import { lessonsDone } from '../../lib/domain/progress';
+  import { reviewOpen } from '../../lib/domain/review';
   import { chestState } from '../../lib/domain/rewards';
   import { storyIsNew } from '../../lib/domain/stories';
   import { localDay } from '../../lib/domain/time';
@@ -53,6 +54,7 @@
   let perChest = $state(15);
   let unopened = $state(0);
   let newStory = $state(false);
+  let canReview = $state(false);
   let current = $state<HTMLElement | undefined>();
 
   /** Bottom to top would be the sea chart; top to bottom reads like a path to scroll down. */
@@ -76,6 +78,7 @@
       ({ meter, unopened } = chestState(file.progress[childId], perChest));
       const states = wordStates(file.progress[childId]);
       newStory = stories.some((st) => storyIsNew(st, states, file.progress[childId]));
+      canReview = reviewOpen(file, childId, (id) => word(id) !== undefined);
       await tick();
       current?.scrollIntoView({ block: 'center' });
       if (speaker().isUnlocked) {
@@ -113,6 +116,12 @@
     unlock();
     sounds().play('tap');
     void push(`/child/${childId}/stories`);
+  }
+
+  function reviewLesson() {
+    unlock();
+    sounds().play('tap');
+    void push(`/child/${childId}/lesson?review`);
   }
 
   function albumPage() {
@@ -208,6 +217,11 @@
       >
         <ContentImage id="open-book" class="pointer-events-none h-full w-full object-contain" />
       </button>
+      {#if canReview}
+        <button type="button" class="bar-button size-tap rounded-full bg-foam/90 p-2 shadow-md" aria-label="Powtórka" data-testid="review" onclick={reviewLesson}>
+          <ContentImage id="repeat-button" class="pointer-events-none h-full w-full object-contain" />
+        </button>
+      {/if}
       <button type="button" class="bar-button size-tap rounded-full bg-foam/90 p-2 shadow-md" aria-label="Album z naklejkami" data-testid="album" onclick={albumPage}>
         <ContentImage id="ledger" class="pointer-events-none h-full w-full object-contain" />
       </button>

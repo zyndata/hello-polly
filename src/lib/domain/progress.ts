@@ -29,7 +29,15 @@ export function recordIntroduced(file: FamilyFile, child: ChildId, device: Devic
 /** A finished lesson, under an event id unique to it. Recording the same id twice changes nothing. */
 export function recordLesson(file: FamilyFile, child: ChildId, device: DeviceId, id: string, lesson: LessonRecord): FamilyFile {
   return change(file, child, device, (p) =>
-    id in p.lessons ? undefined : { ...p, lessons: { ...p.lessons, [id]: { at: lesson.at, words: [...lesson.words] } } }
+    id in p.lessons
+      ? undefined
+      : {
+          ...p,
+          lessons: {
+            ...p.lessons,
+            [id]: { at: lesson.at, words: [...lesson.words], ...(lesson.planned === undefined ? {} : { planned: lesson.planned }) }
+          }
+        }
   );
 }
 
@@ -56,6 +64,13 @@ export function addStars(file: FamilyFile, child: ChildId, device: DeviceId, sta
 /** Lessons finished on every device: the islands with a flag. */
 export function lessonsDone(progress: ChildProgress): number {
   return Object.values(progress ?? {}).reduce((sum, d) => sum + Object.keys(d.lessons).length, 0);
+}
+
+/** The parent's planned lessons finished on any device (STATE.md decision 105). */
+export function plannedDone(progress: ChildProgress): Set<string> {
+  const done = new Set<string>();
+  for (const d of Object.values(progress ?? {})) for (const l of Object.values(d.lessons)) if (l.planned !== undefined) done.add(l.planned);
+  return done;
 }
 
 /**

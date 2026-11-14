@@ -32,8 +32,8 @@ test.describe('/parent/speech', () => {
   });
 
   test('tapping a picture speaks its `say ?? en`, for every word', async ({ page }) => {
-    // 45 taps, each checked; WebKit under a loaded CI runner needs the room.
-    test.setTimeout(90_000);
+    // 98 taps, each checked; WebKit under a loaded CI runner needs the room.
+    test.setTimeout(200_000);
     for (const w of words) {
       await page.locator(`[data-word-id="${w.id}"]`).click();
       await expect.poll(() => lastSpoken(page).then((s) => s?.[0]), { message: w.id, intervals: [25] }).toBe(spokenForm(w));

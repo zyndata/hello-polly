@@ -3,10 +3,10 @@ import { topics } from '../content';
 import { addChild } from './children';
 import { emptyFamily, defaultPlan } from './family';
 import { wordStates } from './learning';
-import { introducedBy, lessonFor } from './lesson';
+import { introducedBy, lessonFor, nextLesson } from './lesson';
 import { mergeFamily } from './merge';
 import { totalStars } from './rewards';
-import { addStars, lessonsDone, recordAttempt, recordIntroduced, recordLesson } from './progress';
+import { addStars, lessonsDone, plannedDone, recordAttempt, recordIntroduced, recordLesson } from './progress';
 
 const T1 = '2026-10-19T08:00:00.000Z';
 const T2 = '2026-10-19T09:00:00.000Z';
@@ -45,6 +45,56 @@ describe('progress', () => {
     let file = family();
     file = { ...file, plans: { ...file.plans, c1: { v: { ...defaultPlan(), queue: ['pets-farm.duck'] }, t: T2, d: 'dev-a' } } };
     expect(introducedBy(lessonFor(file, 'c1', topics, TODAY))[0]).toBe('pets-farm.duck');
+  });
+
+  it('plays the parent’s planned lessons in order until a device records each one finished (decision 105)', () => {
+    let file = family();
+    const lessons = [
+      { id: 'p1', words: ['body.nose', 'fruit.apple'] },
+      { id: 'p2', words: ['pets-farm.cat'] }
+    ];
+    file = { ...file, plans: { ...file.plans, c1: { v: { ...defaultPlan(), lessons }, t: T2, d: 'dev-a' } } };
+    const first = nextLesson(file, 'c1', topics, TODAY);
+    expect(first.planned).toBe('p1');
+    expect(introducedBy(first.steps)).toEqual(['body.nose', 'fruit.apple']);
+
+    file = recordLesson(file, 'c1', 'dev-b', 'l1', { at: T2, words: ['body.nose', 'fruit.apple'], planned: 'p1' });
+    expect(file.progress.c1?.['dev-b']?.lessons.l1?.planned).toBe('p1');
+    expect([...plannedDone(file.progress.c1)]).toEqual(['p1']);
+    const second = nextLesson(file, 'c1', topics, TODAY);
+    expect(second.planned).toBe('p2');
+    expect(introducedBy(second.steps)).toEqual(['pets-farm.cat']);
+    // A one-word lesson is still topped up to eight steps.
+    expect(second.steps.length).toBeLessThanOrEqual(8);
+
+    file = recordLesson(file, 'c1', 'dev-a', 'l2', { at: T2, words: ['pets-farm.cat'], planned: 'p2' });
+    const after = nextLesson(file, 'c1', topics, TODAY);
+    expect(after.planned).toBeUndefined();
+    expect(introducedBy(after.steps)[0]).toBe('colours.red');
+  });
+
+  it('a planned lesson of words the content no longer has is skipped', () => {
+    let file = family();
+    file = { ...file, plans: { ...file.plans, c1: { v: { ...defaultPlan(), lessons: [{ id: 'p1', words: ['gone.word'] }] }, t: T2, d: 'dev-a' } } };
+    expect(nextLesson(file, 'c1', topics, TODAY).planned).toBeUndefined();
+  });
+
+  it('words introduced earlier come back in later lessons, so they can be learned on a second day (decision 104)', () => {
+    let file = family();
+    for (const id of ['colours.red', 'colours.blue', 'colours.yellow']) {
+      file = recordIntroduced(file, 'c1', 'dev-a', id, T1);
+      file = recordAttempt(file, 'c1', 'dev-a', id, '2026-10-18', 0);
+      file = recordAttempt(file, 'c1', 'dev-a', id, '2026-10-18', 0);
+    }
+    const steps = lessonFor(file, 'c1', topics, TODAY);
+    expect(steps.filter((s) => s.kind === 'pick' && s.reason === 'practice').map((s) => s.word).sort()).toEqual([
+      'colours.blue',
+      'colours.red',
+      'colours.yellow'
+    ]);
+    // One first-try answer today makes such a word learned.
+    file = recordAttempt(file, 'c1', 'dev-a', 'colours.red', TODAY, 0);
+    expect(wordStates(file.progress.c1).get('colours.red')?.status).toBe('learned');
   });
 
   it('records solved exercises per word and day, with first tries and wrong taps', () => {

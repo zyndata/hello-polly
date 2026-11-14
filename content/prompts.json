@@ -40,5 +40,7 @@
   {"id":"paint.colour","pl":"Pomaluj na {word}!"},
   {"id":"paint.pot","pl":"Najpierw dotknij farbki!"},
   {"id":"sort.which","pl":"Do którego koszyka?"},
+  {"id":"review.start","pl":"Powtórka! Przypomnijmy sobie słówka.","variants":["Czas na powtórkę! Co już znamy?","Powtarzamy słówka! Gotowi?"]},
+  {"id":"review.finish","pl":"Brawo! Powtórka zrobiona!","variants":["Super powtórka! Brawo!","Pięknie! Wszystko powtórzone!"]},
   {"id":"sleep.night","pl":"Koniec na dziś! Polly idzie spać.","variants":["Na dziś wystarczy! Polly idzie spać.","Polly ziewa… Czas odpocząć. Do jutra!"]}
 ]

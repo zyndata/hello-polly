@@ -6,14 +6,20 @@
  * here; the unit tests import the function and feed it fixtures.
  */
 
-/** Per-SVG size budget (PLAN.md "Pictures"). */
-export const SVG_BUDGET_BYTES = 25 * 1024;
+/** Per-SVG size budget (PLAN.md "Pictures"; raised from 25 kB by STATE.md decision 111). */
+export const SVG_BUDGET_BYTES = 56 * 1024;
+/**
+ * What a picture should weigh (decision 111): the old budget. Above it a picture is allowed only
+ * when nothing smaller shows the word; `npm run content` and `--check` list such pictures.
+ */
+export const SVG_TARGET_BYTES = 25 * 1024;
 
 /**
  * Every Polish prompt the app speaks: the start screen's greeting (Phase 3), and the Phase 5
  * lesson player and exercises (look and listen, E1, E2, E3, feedback, finish), the Phase 6
- * chest and album, and the Phase 9 story shelf and player and games E4–E9. `check:content` fails when one is missing from the catalog, or when
- * the catalog has one that is not listed here.
+ * chest and album, the Phase 9 story shelf and player and games E4–E9, and *Powtórka* (STATE.md
+ * decision 106). `check:content` fails when one is missing from the catalog, or when the
+ * catalog has one that is not listed here.
  */
 export const REQUIRED_PROMPT_IDS = /** @type {const} */ ([
   'start.hello',
@@ -57,6 +63,8 @@ export const REQUIRED_PROMPT_IDS = /** @type {const} */ ([
   'paint.colour',
   'paint.pot',
   'sort.which',
+  'review.start',
+  'review.finish',
   'sleep.night'
 ]);
 
@@ -78,12 +86,13 @@ export const STORY_FUNCTION_WORDS = /** @type {const} */ ([
  * Pictures the screens use directly rather than through content: Polly, the 🐢/🐇 speed
  * toggle, Polly's ship on the map, the gear of the parent gate, the home button, the game
  * shelf's die, lock and speaker, the album's ledger, the stories' book, and the Phase 9 game
- * tiles and *Polly mówi*'s ✅. They count as used, and must exist like any content picture.
+ * tiles and *Polly mówi*'s ✅, and the map's 🔁 *Powtórka*. They count as used, and must
+ * exist like any content picture.
  */
 export const UI_IMAGE_IDS = /** @type {const} */ ([
   'parrot', 'turtle', 'rabbit', 'sailboat', 'gear', 'house', 'game-die', 'locked', 'speaker-high-volume', 'ledger',
   'open-book', 'check-mark-button', 'bubbles', 'magnifying-glass-tilted-left', 'fork-and-knife-with-plate', 'basket',
-  'zzz'
+  'zzz', 'repeat-button'
 ]);
 
 /** A story has this many pages (PLAN.md "Content model": 5–8, about 30 seconds). */
@@ -240,7 +249,7 @@ export function validateContent(content, imageBytes) {
     checkImage(where, word.image);
   }
 
-  // Polish prompts and English praise.
+  // Polish prompts, and praise in English or Polish.
   const prompts = indexById('prompt', content.prompts);
   /** @type {readonly string[]} */
   const required = REQUIRED_PROMPT_IDS;
@@ -282,7 +291,9 @@ export function validateContent(content, imageBytes) {
     }
   }
   if (!Array.isArray(content.praise) || content.praise.length === 0) errors.push('praise: empty');
-  else if (!content.praise.every(isText)) errors.push('praise: every entry must be text');
+  else if (!content.praise.every((/** @type {any} */ p) => p !== null && typeof p === 'object' && Object.keys(p).length === 1 && (isText(p.en) || isText(p.pl)))) {
+    errors.push('praise: every entry must be {"en": text} or {"pl": text}');
+  }
 
   // Stories: every token is vocabulary, a topic name, or a function word.
   /** @type {Set<string>} */

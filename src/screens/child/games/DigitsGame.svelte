@@ -8,7 +8,8 @@
   import { onDestroy, onMount } from 'svelte';
   import ContentImage from '../../../lib/components/ContentImage.svelte';
   import type { Mood } from '../../../lib/components/PollyBuddy.svelte';
-  import { praise, prompt, word as wordById } from '../../../lib/content';
+  import { nextPraise } from '../../../lib/components/pick-round.svelte';
+  import { prompt, word as wordById } from '../../../lib/content';
   import { DIGITS, digitsBoard, digitsDone, selectDigit, startDigits, tapPicture, type Digit } from '../../../lib/domain/digits';
   import { starsFor } from '../../../lib/domain/exercise';
   import { digitImage } from '../../../lib/domain/games';
@@ -38,7 +39,6 @@
   let round = $state(startDigits());
   let wiggles = $state<Record<WordId, number>>({});
   let toldToFind = false;
-  let praised = 0;
   let alive = true;
 
   const selectedWord = $derived(board && round.selected !== null ? wordById(board.pairs[round.selected]) : undefined);
@@ -91,8 +91,7 @@
       const done = digitsDone(next);
       await speaker().sayWord(w, speed.value);
       if (!alive) return;
-      const line = praise[praised++ % praise.length] ?? 'Great!';
-      await speaker().speak(line, { lang: 'en', speed: 'normal' });
+      await speaker().saySegments([nextPraise()], 'normal');
       if (alive && done) onfinish(starsFor(DIGITS.length, firstTries));
       return;
     }

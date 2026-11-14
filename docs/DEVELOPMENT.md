@@ -38,7 +38,7 @@ both machines and in CI.
 | `npm run test:e2e` | Playwright against `vite preview` (builds first). Chromium; WebKit too with `E2E_WEBKIT=1` or in CI |
 | `npm run test:e2e:csp` | The same specs against the Caddy container on :8081, under the production CSP |
 | `npm run content` | Rebuild `content/img/` from `content/images.json`: download from the pinned Fluent Emoji commit, SVGO, size budget, licence and attribution. **Needs the network**; commit the result |
-| `npm run check:content` | Offline: `content/img/` matches the manifest, then the content rules (ids, pictures within 25 kB, Polish forms, prompt catalog, story words). Runs in CI |
+| `npm run check:content` | Offline: `content/img/` matches the manifest, then the content rules (ids, pictures within 56 kB, Polish forms, prompt catalog, story words). Runs in CI |
 | `npm run docker:up` | `build`, then rebuild and restart the `hellopolly-dev` container on :8081 |
 | `npm run screenshots` | Retake the README screenshots against a running build (default :8081) |
 | `npm run changelog` | Regenerate `CHANGELOG.md` from commits (git-cliff) |
@@ -141,7 +141,7 @@ are `UI_IMAGE_IDS` in the content rules; the avatars are `content/avatars.json`)
 
 1. Add its picture to `content/images.json` (the upstream path in the pinned
    `microsoft/fluentui-emoji` commit; browse the repository at that commit to find it).
-2. `npm run content` (downloads, optimises, enforces ≤ 25 kB). A picture over budget may carry
+2. `npm run content` (downloads, optimises, enforces ≤ 56 kB). A picture over budget may carry
    `{ "path": …, "floatPrecision": 1 }`; compare it side by side before accepting.
 3. Add the word to `content/words.json` (with `pl` and `plAcc`) and to its topic's `words`.
 4. `npm run check:content`, then commit `content/` together.

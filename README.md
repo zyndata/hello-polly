@@ -14,17 +14,20 @@ Pre A1 Starters). The code, comments and documentation are in English.
 > local data layer, speech, children and the word plan, real lessons, rewards, Drive sync,
 > inviting the second parent, stories with more games, and screen time with the progress
 > dashboard. A parent sets up a
-> child (nickname and an animal picture), chooses the topics and, if they like, the exact words
-> to start with. The child gets a treasure map of islands: each island is a lesson of about
-> 8–12 steps, up to three new words in *look and listen*, then „Gdzie jest…?” picks with 2–4
-> pictures that mix the new words with reviews. A wrong tap only wiggles and says the word again;
+> child (nickname and an animal picture), chooses the topics (colours, numbers, fruit, animals,
+> toys, food and drinks, body parts, clothes, everyday actions) and, if they like, the exact
+> words to start with, or plans the next islands ahead with up to four words each. The child gets a treasure map of islands: each
+> island is a lesson of about 8–12 steps, up to three new words in *look and listen*, then
+> „Gdzie jest…?” picks with 2–4 pictures that mix the new words with words met before, so every
+> word comes back until it is learned. *Powtórka* (🔁 on the map) reviews words already met,
+> the ones that gave trouble first. A wrong tap only wiggles and says the word again;
 > after the second miss the right picture glows. Stars appear at the end of each island. Once a
 > child has learned four words, a game shelf opens with up to nine games over learned words
 > only: *Posłuchaj i dotknij*, *Cyferki* (tap a digit, hear a word, find its picture),
 > *Memory*, *Bańki* (pop the named bubble), *Nakarm Polly* (drag the named food to her),
 > *Gdzie jest…?* (find things in a scene), *Polly mówi* (show your nose, your hand…),
 > *Pokoloruj* (dip a brush in the named colour and paint the picture) and, if a parent switches
-> it on, *Kosze* (sort pictures into two topic baskets). Five 30-second stories, one per topic,
+> it on, *Kosze* (sort pictures into two topic baskets). Eight 30-second stories, one per topic,
 > open once 80 % of their pictures' words are learned: Polly reads them sentence by sentence,
 > the pictures bounce as their words are spoken, and any picture says its word when tapped. The parent panel sits
 > behind a parent gate (a number in Polish words). Stars fill a meter on the map; a full meter
@@ -49,15 +52,15 @@ Pre A1 Starters). The code, comments and documentation are in English.
 
 | Treasure map (child) | Look and listen (child) | Listen and tap (child) |
 |---|---|---|
-| ![Islands in a blue sea: one with a flag, the next with Polly on her sailboat, two more ahead; a star meter two-thirds full and a faded chest at the top, a die and an album at the bottom](docs/screenshots/map.png) | ![A big red car to tap, progress dots, the turtle and rabbit speed buttons and a house to hold for leaving](docs/screenshots/lesson.png) | ![Two cars to choose from after two wrong taps: the right one glows coral; Polly and a speaker button below](docs/screenshots/pick.png) |
+| ![Islands in a blue sea: one with a flag, the next with Polly on her sailboat, two more ahead; a star meter two-thirds full and a faded chest at the top; a die, a book, the 🔁 of Powtórka and an album at the bottom](docs/screenshots/map.png) | ![A big red flag to tap, progress dots, the turtle and rabbit speed buttons and a house to hold for leaving](docs/screenshots/lesson.png) | ![Two flags to choose from after two wrong taps: the right one glows coral; Polly and a speaker button below](docs/screenshots/pick.png) |
 | **Cyferki (child)** | **Island won (child)** | **Start (child)** |
 | ![Four fruit pictures above four digit tiles 1–4; digit 2 is picked and ringed in gold](docs/screenshots/digits.png) | ![The island with its flag, Polly, and a row of gold stars earned](docs/screenshots/finish.png) | ![Polly the parrot on the sea, ringed by a pulsing gold circle: tap to begin](docs/screenshots/start.png) |
 | **Treasure chest (child)** | **Sticker album (child)** | **A story (child)** |
 | ![An open pirate chest glowing gold, a new sticker (a pear) above it and a green ▶ below](docs/screenshots/chest.png) | ![The album's fruit page: topic tabs above a grid of dashed slots with fruit silhouettes; the pear sticker ringed in gold](docs/screenshots/album.png) | ![A beach scene with Polly and a big red apple, page dots above and the sentence "Look! A red apple." below](docs/screenshots/story.png) |
 | **Pokoloruj (child)** | **Gdzie jest…? (child)** | **Polly asleep: the lock (child)** |
-| ![A pear painted yellow above three paint pots, the yellow one ringed in gold](docs/screenshots/paint.png) | ![A beach scene with eight learned things to find: cars, fruit](docs/screenshots/spy.png) | ![The lock: a night sea with a moon and Polly asleep with a zzz; only the gear in the corner](docs/screenshots/sleep.png) |
+| ![A pear painted yellow above three paint pots, the yellow one ringed in gold](docs/screenshots/paint.png) | ![A beach scene with eight learned things to find: flags, fruit](docs/screenshots/spy.png) | ![The lock: a night sea with a moon and Polly asleep with a zzz; only the gear in the corner](docs/screenshots/sleep.png) |
 | **Parent gate** | **Word plan (parent)** | **Speech and voices (parent)** |
-| ![The parent gate: „dziesięć” written in words above a number keypad](docs/screenshots/gate.png) | ![A child's next new words and the word plan: queue, random order, topics](docs/screenshots/plan.png) | ![The parent's speech screen: voice check, accent, speeds](docs/screenshots/speech.png) |
+| ![The parent gate: „dziesięć” written in words above a number keypad](docs/screenshots/gate.png) | ![A child's next new words, the lesson plan and the word plan: queue, random order, topics](docs/screenshots/plan.png) | ![The parent's speech screen: voice check, accent, speeds](docs/screenshots/speech.png) |
 | **Progress (parent)** | | |
 | ![The progress dashboard: learned words per topic as bars, words to practise, a 4-week calendar of minutes](docs/screenshots/dashboard.png) | | |
 

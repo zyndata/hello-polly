@@ -30,7 +30,7 @@ describe('learned words per topic', () => {
 });
 
 describe('words that need practice', () => {
-  it('most first-try misses first, over every device and day, then the most recent miss', () => {
+  it('furthest from mastered first, over every device and day, then the most recent miss', () => {
     const p = {
       a: progress({
         attempts: {
@@ -48,9 +48,9 @@ describe('words that need practice', () => {
       })
     };
     expect(needsPractice(p, (id) => id !== 'gone.word')).toEqual([
-      { word: 'fruit.apple', misses: 3, lastMiss: '2026-10-01' },
-      { word: 'colours.red', misses: 2, lastMiss: '2026-10-15' },
-      { word: 'pets.cat', misses: 2, lastMiss: '2026-10-03' }
+      { word: 'fruit.apple', misses: 3, debt: 4, lastMiss: '2026-10-01' },
+      { word: 'pets.cat', misses: 2, debt: 3, lastMiss: '2026-10-03' },
+      { word: 'colours.red', misses: 2, debt: 2, lastMiss: '2026-10-15' }
     ]);
     expect(needsPractice(p, () => true, 1).map((w) => w.word)).toEqual(['gone.word']);
     expect(needsPractice(undefined, () => true)).toEqual([]);
@@ -59,9 +59,22 @@ describe('words that need practice', () => {
   it('a word whose misses are all compacted still shows, after the dated ones', () => {
     const p = { a: progress({ attempts: { 'fruit.pear': { old: { c: 3, w: 2, first: 1, days: 1 } }, 'fruit.apple': { '2026-10-01': { c: 3, w: 2, first: 1 } } } }) };
     expect(needsPractice(p, () => true)).toEqual([
-      { word: 'fruit.apple', misses: 2, lastMiss: '2026-10-01' },
-      { word: 'fruit.pear', misses: 2 }
+      { word: 'fruit.apple', misses: 2, debt: 3, lastMiss: '2026-10-01' },
+      { word: 'fruit.pear', misses: 2, debt: 3 }
     ]);
+  });
+
+  it('a word leaves the list once later clean answers pay its misses, two per miss', () => {
+    // Day one: one miss and one clean answer (debt 1). Day two: one more clean answer pays it.
+    const missed = { '2026-10-01': { c: 2, w: 1, first: 1 } };
+    expect(needsPractice({ a: progress({ attempts: { 'fruit.apple': missed } }) }, () => true)).toEqual([
+      { word: 'fruit.apple', misses: 1, debt: 1, lastMiss: '2026-10-01' }
+    ]);
+    const paid = progress({ attempts: { 'fruit.apple': { ...missed, '2026-10-02': { c: 1, w: 0, first: 1 } } } });
+    expect(needsPractice({ a: paid }, () => true)).toEqual([]);
+    // A miss alone needs two clean answers: after one it is still there.
+    const notYet = progress({ attempts: { 'fruit.apple': { '2026-10-01': { c: 1, w: 2, first: 0 }, '2026-10-02': { c: 1, w: 0, first: 1 } } } });
+    expect(needsPractice({ a: notYet }, () => true)).toEqual([{ word: 'fruit.apple', misses: 1, debt: 1, lastMiss: '2026-10-01' }]);
   });
 });
 
@@ -109,7 +122,7 @@ describe('stickers collected and stories heard', () => {
   const STICKERS: Sticker[] = [
     { id: 'fruit.apple', image: 'red-apple', set: 'fruit' },
     { id: 'fruit.pear', image: 'pear', set: 'fruit' },
-    { id: 'colours.red', image: 'red-car', set: 'colours' }
+    { id: 'colours.red', image: 'red-flag', set: 'colours' }
   ];
   const p = {
     a: progress({ chestsOpened: { c1: { at: '2026-10-01T10:00:00.000Z', stickers: ['fruit.apple'] } }, storiesHeard: { picnic: 2 } }),
