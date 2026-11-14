@@ -31,6 +31,11 @@ project adheres to [Semantic Versioning](https://semver.org).
 
 - Update CHANGELOG
 - Update CHANGELOG
+- Update CHANGELOG
+
+### Tests
+
+- Expect the 56 kB budget in the oversized-picture check
 
 ## [0.4.0] - 2026-11-06
 
