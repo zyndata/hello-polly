@@ -15,8 +15,8 @@ Pre A1 Starters). The code, comments and documentation are in English.
 > inviting the second parent, stories with more games, and screen time with the progress
 > dashboard. A parent sets up a
 > child (nickname and an animal picture), chooses the topics (colours, numbers, fruit, animals,
-> body parts, everyday actions) and, if they like, the exact words to start with, or plans the
-> next islands ahead with up to four words each. The child gets a treasure map of islands: each
+> toys, food and drinks, body parts, clothes, everyday actions) and, if they like, the exact
+> words to start with, or plans the next islands ahead with up to four words each. The child gets a treasure map of islands: each
 > island is a lesson of about 8–12 steps, up to three new words in *look and listen*, then
 > „Gdzie jest…?” picks with 2–4 pictures that mix the new words with words met before, so every
 > word comes back until it is learned. *Powtórka* (🔁 on the map) reviews words already met,
@@ -27,7 +27,7 @@ Pre A1 Starters). The code, comments and documentation are in English.
 > *Memory*, *Bańki* (pop the named bubble), *Nakarm Polly* (drag the named food to her),
 > *Gdzie jest…?* (find things in a scene), *Polly mówi* (show your nose, your hand…),
 > *Pokoloruj* (dip a brush in the named colour and paint the picture) and, if a parent switches
-> it on, *Kosze* (sort pictures into two topic baskets). Five 30-second stories, one per topic,
+> it on, *Kosze* (sort pictures into two topic baskets). Eight 30-second stories, one per topic,
 > open once 80 % of their pictures' words are learned: Polly reads them sentence by sentence,
 > the pictures bounce as their words are spoken, and any picture says its word when tapped. The parent panel sits
 > behind a parent gate (a number in Polish words). Stars fill a meter on the map; a full meter

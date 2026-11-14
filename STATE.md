@@ -1482,6 +1482,23 @@ is optional and absent means the old behaviour).
      Polish prompts are off. PLAN.md's "a short English praise" now has a Polish one among
      them.
 
+### 2026-11-14 — three more topics (outside the phase sequence)
+
+110. **Toys, food and drinks, clothes**: the owner asked for three more topics, the most
+     common first; they are the next three of PLAN.md's vocabulary list (6, 7 and 9; 8, the
+     body, exists). Level 1, map order 6, 7 and 9, so *Czynności* (decision 107) moves to order
+     18, its place in the plan. *Zabawki* (10): ball, teddy bear, robot, kite, balloon, car,
+     train, drum, puzzle, yo-yo. *Jedzenie i picie* (12): bread, cheese, egg, milk, juice,
+     water, cake, ice cream, pizza, sandwich, chocolate, soup. *Ubrania* (11): T-shirt, jeans,
+     dress, shoes, socks, cap, coat, scarf, gloves, shorts, glasses (Fluent has no plain boot
+     under the expected name, so *boots* waits). 33 Fluent pictures; *Soccer ball* and
+     *Chocolate bar* need `floatPrecision` 2. The car is Fluent's plain red *Automobile*, a toy
+     here, not a colour. Each topic has a sticker page (one rare sticker each: kite, ice cream,
+     scarf) and, as PLAN.md asks of every level-1 topic, a six-page story: *Polly's Toys*,
+     *Polly's Lunch*, *Polly's Clothes*, each estimated within 25–40 s. The topics are off by
+     default, like the actions; a parent switches them on or plans their words. Food is what
+     *Nakarm Polly* was made for; nothing in the games needed a change.
+
 ## Open questions
 
 Copied from PLAN.md. Each is settled in the phase named and the answer recorded here.
