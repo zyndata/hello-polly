@@ -15,6 +15,7 @@ project adheres to [Semantic Versioning](https://semver.org).
 ### Documentation
 
 - Record the owner's eight requests (decisions 104–109) and refresh the README
+- Record the three new topics (decision 110)
 
 ### Features
 
@@ -23,6 +24,11 @@ project adheres to [Semantic Versioning](https://semver.org).
 - **content:** Everyday actions, twelve verbs such as cook, drink and buy
 - **parent:** Plan the next lessons ahead, choosing each lesson's words
 - **child:** „Powtórka” reviews words already met, trouble words first
+- **content:** Three new topics: toys, food and drinks, and clothes
+
+### Miscellaneous
+
+- Update CHANGELOG
 
 ## [0.4.0] - 2026-11-06
 
