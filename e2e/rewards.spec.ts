@@ -152,8 +152,9 @@ test('the album is open from the first day: empty slots, pages by topic', async 
   await expect(page).toHaveURL(new RegExp(`#/child/${ola}/album$`));
   await expect.poll(() => texts(page).then((t) => t.at(-1))).toBe('Zbieraj gwiazdki, a znajdziesz skrzynię z naklejkami!');
   const tabs = page.getByTestId('album-tabs').locator('[data-set]');
-  // The four first topics, the body parts (STATE.md decision 83) and the actions (decision 107).
-  await expect(tabs).toHaveCount(6);
+  // Every topic has its page: the four first ones, toys, food, the body parts (STATE.md decision
+  // 83), clothes and actions (decisions 107, 110).
+  await expect(tabs).toHaveCount(9);
   const albumPage = page.getByTestId('album-page');
   await expect(albumPage).toHaveAttribute('data-set', 'colours');
   await expect(albumPage.locator('[data-sticker-id]')).toHaveCount(11);

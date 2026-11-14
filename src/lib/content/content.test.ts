@@ -3,8 +3,8 @@ import { REQUIRED_PROMPT_IDS } from '../../../scripts/lib/content-rules.mjs';
 import { prompt, promptLines, topic, topics, word, words } from '.';
 
 describe('bundled content', () => {
-  it('has the first four topics, body parts (STATE.md decision 83) and actions (decision 107), in map order', () => {
-    expect(topics.map((t) => t.id)).toEqual(['colours', 'numbers', 'fruit', 'pets-farm', 'body', 'actions']);
+  it('has the first four topics, toys, food, body parts (STATE.md decision 83), clothes and actions (decisions 107, 110), in map order', () => {
+    expect(topics.map((t) => t.id)).toEqual(['colours', 'numbers', 'fruit', 'pets-farm', 'toys', 'food', 'body', 'clothes', 'actions']);
   });
 
   it('every word has its Polish forms and an image id (never a file name)', () => {
