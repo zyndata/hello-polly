@@ -10,12 +10,16 @@
     stars are written together. Then the child sails back to the map.
   - Time up (decision 93): the step being played is finished first; then the lesson stops, the
     steps done are paid in stars (no flag: the lesson was not finished), and the lock shows.
+  - The parent's next planned lesson, when there is one, is the one played, and finishing it
+    records its id (STATE.md decision 105).
+  - `?review` plays *Powtórka* instead (decision 106): words met before, trouble words first.
+    Its answers and stars count like a lesson's, but it is not an island: no flag, no record.
 
   Progress dots, 🐢/🐇, Polly's reactions, 🔊 on picks, and the long-press home throughout.
 -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { replace } from 'svelte-spa-router';
+  import { replace, router } from 'svelte-spa-router';
   import ChildLayout from '../../lib/components/ChildLayout.svelte';
   import FinishScreen from '../../lib/components/FinishScreen.svelte';
   import HomeButton from '../../lib/components/HomeButton.svelte';
@@ -29,8 +33,9 @@
   import { childPlan, liveChild } from '../../lib/domain/children';
   import { planLesson, starsFor, type PlayStep } from '../../lib/domain/exercise';
   import { wordStates } from '../../lib/domain/learning';
-  import { introducedBy, lessonFor } from '../../lib/domain/lesson';
+  import { introducedBy, nextLesson } from '../../lib/domain/lesson';
   import { addStars, recordAttempt, recordIntroduced, recordLesson } from '../../lib/domain/progress';
+  import { reviewFor } from '../../lib/domain/review';
   import { localDay } from '../../lib/domain/time';
   import { sounds } from '../../lib/sound/effects';
   import { speaker, spokenForm, type Segment } from '../../lib/speech';
@@ -52,6 +57,10 @@
   const childId = $derived(params?.id ?? '');
   const lessonId = crypto.randomUUID();
   const startedAt = new Date().toISOString();
+  /** *Powtórka* (decision 106), not an island. */
+  const review = new URLSearchParams(router.querystring ?? '').has('review');
+  /** The parent's planned lesson being played, if any (decision 105). */
+  let planned: string | undefined;
 
   let steps = $state<PlayStep[]>([]);
   let index = $state(0);
@@ -68,13 +77,20 @@
   const current = $derived(steps[index]);
   const currentWord = $derived(current ? word(current.word) : undefined);
   /** The opening line goes with the first step, whatever it is. */
-  const opening = (): Segment[] => (index === 0 ? [{ lang: 'pl', text: prompt('lesson.start') }] : []);
+  const opening = (): Segment[] => (index === 0 ? [{ lang: 'pl', text: prompt(review ? 'review.start' : 'lesson.start') }] : []);
 
   onMount(() => {
     void (async () => {
       const file = await loadFamily();
       if (!liveChild(file, childId)) return replace('/');
-      const composed = lessonFor(file, childId, topics, localDay(new Date()));
+      let composed;
+      if (review) {
+        composed = reviewFor(file, childId, (id) => word(id) !== undefined, lessonId);
+      } else {
+        const next = nextLesson(file, childId, topics, localDay(new Date()));
+        composed = next.steps;
+        planned = next.planned;
+      }
       const context = { plan: childPlan(file, childId), states: wordStates(file.progress[childId]), words };
       steps = planLesson(composed, context, lessonId).filter((s) => word(s.word));
       if (steps.length === 0) return replace(`/child/${childId}`);
@@ -148,23 +164,23 @@
   async function finish() {
     finished = true;
     stars = starsFor(steps.length, firstTries);
-    const record = { at: startedAt, words: introducedBy(steps) };
+    const record = { at: startedAt, words: introducedBy(steps), ...(planned === undefined ? {} : { planned }) };
     const earned = stars;
     const saved = change((file, _now, device) =>
-      addStars(recordLesson(file, childId, device, lessonId, record), childId, device, earned)
+      addStars(review ? file : recordLesson(file, childId, device, lessonId, record), childId, device, earned)
     );
     sounds().play('sparkle');
     const minimum = new Promise((r) => setTimeout(r, FINISH_MS));
-    await Promise.all([saved, minimum, speaker().sayPrompt(prompt('lesson.finish'), speed.value)]);
+    await Promise.all([saved, minimum, speaker().sayPrompt(prompt(review ? 'review.finish' : 'lesson.finish'), speed.value)]);
     await replace(`/child/${childId}`);
   }
 </script>
 
 <ChildLayout>
-  <h1 class="sr-only">{screen.title}</h1>
+  <h1 class="sr-only">{review ? 'Powtórka' : screen.title}</h1>
   {#if finished}
     <div class="flex flex-1 flex-col" data-testid="lesson-finished">
-      <FinishScreen {stars} flag />
+      <FinishScreen {stars} flag={!review} />
     </div>
   {:else if current && currentWord}
     <header class="flex items-center justify-between gap-3 p-3">

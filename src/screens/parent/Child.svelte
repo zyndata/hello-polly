@@ -1,6 +1,6 @@
 <!--
-  /parent/child/:id (behind the gate): one child's word plan (topics, queue, known, paused,
-  random order), what comes next, the screen-time limits (STATE.md decision 95), the progress
+  /parent/child/:id (behind the gate): one child's lessons planned ahead (STATE.md decision
+  105), word plan (topics, queue, known, paused, random order), what comes next, the screen-time limits (STATE.md decision 95), the progress
   dashboard (decision 96), and the profile, including deleting it (a tombstone, after an
   inline „Na pewno?”, decisions 34 and 38).
 -->
@@ -9,6 +9,7 @@
   import { push } from 'svelte-spa-router';
   import ChildForm from '../../lib/components/ChildForm.svelte';
   import ContentImage from '../../lib/components/ContentImage.svelte';
+  import LessonPlanEditor from '../../lib/components/LessonPlanEditor.svelte';
   import ParentLayout from '../../lib/components/ParentLayout.svelte';
   import ProgressDashboard from '../../lib/components/ProgressDashboard.svelte';
   import WordPlanEditor from '../../lib/components/WordPlanEditor.svelte';
@@ -16,6 +17,8 @@
   import { loadFamily } from '../../lib/db';
   import { childLimits, childPlan, deleteChild, liveChild, setLimits, setPlan, updateChild } from '../../lib/domain/children';
   import { nextWords, wordStates, type WordState } from '../../lib/domain/learning';
+  import { pendingLessons, prunePlanned } from '../../lib/domain/plan';
+  import { plannedDone } from '../../lib/domain/progress';
   import { localDay } from '../../lib/domain/time';
   import { change } from '../../lib/store';
   import type { Screen } from '../../lib/screens';
@@ -43,6 +46,9 @@
   let status = $state<'' | 'saved' | 'failed'>('');
 
   const upcoming = $derived(plan ? nextWords(plan, states, topics, childId, PREVIEW) : []);
+  /** Planned lessons finished on any device. */
+  const finished = $derived(plannedDone(progress));
+  const plannedCount = $derived(plan ? pendingLessons(plan, finished, new Set(topics.flatMap((t) => t.words))).length : 0);
 
   function show(file: FamilyFile) {
     profile = liveChild(file, childId);
@@ -71,8 +77,9 @@
   });
 
   async function savePlan(edited: WordPlan) {
-    // The editor builds on this screen's state; IndexedDB stores plain values only.
-    const next = $state.snapshot(edited);
+    // The editor builds on this screen's state; IndexedDB stores plain values only. Planned
+    // lessons already finished leave the plan with any change (decision 105).
+    const next = prunePlanned($state.snapshot(edited), finished);
     plan = next;
     await save((file, now, device) => setPlan(file, childId, next, now, device));
   }
@@ -120,7 +127,15 @@
           {/each}
         </ol>
       {/if}
-      <p class="text-sm text-ink-muted">Najpierw kolejka, potem włączone tematy w kolejności mapy.</p>
+      <p class="text-sm text-ink-muted">
+        {#if plannedCount > 0}Po zaplanowanych lekcjach ({plannedCount}): najpierw kolejka{:else}Najpierw kolejka{/if}, potem włączone
+        tematy w kolejności mapy.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="lessons-title">
+      <h2 id="lessons-title" class="card-title">Plan lekcji</h2>
+      <LessonPlanEditor {plan} {states} {finished} onchange={savePlan} />
     </section>
 
     <section class="card" aria-labelledby="plan-title">
