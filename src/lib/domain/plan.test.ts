@@ -3,6 +3,13 @@ import { topics } from '../content';
 import { defaultPlan } from './family';
 import { nextWords, type WordState } from './learning';
 import {
+  MAX_PLANNED_WORDS,
+  addLesson,
+  moveLesson,
+  pendingLessons,
+  prunePlanned,
+  removeLesson,
+  setLessonWords,
   dequeue,
   enqueue,
   moveQueued,
@@ -77,5 +84,40 @@ describe('word plan editing', () => {
     const queued = enqueue(defaultPlan(), 'fruit.mango');
     expect(nextWords(defaultPlan(), new Map(), topics, 'c1', 1)).toEqual(['colours.red']);
     expect(nextWords(queued, new Map(), topics, 'c1', 1)).toEqual(['fruit.mango']);
+  });
+});
+
+describe('planned lessons (decision 105)', () => {
+  const base = () => defaultPlan();
+
+  it('adds lessons at the end, words distinct and at most four; an empty one is not added', () => {
+    let p = addLesson(base(), 'l1', ['a', 'b', 'a']);
+    p = addLesson(p, 'l2', ['c', 'd', 'e', 'f', 'g']);
+    expect(addLesson(p, 'l3', [])).toBe(p);
+    expect(addLesson(p, 'l1', ['x'])).toBe(p);
+    expect(p.lessons).toEqual([
+      { id: 'l1', words: ['a', 'b'] },
+      { id: 'l2', words: ['c', 'd', 'e', 'f'].slice(0, MAX_PLANNED_WORDS) }
+    ]);
+  });
+
+  it('edits, moves and removes a lesson; emptying one removes it', () => {
+    let p = addLesson(addLesson(addLesson(base(), 'l1', ['a']), 'l2', ['b']), 'l3', ['c']);
+    p = moveLesson(p, 'l3', -5);
+    expect(p.lessons?.map((l) => l.id)).toEqual(['l3', 'l1', 'l2']);
+    expect(moveLesson(p, 'l2', 1)).toBe(p);
+    p = setLessonWords(p, 'l1', ['x', 'y']);
+    expect(p.lessons?.[1]).toEqual({ id: 'l1', words: ['x', 'y'] });
+    p = setLessonWords(p, 'l1', []);
+    expect(p.lessons?.map((l) => l.id)).toEqual(['l3', 'l2']);
+    expect(removeLesson(p, 'l3').lessons?.map((l) => l.id)).toEqual(['l2']);
+  });
+
+  it('pending: not finished, with a word that still exists; finished ones are pruned', () => {
+    const p = addLesson(addLesson(addLesson(base(), 'l1', ['a']), 'l2', ['gone']), 'l3', ['b']);
+    expect(pendingLessons(p, new Set(['l1']), new Set(['a', 'b'])).map((l) => l.id)).toEqual(['l3']);
+    expect(prunePlanned(p, new Set(['l1'])).lessons?.map((l) => l.id)).toEqual(['l2', 'l3']);
+    expect(prunePlanned(p, new Set())).toBe(p);
+    expect(pendingLessons(base(), new Set(), new Set())).toEqual([]);
   });
 });

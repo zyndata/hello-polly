@@ -4,7 +4,7 @@
  * function returns a new plan and leaves its input alone.
  */
 
-import type { TopicId, WordId, WordPlan } from '../types';
+import type { PlannedLesson, TopicId, WordId, WordPlan } from '../types';
 import type { WordState, WordStatus } from './learning';
 import { NEW_WORD } from './learning';
 
@@ -73,6 +73,60 @@ export function pendingQueue(plan: WordPlan, states: ReadonlyMap<WordId, WordSta
 export function pruneQueue(plan: WordPlan, states: ReadonlyMap<WordId, WordState>): WordPlan {
   const queue = pendingQueue(plan, states);
   return queue.length === plan.queue.length ? plan : { ...plan, queue };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Lessons planned ahead (STATE.md decision 105)
+
+/** A planned lesson has at most this many words: four new words fill a twelve-step lesson. */
+export const MAX_PLANNED_WORDS = 4;
+
+/** Distinct words, in order, at most `MAX_PLANNED_WORDS`. */
+const cleanWords = (words: readonly WordId[]): WordId[] => [...new Set(words)].slice(0, MAX_PLANNED_WORDS);
+
+/**
+ * The planned lessons still to play, in order: not finished on any device (`done` holds the
+ * finished ones' ids) and with at least one word the content still has.
+ */
+export function pendingLessons(plan: WordPlan, done: ReadonlySet<string>, exists: ReadonlySet<WordId>): PlannedLesson[] {
+  return (plan.lessons ?? []).filter((l) => !done.has(l.id) && l.words.some((id) => exists.has(id)));
+}
+
+/** The plan without the planned lessons already finished (the parent's next save drops them). */
+export function prunePlanned(plan: WordPlan, done: ReadonlySet<string>): WordPlan {
+  const lessons = plan.lessons ?? [];
+  const kept = lessons.filter((l) => !done.has(l.id));
+  return kept.length === lessons.length ? plan : { ...plan, lessons: kept };
+}
+
+/** A new planned lesson at the end. A lesson with no word is not added. */
+export function addLesson(plan: WordPlan, id: string, words: readonly WordId[]): WordPlan {
+  const clean = cleanWords(words);
+  if (clean.length === 0 || (plan.lessons ?? []).some((l) => l.id === id)) return plan;
+  return { ...plan, lessons: [...(plan.lessons ?? []), { id, words: clean }] };
+}
+
+/** The planned lesson's words replaced; with no word left, the lesson goes. */
+export function setLessonWords(plan: WordPlan, id: string, words: readonly WordId[]): WordPlan {
+  const clean = cleanWords(words);
+  if (clean.length === 0) return removeLesson(plan, id);
+  return { ...plan, lessons: (plan.lessons ?? []).map((l) => (l.id === id ? { id, words: clean } : l)) };
+}
+
+export function removeLesson(plan: WordPlan, id: string): WordPlan {
+  return { ...plan, lessons: (plan.lessons ?? []).filter((l) => l.id !== id) };
+}
+
+/** The planned lesson moved by `delta` places, kept within the list. */
+export function moveLesson(plan: WordPlan, id: string, delta: number): WordPlan {
+  const lessons = [...(plan.lessons ?? [])];
+  const from = lessons.findIndex((l) => l.id === id);
+  if (from < 0) return plan;
+  const to = Math.max(0, Math.min(lessons.length - 1, from + delta));
+  if (to === from) return plan;
+  const [moved] = lessons.splice(from, 1);
+  lessons.splice(to, 0, moved as PlannedLesson);
+  return { ...plan, lessons };
 }
 
 /** What the parent sees on a word: the plan's mark first, else its learning state. */

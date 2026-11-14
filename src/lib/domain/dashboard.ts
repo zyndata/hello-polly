@@ -43,27 +43,45 @@ export interface PracticeWord {
   word: WordId;
   /** Exercises not solved on the first try, over every day and device. */
   misses: number;
+  /** How far the word still is from mastered: see `MISS_WEIGHT`. Always above 0 here. */
+  debt: number;
   /** The last day with such a miss; `undefined` when they are all in the compacted bucket. */
   lastMiss?: Day;
 }
 
-/** Words that need practice: the most first-try misses first, then the most recent (decision 96). */
+/**
+ * A word is a trouble word while its first-try misses outweigh its clean answers since
+ * (STATE.md decision 106): day by day, each miss adds this much and each first-try answer
+ * takes one away, never below zero. So one miss needs two clean answers later, and a word
+ * answered right only half the time (chance, with two pictures) stays on the list.
+ */
+export const MISS_WEIGHT = 2;
+
+/**
+ * Words that need practice now, the furthest from mastered first, then the most recent miss
+ * (decisions 96 and 106). A word leaves the list once later clean answers have paid its misses.
+ */
 export function needsPractice(progress: ChildProgress, exists: (id: WordId) => boolean, limit = 8): PracticeWord[] {
   const out: PracticeWord[] = [];
   for (const [word, history] of wordHistories(progress).histories) {
     if (!exists(word)) continue;
-    let misses = history.old ? history.old.c - history.old.first : 0;
+    let misses = 0;
+    let debt = 0;
     let lastMiss: Day | undefined;
-    for (const [day, a] of history.days) {
-      if (a.c - a.first > 0) {
-        misses += a.c - a.first;
-        lastMiss = day;
-      }
+    const days: [Day | undefined, { c: number; first: number }][] = [
+      ...(history.old ? [[undefined, history.old] as [undefined, { c: number; first: number }]] : []),
+      ...history.days
+    ];
+    for (const [day, a] of days) {
+      const missed = a.c - a.first;
+      misses += missed;
+      debt = Math.max(0, debt + MISS_WEIGHT * missed - a.first);
+      if (missed > 0 && day !== undefined) lastMiss = day;
     }
-    if (misses > 0) out.push(lastMiss === undefined ? { word, misses } : { word, misses, lastMiss });
+    if (debt > 0) out.push(lastMiss === undefined ? { word, misses, debt } : { word, misses, debt, lastMiss });
   }
   return out
-    .sort((a, b) => b.misses - a.misses || (b.lastMiss ?? '').localeCompare(a.lastMiss ?? '') || (a.word < b.word ? -1 : 1))
+    .sort((a, b) => b.debt - a.debt || (b.lastMiss ?? '').localeCompare(a.lastMiss ?? '') || (a.word < b.word ? -1 : 1))
     .slice(0, limit);
 }
 

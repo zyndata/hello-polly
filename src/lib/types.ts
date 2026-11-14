@@ -126,6 +126,18 @@ export interface WordPlan {
   randomWithinTopic: boolean;
   /** The *Kosze* sorting game is on the shelf (STATE.md decision 89). Absent means off. */
   sortGame?: boolean;
+  /**
+   * Lessons the parent planned ahead, in order (STATE.md decision 105). Each is played as the
+   * next island until a device records it finished. Absent means none.
+   */
+  lessons?: PlannedLesson[];
+}
+
+/** One lesson planned by the parent: the words it teaches or practises. */
+export interface PlannedLesson {
+  /** Unique; a finished lesson records it (`LessonRecord.planned`). */
+  id: string;
+  words: WordId[];
 }
 
 export type Accent = 'en-GB' | 'en-US';
@@ -172,6 +184,8 @@ export interface ChestOpening {
 export interface LessonRecord {
   at: Instant;
   words: WordId[];
+  /** The parent's planned lesson it was (`PlannedLesson.id`), if any (STATE.md decision 105). */
+  planned?: string;
 }
 
 /** Everything one device recorded about one child. Only that device ever writes it. */
