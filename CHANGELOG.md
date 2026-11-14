@@ -26,9 +26,11 @@ project adheres to [Semantic Versioning](https://semver.org).
 - **child:** „Powtórka” reviews words already met, trouble words first
 - **content:** Three new topics: toys, food and drinks, and clothes
 - **content:** Pictures may be up to 56 kB, and "dance" joins the actions
+- **content:** The cook is a chef, and pictures stay as small as they can
 
 ### Miscellaneous
 
+- Update CHANGELOG
 - Update CHANGELOG
 - Update CHANGELOG
 - Update CHANGELOG
