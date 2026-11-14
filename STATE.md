@@ -1499,6 +1499,17 @@ is optional and absent means the old behaviour).
      default, like the actions; a parent switches them on or plans their words. Food is what
      *Nakarm Polly* was made for; nothing in the games needed a change.
 
+### 2026-11-14 — a larger picture budget, and *dance* (outside the phase sequence)
+
+111. **The per-picture budget is 56 kB, not 25 kB** (PLAN.md "Pictures" said ≤ 25 kB per SVG),
+     at the owner's request: richer Fluent pictures of people and actions are often 35–50 kB
+     after SVGO, and the owner would rather keep a valuable word than drop it for its file
+     size. `SVG_BUDGET_BYTES` is 56 × 1024; `check:content` and `npm run content` enforce it as
+     before. With it, *dance* joins the actions (decision 107) with Fluent's *Woman dancing* at
+     full precision (48 kB); the set is 127 pictures, 1.4 MB. The pictures chosen under the old
+     budget (the pan for *cook*, the microphone for *sing*, `floatPrecision` 2 on some) stay as
+     they are; any of them can be revisited now that the room exists.
+
 ## Open questions
 
 Copied from PLAN.md. Each is settled in the phase named and the answer recorded here.

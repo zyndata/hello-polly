@@ -62,6 +62,7 @@
   {"id":"actions.swim","image":"person-swimming","word":"actions.swim","set":"actions"},
   {"id":"actions.sing","image":"microphone","word":"actions.sing","set":"actions"},
   {"id":"actions.clap","image":"clapping-hands","word":"actions.clap","set":"actions","rare":true},
+  {"id":"actions.dance","image":"woman-dancing","word":"actions.dance","set":"actions"},
   {"id":"actions.draw","image":"crayon","word":"actions.draw","set":"actions"},
   {"id":"actions.wash","image":"soap","word":"actions.wash","set":"actions"},
   {"id":"toys.ball","image":"soccer-ball","word":"toys.ball","set":"toys"},

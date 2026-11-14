@@ -62,6 +62,7 @@
   {"id":"actions.swim","en":"swim","pl":"pływa","plAcc":"pływania","topic":"actions","image":"person-swimming","level":3},
   {"id":"actions.sing","en":"sing","pl":"śpiewa","plAcc":"śpiewania","topic":"actions","image":"microphone","level":3},
   {"id":"actions.clap","en":"clap","pl":"klaszcze","plAcc":"klaskania","topic":"actions","image":"clapping-hands","level":3},
+  {"id":"actions.dance","en":"dance","pl":"tańczy","plAcc":"tańca","topic":"actions","image":"woman-dancing","level":3},
   {"id":"actions.draw","en":"draw","pl":"rysuje","plAcc":"rysowania","topic":"actions","image":"crayon","level":3},
   {"id":"actions.wash","en":"wash","pl":"myje","plAcc":"mycia","topic":"actions","image":"soap","level":3},
   {"id":"toys.ball","en":"ball","pl":"piłka","plAcc":"piłki","topic":"toys","image":"soccer-ball","level":1},

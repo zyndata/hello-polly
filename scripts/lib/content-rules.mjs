@@ -6,8 +6,8 @@
  * here; the unit tests import the function and feed it fixtures.
  */
 
-/** Per-SVG size budget (PLAN.md "Pictures"). */
-export const SVG_BUDGET_BYTES = 25 * 1024;
+/** Per-SVG size budget (PLAN.md "Pictures"; raised from 25 kB by STATE.md decision 111). */
+export const SVG_BUDGET_BYTES = 56 * 1024;
 
 /**
  * Every Polish prompt the app speaks: the start screen's greeting (Phase 3), and the Phase 5
