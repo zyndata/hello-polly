@@ -51,5 +51,17 @@
   {"id":"body.hand","en":"hand","pl":"ręka","plAcc":"ręki","topic":"body","image":"raised-hand","level":1},
   {"id":"body.arm","en":"arm","pl":"ramię","plAcc":"ramienia","topic":"body","image":"flexed-biceps","level":1},
   {"id":"body.leg","en":"leg","pl":"noga","plAcc":"nogi","topic":"body","image":"leg","level":1},
-  {"id":"body.foot","en":"foot","pl":"stopa","plAcc":"stopy","topic":"body","image":"foot","level":1}
+  {"id":"body.foot","en":"foot","pl":"stopa","plAcc":"stopy","topic":"body","image":"foot","level":1},
+  {"id":"actions.cook","en":"cook","pl":"gotuje","plAcc":"gotowania","topic":"actions","image":"cooking","level":3},
+  {"id":"actions.eat","en":"eat","pl":"je","plAcc":"jedzenia","topic":"actions","image":"face-savoring-food","level":3},
+  {"id":"actions.drink","en":"drink","pl":"pije","plAcc":"picia","topic":"actions","image":"cup-with-straw","level":3},
+  {"id":"actions.buy","en":"buy","pl":"kupuje","plAcc":"kupowania","topic":"actions","image":"shopping-cart","level":3},
+  {"id":"actions.sleep","en":"sleep","pl":"śpi","plAcc":"spania","topic":"actions","image":"sleeping-face","level":3},
+  {"id":"actions.run","en":"run","pl":"biega","plAcc":"biegania","topic":"actions","image":"person-running","level":3},
+  {"id":"actions.walk","en":"walk","pl":"chodzi","plAcc":"chodzenia","topic":"actions","image":"person-walking","level":3},
+  {"id":"actions.swim","en":"swim","pl":"pływa","plAcc":"pływania","topic":"actions","image":"person-swimming","level":3},
+  {"id":"actions.sing","en":"sing","pl":"śpiewa","plAcc":"śpiewania","topic":"actions","image":"microphone","level":3},
+  {"id":"actions.clap","en":"clap","pl":"klaszcze","plAcc":"klaskania","topic":"actions","image":"clapping-hands","level":3},
+  {"id":"actions.draw","en":"draw","pl":"rysuje","plAcc":"rysowania","topic":"actions","image":"crayon","level":3},
+  {"id":"actions.wash","en":"wash","pl":"myje","plAcc":"mycia","topic":"actions","image":"soap","level":3}
 ]

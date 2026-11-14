@@ -30,6 +30,8 @@ export const digitImage = (digit: Digit): ImageId => `keycap-${digit}`;
 export const COLOUR_TOPIC = 'colours';
 /** *Polly mówi*'s commands (decision 83). */
 export const BODY_TOPIC = 'body';
+/** Verbs (decision 107): a picture of an action is neither food for Polly nor a thing to paint. */
+export const ACTION_TOPIC = 'actions';
 
 type WordTopic = Pick<Word, 'id' | 'topic'>;
 
@@ -52,12 +54,13 @@ export function byTopic(learned: readonly WordId[], words: readonly WordTopic[])
   return groups;
 }
 
-/** *Pokoloruj*: learned colours (the pots) and the learned things to paint (not colours, not numbers). */
+/** *Pokoloruj*: learned colours (the pots) and the learned things to paint (not colours, numbers or actions). */
 export function paintPools(learned: readonly WordId[], words: readonly WordTopic[]): { colours: WordId[]; things: WordId[] } {
   const topicOf = new Map(words.map((w) => [w.id, w.topic]));
+  const notThings = new Set([COLOUR_TOPIC, DIGIT_TOPIC, ACTION_TOPIC]);
   return {
     colours: learned.filter((id) => topicOf.get(id) === COLOUR_TOPIC),
-    things: learned.filter((id) => topicOf.get(id) !== COLOUR_TOPIC && topicOf.get(id) !== DIGIT_TOPIC)
+    things: learned.filter((id) => !notThings.has(topicOf.get(id) ?? ''))
   };
 }
 
@@ -66,13 +69,14 @@ export const basketTopics = (learned: readonly WordId[], words: readonly WordTop
   [...byTopic(learned, words)].filter(([, ids]) => ids.length >= MIN_PER_BASKET).map(([topic]) => topic);
 
 /**
- * The words a game may use: every learned word, except *Cyferki* (outside the numbers) and
- * *Polly mówi* (body parts only).
+ * The words a game may use: every learned word, except *Cyferki* (outside the numbers),
+ * *Polly mówi* (body parts only) and *Nakarm Polly* (no actions, decision 107).
  */
 export function gamePool(game: GameId, learned: readonly WordId[], words: readonly WordTopic[]): WordId[] {
   const topicOf = new Map(words.map((w) => [w.id, w.topic]));
   if (game === 'digits') return learned.filter((id) => topicOf.get(id) !== DIGIT_TOPIC);
   if (game === 'simon') return learned.filter((id) => topicOf.get(id) === BODY_TOPIC);
+  if (game === 'feed') return learned.filter((id) => topicOf.get(id) !== ACTION_TOPIC);
   return [...learned];
 }
 

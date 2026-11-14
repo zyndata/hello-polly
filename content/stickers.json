@@ -51,5 +51,17 @@
   {"id":"body.hand","image":"raised-hand","word":"body.hand","set":"body"},
   {"id":"body.arm","image":"flexed-biceps","word":"body.arm","set":"body"},
   {"id":"body.leg","image":"leg","word":"body.leg","set":"body"},
-  {"id":"body.foot","image":"foot","word":"body.foot","set":"body","rare":true}
+  {"id":"body.foot","image":"foot","word":"body.foot","set":"body","rare":true},
+  {"id":"actions.cook","image":"cooking","word":"actions.cook","set":"actions"},
+  {"id":"actions.eat","image":"face-savoring-food","word":"actions.eat","set":"actions"},
+  {"id":"actions.drink","image":"cup-with-straw","word":"actions.drink","set":"actions"},
+  {"id":"actions.buy","image":"shopping-cart","word":"actions.buy","set":"actions"},
+  {"id":"actions.sleep","image":"sleeping-face","word":"actions.sleep","set":"actions"},
+  {"id":"actions.run","image":"person-running","word":"actions.run","set":"actions"},
+  {"id":"actions.walk","image":"person-walking","word":"actions.walk","set":"actions"},
+  {"id":"actions.swim","image":"person-swimming","word":"actions.swim","set":"actions"},
+  {"id":"actions.sing","image":"microphone","word":"actions.sing","set":"actions"},
+  {"id":"actions.clap","image":"clapping-hands","word":"actions.clap","set":"actions","rare":true},
+  {"id":"actions.draw","image":"crayon","word":"actions.draw","set":"actions"},
+  {"id":"actions.wash","image":"soap","word":"actions.wash","set":"actions"}
 ]

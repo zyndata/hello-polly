@@ -12,8 +12,9 @@ export const SVG_BUDGET_BYTES = 25 * 1024;
 /**
  * Every Polish prompt the app speaks: the start screen's greeting (Phase 3), and the Phase 5
  * lesson player and exercises (look and listen, E1, E2, E3, feedback, finish), the Phase 6
- * chest and album, and the Phase 9 story shelf and player and games E4–E9. `check:content` fails when one is missing from the catalog, or when
- * the catalog has one that is not listed here.
+ * chest and album, the Phase 9 story shelf and player and games E4–E9, and *Powtórka* (STATE.md
+ * decision 106). `check:content` fails when one is missing from the catalog, or when the
+ * catalog has one that is not listed here.
  */
 export const REQUIRED_PROMPT_IDS = /** @type {const} */ ([
   'start.hello',
@@ -57,6 +58,8 @@ export const REQUIRED_PROMPT_IDS = /** @type {const} */ ([
   'paint.colour',
   'paint.pot',
   'sort.which',
+  'review.start',
+  'review.finish',
   'sleep.night'
 ]);
 
@@ -78,12 +81,13 @@ export const STORY_FUNCTION_WORDS = /** @type {const} */ ([
  * Pictures the screens use directly rather than through content: Polly, the 🐢/🐇 speed
  * toggle, Polly's ship on the map, the gear of the parent gate, the home button, the game
  * shelf's die, lock and speaker, the album's ledger, the stories' book, and the Phase 9 game
- * tiles and *Polly mówi*'s ✅. They count as used, and must exist like any content picture.
+ * tiles and *Polly mówi*'s ✅, and the map's 🔁 *Powtórka*. They count as used, and must
+ * exist like any content picture.
  */
 export const UI_IMAGE_IDS = /** @type {const} */ ([
   'parrot', 'turtle', 'rabbit', 'sailboat', 'gear', 'house', 'game-die', 'locked', 'speaker-high-volume', 'ledger',
   'open-book', 'check-mark-button', 'bubbles', 'magnifying-glass-tilted-left', 'fork-and-knife-with-plate', 'basket',
-  'zzz'
+  'zzz', 'repeat-button'
 ]);
 
 /** A story has this many pages (PLAN.md "Content model": 5–8, about 30 seconds). */
