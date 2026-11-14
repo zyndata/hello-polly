@@ -25,9 +25,11 @@ project adheres to [Semantic Versioning](https://semver.org).
 - **parent:** Plan the next lessons ahead, choosing each lesson's words
 - **child:** „Powtórka” reviews words already met, trouble words first
 - **content:** Three new topics: toys, food and drinks, and clothes
+- **content:** Pictures may be up to 56 kB, and "dance" joins the actions
 
 ### Miscellaneous
 
+- Update CHANGELOG
 - Update CHANGELOG
 
 ## [0.4.0] - 2026-11-06
