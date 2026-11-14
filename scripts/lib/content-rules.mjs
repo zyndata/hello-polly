@@ -8,6 +8,11 @@
 
 /** Per-SVG size budget (PLAN.md "Pictures"; raised from 25 kB by STATE.md decision 111). */
 export const SVG_BUDGET_BYTES = 56 * 1024;
+/**
+ * What a picture should weigh (decision 111): the old budget. Above it a picture is allowed only
+ * when nothing smaller shows the word; `npm run content` and `--check` list such pictures.
+ */
+export const SVG_TARGET_BYTES = 25 * 1024;
 
 /**
  * Every Polish prompt the app speaks: the start screen's greeting (Phase 3), and the Phase 5

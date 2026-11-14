@@ -94,7 +94,7 @@
     "hippopotamus": "assets/Hippopotamus/Color/hippopotamus_color.svg",
     "service-dog": { "path": "assets/Service dog/Color/service_dog_color.svg", "floatPrecision": 2 },
 
-    "cooking": "assets/Cooking/Color/cooking_color.svg",
+    "cook": { "path": "assets/Cook/Default/Color/cook_color_default.svg", "floatPrecision": 1 },
     "face-savoring-food": "assets/Face savoring food/Color/face_savoring_food_color.svg",
     "cup-with-straw": "assets/Cup with straw/Color/cup_with_straw_color.svg",
     "shopping-cart": "assets/Shopping cart/Color/shopping_cart_color.svg",
@@ -104,7 +104,7 @@
     "person-swimming": "assets/Person swimming/Default/Color/person_swimming_color_default.svg",
     "microphone": "assets/Microphone/Color/microphone_color.svg",
     "clapping-hands": "assets/Clapping hands/Default/Color/clapping_hands_color_default.svg",
-    "woman-dancing": "assets/Woman dancing/Default/Color/woman_dancing_color_default.svg",
+    "woman-dancing": { "path": "assets/Woman dancing/Default/Color/woman_dancing_color_default.svg", "floatPrecision": 1 },
     "crayon": "assets/Crayon/Color/crayon_color.svg",
     "soap": "assets/Soap/Color/soap_color.svg",
     "repeat-button": "assets/Repeat button/Color/repeat_button_color.svg",

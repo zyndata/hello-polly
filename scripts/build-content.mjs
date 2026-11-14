@@ -18,7 +18,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { IMAGE_DIR_EXTRAS, REPO_ROOT, contentDir, imageDir, readImageBytes, readJson } from './lib/content-files.mjs';
-import { SVG_BUDGET_BYTES } from './lib/content-rules.mjs';
+import { SVG_BUDGET_BYTES, SVG_TARGET_BYTES } from './lib/content-rules.mjs';
 import { recolor } from './lib/recolor.mjs';
 
 const { values: args } = parseArgs({
@@ -39,6 +39,17 @@ if (args.check) {
   process.exit(check() ? 0 : 1);
 } else {
   await build();
+}
+
+/**
+ * Lists the pictures above the target size (they pass, but each one should be the smallest that
+ * still shows its word: try a lower `floatPrecision` or another picture).
+ * @param {Map<string, number>} sizes picture id → bytes
+ */
+function reportAboveTarget(sizes) {
+  const above = [...sizes].filter(([, bytes]) => bytes > SVG_TARGET_BYTES).sort((a, b) => b[1] - a[1]);
+  if (above.length === 0) return;
+  console.log(`ℹ above the ${kB(SVG_TARGET_BYTES)} target: ${above.map(([id, bytes]) => `${id} ${kB(bytes)}`).join(', ')}`);
 }
 
 /** @returns {boolean} true when content/img/ matches the manifest */
@@ -68,6 +79,7 @@ function check() {
   if (errors.length === 0) {
     const total = [...sizes.values()].reduce((a, b) => a + b, 0);
     console.log(`✓ content/img: ${sizes.size} pictures, ${kB(total)}, all within ${kB(SVG_BUDGET_BYTES)}, pinned to ${commit.slice(0, 12)}`);
+    reportAboveTarget(sizes);
   }
   return errors.length === 0;
 }
@@ -117,6 +129,7 @@ async function build() {
   const total = rows.reduce((a, r) => a + r.after, 0);
   console.log(`${rows.length} pictures, ${kB(total)} in total`);
   for (const r of over) console.error(`✗ ${r.id}.svg is ${kB(r.after)}, over the ${kB(SVG_BUDGET_BYTES)} budget`);
+  reportAboveTarget(new Map(rows.map((r) => [r.id, r.after])));
   if (over.length > 0) process.exit(1);
 }
 

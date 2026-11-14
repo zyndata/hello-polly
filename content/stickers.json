@@ -52,7 +52,7 @@
   {"id":"body.arm","image":"flexed-biceps","word":"body.arm","set":"body"},
   {"id":"body.leg","image":"leg","word":"body.leg","set":"body"},
   {"id":"body.foot","image":"foot","word":"body.foot","set":"body","rare":true},
-  {"id":"actions.cook","image":"cooking","word":"actions.cook","set":"actions"},
+  {"id":"actions.cook","image":"cook","word":"actions.cook","set":"actions"},
   {"id":"actions.eat","image":"face-savoring-food","word":"actions.eat","set":"actions"},
   {"id":"actions.drink","image":"cup-with-straw","word":"actions.drink","set":"actions"},
   {"id":"actions.buy","image":"shopping-cart","word":"actions.buy","set":"actions"},

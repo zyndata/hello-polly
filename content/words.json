@@ -52,7 +52,7 @@
   {"id":"body.arm","en":"arm","pl":"ramię","plAcc":"ramienia","topic":"body","image":"flexed-biceps","level":1},
   {"id":"body.leg","en":"leg","pl":"noga","plAcc":"nogi","topic":"body","image":"leg","level":1},
   {"id":"body.foot","en":"foot","pl":"stopa","plAcc":"stopy","topic":"body","image":"foot","level":1},
-  {"id":"actions.cook","en":"cook","pl":"gotuje","plAcc":"gotowania","topic":"actions","image":"cooking","level":3},
+  {"id":"actions.cook","en":"cook","pl":"gotuje","plAcc":"gotowania","topic":"actions","image":"cook","level":3},
   {"id":"actions.eat","en":"eat","pl":"je","plAcc":"jedzenia","topic":"actions","image":"face-savoring-food","level":3},
   {"id":"actions.drink","en":"drink","pl":"pije","plAcc":"picia","topic":"actions","image":"cup-with-straw","level":3},
   {"id":"actions.buy","en":"buy","pl":"kupuje","plAcc":"kupowania","topic":"actions","image":"shopping-cart","level":3},

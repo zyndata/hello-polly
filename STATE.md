@@ -1466,8 +1466,8 @@ is optional and absent means the old behaviour).
      sleep, run, walk, swim, sing, clap, draw, wash. English base form; the Polish is the
      owner's form („gotuje”, „pije”, „kupuje”…), `plAcc` the genitive of the noun
      („gotowania”). Each is a still Fluent picture of the action (🍳, 😋, 🥤, 🛒, 😴, 🏃,
-     🚶, 🏊, 🎤, 👏, 🖍️, 🧼), so open question 7 (animation for verbs) stays open for Phase
-     11. *Cook*, *Singer* and *Woman dancing* were over the 25 kB budget even at
+     🚶, 🏊, 🎤, 👏, 🖍️, 🧼; *cook* became the chef 🧑‍🍳 in decision 111), so open
+     question 7 (animation for verbs) stays open for Phase 11. *Cook*, *Singer* and *Woman dancing* were over the 25 kB budget even at
      `floatPrecision` 1, so cook is the pan, sing the microphone, and *dance* gave way to
      *clap*; the walking and running people need `floatPrecision` 2. The topic is off by
      default (not in `DEFAULT_TOPICS`): the parent switches it on or plans its words. A sticker
@@ -1505,10 +1505,14 @@ is optional and absent means the old behaviour).
      at the owner's request: richer Fluent pictures of people and actions are often 35–50 kB
      after SVGO, and the owner would rather keep a valuable word than drop it for its file
      size. `SVG_BUDGET_BYTES` is 56 × 1024; `check:content` and `npm run content` enforce it as
-     before. With it, *dance* joins the actions (decision 107) with Fluent's *Woman dancing* at
-     full precision (48 kB); the set is 127 pictures, 1.4 MB. The pictures chosen under the old
-     budget (the pan for *cook*, the microphone for *sing*, `floatPrecision` 2 on some) stay as
-     they are; any of them can be revisited now that the room exists.
+     before. **25 kB stays the target** (the owner: pictures as small as possible, the old limit
+     wherever it can be kept): `SVG_TARGET_BYTES`, and both commands list every picture above it
+     (`ℹ above the 25.0 kB target: …`). A picture goes above only when nothing smaller shows the
+     word, at the lowest `floatPrecision` that still looks the same side by side (0 breaks the
+     people). So *dance* joins the actions (decision 107) as Fluent's *Woman dancing* at
+     `floatPrecision` 1 (37.3 kB, 48 kB at the default), and *cook* is now Fluent's *Cook*, the
+     chef (41.3 kB at 1), in place of the pan: one English word for the verb and the person, so
+     not a second word. The other pictures stay; the set is 127 pictures, 1.4 MB.
 
 ## Open questions
 
