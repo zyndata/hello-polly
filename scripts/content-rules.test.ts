@@ -18,7 +18,7 @@ function valid(): ContentSet {
       { id: 'fruit.banana', en: 'banana', pl: 'banan', plAcc: 'banana', topic: 'fruit', image: 'banana', level: 1 }
     ],
     prompts: REQUIRED_PROMPT_IDS.map((id) => ({ id, pl: id === 'pick.find' ? 'Gdzie jest {word}?' : 'Tekst.' })),
-    praise: ['Great!'],
+    praise: [{ en: 'Great!' }, { pl: 'Bardzo dobrze!' }],
     stories: [
       {
         id: 'picnic',

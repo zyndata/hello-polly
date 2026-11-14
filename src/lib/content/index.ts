@@ -24,8 +24,17 @@ export const stories: readonly Story[] = storiesJson as Story[];
 export const stickers: readonly Sticker[] = stickersJson as Sticker[];
 /** The pictures a child profile may use as its avatar. */
 export const avatars: readonly ImageId[] = avatarsJson;
-/** English praise for a correct answer, spoken by the English voice. */
-export const praise: readonly string[] = praiseJson;
+/**
+ * Praise for a correct answer, in turn: mostly English, spoken by the English voice, and
+ * „Bardzo dobrze!” in Polish (STATE.md decision 109).
+ */
+export interface Praise {
+  lang: 'en' | 'pl';
+  text: string;
+}
+export const praise: readonly Praise[] = (praiseJson as ({ en: string } | { pl: string })[]).map((p) =>
+  'pl' in p ? { lang: 'pl', text: p.pl } : { lang: 'en', text: p.en }
+);
 
 const wordById = new Map(words.map((w) => [w.id, w]));
 const topicById = new Map(topics.map((t) => [t.id, t]));

@@ -85,7 +85,7 @@
     dropping = basket;
     sounds().play('correct');
     onmood('happy');
-    await Promise.all([speaker().speak(nextPraise(), { lang: 'en', speed: 'normal' }), new Promise((r) => setTimeout(r, DROP_MS))]);
+    await Promise.all([speaker().saySegments([nextPraise()], 'normal'), new Promise((r) => setTimeout(r, DROP_MS))]);
     if (!alive) return;
     dropping = undefined;
     sorting = next;

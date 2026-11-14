@@ -240,7 +240,7 @@ export function validateContent(content, imageBytes) {
     checkImage(where, word.image);
   }
 
-  // Polish prompts and English praise.
+  // Polish prompts, and praise in English or Polish.
   const prompts = indexById('prompt', content.prompts);
   /** @type {readonly string[]} */
   const required = REQUIRED_PROMPT_IDS;
@@ -282,7 +282,9 @@ export function validateContent(content, imageBytes) {
     }
   }
   if (!Array.isArray(content.praise) || content.praise.length === 0) errors.push('praise: empty');
-  else if (!content.praise.every(isText)) errors.push('praise: every entry must be text');
+  else if (!content.praise.every((/** @type {any} */ p) => p !== null && typeof p === 'object' && Object.keys(p).length === 1 && (isText(p.en) || isText(p.pl)))) {
+    errors.push('praise: every entry must be {"en": text} or {"pl": text}');
+  }
 
   // Stories: every token is vocabulary, a topic name, or a function word.
   /** @type {Set<string>} */
